@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,11 +15,23 @@ const firebaseConfig = {
 // Initialize Firebase only once to prevent errors in Next.js hot-reloading
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore
+// Initialize Firestore & Storage
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-// Helper references to prevent confusion
-const websiteCollection = collection(db, "website_data");
+// Helper references exclusively for the Flutter App
 const appCollection = collection(db, "app_data");
+const appProductsCollection = collection(db, "products_app");
+const appOrdersCollection = collection(db, "orders_app");
+// Note: We moved coupons into app_data, but keeping the old collection reference just in case.
+const couponsCollection = collection(db, "coupons");
 
-export { app, db, websiteCollection, appCollection };
+export { 
+  app, 
+  db, 
+  storage,
+  appCollection,
+  appProductsCollection,
+  appOrdersCollection,
+  couponsCollection
+};

@@ -12,10 +12,9 @@ import {
 
 const navItems = [
   { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/app' },
-  { title: 'Products', icon: Package, href: '/dashboard/products' },
-  { title: 'Orders', icon: ShoppingCart, href: '/dashboard/orders' },
-  { title: 'Coupons', icon: Tag, href: '/dashboard/coupons' },
-  { title: 'Settings', icon: Settings, href: '/dashboard/settings' },
+  { title: 'Products', icon: Package, href: '/dashboard/app/products' },
+  { title: 'Orders', icon: ShoppingCart, href: '/dashboard/app/orders' },
+  { title: 'Settings', icon: Settings, href: '/dashboard/app/settings' },
 ]
 
 export default function AppSidebar() {
