@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 // Helper references exclusively for the Flutter App
 const appCollection = collection(db, "app_data");
 const appProductsCollection = collection(db, "products_app");
-const appOrdersCollection = collection(db, "orders_app");
+const appOrdersCollection = collection(db, "orders");
 // Note: We moved coupons into app_data, but keeping the old collection reference just in case.
 const couponsCollection = collection(db, "coupons");
 

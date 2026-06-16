@@ -9,8 +9,15 @@ import { OrderDetails } from "@/types/order";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { CircleCheck, CircleDashed, CheckCircle2, Clock, Truck, XCircle } from "lucide-react";
+import { CircleCheck, CircleDashed, CheckCircle2, Clock, Truck, XCircle, Loader2 } from "lucide-react";
+import { doc, updateDoc } from "firebase/firestore";
+import { appOrdersCollection } from "@/lib/firebase-app";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface OrderDetailsDrawerProps {
   order: OrderDetails | null;
@@ -23,7 +30,44 @@ export function OrderDetailsDrawer({
   isOpen,
   onClose,
 }: OrderDetailsDrawerProps) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [newStatus, setNewStatus] = useState<string>("Placed");
+  const [trackingId, setTrackingId] = useState("");
+  const [courierName, setCourierName] = useState("");
+
+  useEffect(() => {
+    if (order) {
+      setNewStatus(order.orderStatus || "Placed");
+      setTrackingId(order.trackingId || "");
+      setCourierName(order.courierName || "");
+    }
+  }, [order]);
+
   if (!order) return null;
+
+  const razorpayMatch = order.paymentMethod?.match(/pay_[a-zA-Z0-9]+/);
+  const paymentId = razorpayMatch ? razorpayMatch[0] : null;
+
+  const handleUpdateOrder = async () => {
+    if (!order.id) return;
+    setIsUpdating(true);
+    try {
+      const orderRef = doc(appOrdersCollection, order.id);
+      await updateDoc(orderRef, {
+        status: newStatus,
+        trackingId: trackingId,
+        courierName: courierName,
+        updatedAt: new Date().toISOString()
+      });
+      toast.success("Order updated successfully!");
+      onClose(); // Close the drawer on success
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast.error("Failed to update order.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -64,6 +108,82 @@ export function OrderDetailsDrawer({
             </SheetHeader>
 
             <div className="grid gap-6">
+              {/* Fulfillment Actions */}
+              <div className="space-y-3 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <h3 className="text-sm font-semibold text-blue-900 uppercase tracking-wider">
+                  Fulfillment Actions
+                </h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-slate-600">Update Order Status</label>
+                    <Select value={newStatus} onValueChange={setNewStatus}>
+                      <SelectTrigger className="w-full bg-white">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Placed">Placed (New)</SelectItem>
+                        <SelectItem value="Packed">Packed</SelectItem>
+                        <SelectItem value="Shipped">Shipped</SelectItem>
+                        <SelectItem value="Delivered">Delivered</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {newStatus === "Shipped" && (
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-white rounded-lg border">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-500">Tracking ID</label>
+                        <Input 
+                          placeholder="e.g. AW123456789" 
+                          value={trackingId}
+                          onChange={(e) => setTrackingId(e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-500">Courier Name</label>
+                        <Input 
+                          placeholder="e.g. BlueDart" 
+                          value={courierName}
+                          onChange={(e) => setCourierName(e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <Button 
+                    onClick={handleUpdateOrder} 
+                    disabled={isUpdating}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Order Updates
+                  </Button>
+                </div>
+              </div>
+
+              {/* Payment Details */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  Payment Details
+                </h3>
+                <div className="bg-muted/30 p-4 rounded-lg space-y-2 text-sm">
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-muted-foreground">Method:</span>
+                    <span className="col-span-2 font-medium">{order.paymentMethod || 'COD'}</span>
+                  </div>
+                  {paymentId && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="text-muted-foreground">Razorpay ID:</span>
+                      <span className="col-span-2 font-mono text-xs bg-slate-200 px-2 py-1 rounded select-all w-fit">
+                        {paymentId}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
               {/* Customer Info */}
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -109,21 +229,21 @@ export function OrderDetailsDrawer({
                   Product Details
                 </h3>
                 <div className="space-y-4">
-                  {order.products.map((product) => (
-                    <div key={product.id} className="flex justify-between items-start text-sm">
+                  {order.products.map((product, index) => (
+                    <div key={product.id || index} className="flex justify-between items-start text-sm">
                       <div className="space-y-1">
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-muted-foreground text-xs">SKU: {product.sku}</p>
-                        <p className="text-muted-foreground text-xs">Qty: {product.quantity}</p>
+                        <p className="font-medium">{product.name || 'Unknown Product'}</p>
+                        <p className="text-muted-foreground text-xs">SKU: {product.sku || 'N/A'}</p>
+                        <p className="text-muted-foreground text-xs">Qty: {product.quantity || 1}</p>
                       </div>
                       <p className="font-medium">
-                        ${product.totalPrice.toFixed(2)}
+                        ${(product.totalPrice || product.price || product.unitPrice || 0).toFixed(2)}
                       </p>
                     </div>
                   ))}
                   <div className="pt-4 border-t flex justify-between items-center font-semibold">
                     <span>Total Amount</span>
-                    <span className="text-lg">${order.totalAmount.toFixed(2)}</span>
+                    <span className="text-lg">${(order.totalAmount || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>

@@ -5,8 +5,9 @@ import { OrdersTable } from "@/components/orders/OrdersTable";
 import { OrdersFilters } from "@/components/orders/OrdersFilters";
 import { OrdersPagination } from "@/components/orders/OrdersPagination";
 import { OrderDetailsDrawer } from "@/components/orders/OrderDetailsDrawer";
-import { mockOrders } from "@/data/mock-orders";
 import { OrderDetails } from "@/types/order";
+import { onSnapshot, query, orderBy } from "firebase/firestore";
+import { appOrdersCollection } from "@/lib/firebase-app";
 
 export default function OrdersPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -16,30 +17,87 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
+  const [orders, setOrders] = useState<OrderDetails[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Simulate network loading
+  // Fetch orders from Firestore
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Removed orderBy to prevent Firebase missing index errors
+    const q = query(appOrdersCollection);
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedOrders: OrderDetails[] = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        
+        return {
+          id: doc.id,
+          customerName: data.customerName || data.userId || 'Guest User',
+          mobileNumber: data.mobileNumber || 'N/A',
+          productName: data.items && data.items.length > 0 ? data.items[0].name || data.items[0].title : 'Products',
+          quantity: data.items ? data.items.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) : 1,
+          totalAmount: data.total || 0,
+          orderDate: data.createdAt || new Date().toISOString(),
+          paymentStatus: data.paymentMethod && data.paymentMethod.toUpperCase().includes('COD') ? 'Unpaid' : 'Paid',
+          paymentMethod: data.paymentMethod || 'Unknown',
+          orderStatus: data.status || 'Placed',
+          deliveryAddress: data.shippingAddress || '',
+          trackingId: data.trackingId || '',
+          courierName: data.courierName || '',
+          customerInfo: {
+            name: data.customerName || 'Guest User',
+            email: data.email || '',
+            mobileNumber: data.mobileNumber || ''
+          },
+          shippingInfo: {
+            address: data.shippingAddress || '',
+            city: '', state: '', zipCode: '', country: ''
+          },
+          products: data.items || [],
+          timeline: [
+            {
+              status: 'Placed',
+              date: data.createdAt || new Date().toISOString(),
+              description: 'Order placed by customer'
+            }
+          ]
+        };
+      });
+
+      // Sort locally by createdAt descending
+      fetchedOrders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+
+      console.log("Firebase Orders fetched:", fetchedOrders.length);
+      console.log("Orders Data:", fetchedOrders);
+
+      setOrders(fetchedOrders);
       setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    }, (error) => {
+      console.error("Error fetching orders: ", error);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const filteredOrders = useMemo(() => {
-    return mockOrders.filter((order) => {
+    return orders.filter((order) => {
+      const safeId = order.id || "";
+      const safeName = order.customerName || "";
+      const safePhone = order.mobileNumber || "";
+      const search = searchTerm.toLowerCase();
+
       const matchesSearch = 
-        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.mobileNumber.includes(searchTerm);
+        safeId.toLowerCase().includes(search) ||
+        safeName.toLowerCase().includes(search) ||
+        safePhone.includes(search);
         
       const matchesStatus = statusFilter === "all" || order.orderStatus === statusFilter;
       const matchesPayment = paymentFilter === "all" || order.paymentStatus === paymentFilter;
 
       return matchesSearch && matchesStatus && matchesPayment;
     });
-  }, [searchTerm, statusFilter, paymentFilter]);
+  }, [orders, searchTerm, statusFilter, paymentFilter]);
 
   const totalRecords = filteredOrders.length;
   const totalPages = Math.ceil(totalRecords / pageSize);

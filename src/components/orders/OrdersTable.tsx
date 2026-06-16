@@ -111,10 +111,15 @@ export function OrdersTable({ data, onRowClick, isLoading = false }: OrdersTable
       accessorKey: "paymentStatus",
       header: "Payment",
       cell: ({ row }) => {
-        const status = row.getValue("paymentStatus") as string;
+        const order = row.original;
+        const isCOD = order.paymentMethod?.toUpperCase().includes('COD');
+        
         return (
-          <Badge variant={status === "Paid" ? "default" : status === "Refunded" ? "outline" : "secondary"}>
-            {status}
+          <Badge 
+            variant={isCOD ? "secondary" : "default"} 
+            className={isCOD ? "bg-slate-200 text-slate-700 hover:bg-slate-300" : "bg-emerald-500 hover:bg-emerald-600 text-white"}
+          >
+            {isCOD ? "COD" : "PAID"}
           </Badge>
         );
       },
