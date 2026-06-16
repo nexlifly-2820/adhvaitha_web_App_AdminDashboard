@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import AppSidebar from '@/components/layout/AppSidebar'
-import WebSidebar from '@/components/layout/WebSidebar'
+import AppSidebar from '@/app/dashboard/app/components/AppSidebar'
+import WebSidebar from '@/app/dashboard/website/components/WebSidebar'
 import { Bell, Search, User, Globe, Smartphone } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
