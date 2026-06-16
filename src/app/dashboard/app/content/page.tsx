@@ -19,6 +19,8 @@ interface BentoSelection { section_title: string; best_seller_product: string; c
 interface Category { label: string; img: string }
 interface Coupon { code: string; title: string; sub: string; min: string; color: string }
 interface Packaging { title: string; desc: string; img: string }
+interface OnboardingStep { title: string; subtitle: string; desc: string; img: string }
+interface TasteOption { title: string; sub: string; icon: string; color: string }
 
 export default function ContentManager() {
   const [isLoading, setIsLoading] = useState(true)
@@ -39,6 +41,8 @@ export default function ContentManager() {
   const [deals, setDeals] = useState<string[]>([])
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [packaging, setPackaging] = useState<Packaging[]>([])
+  const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
+  const [tasteOptions, setTasteOptions] = useState<TasteOption[]>([])
 
   useEffect(() => {
     fetchAllContent()
@@ -52,9 +56,9 @@ export default function ContentManager() {
         return snap.exists() ? snap.data() : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
-        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging')
+        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding')
       ])
 
       if (bannersDoc) {
@@ -67,6 +71,10 @@ export default function ContentManager() {
       if (dealsDoc) setDeals(dealsDoc.product_names || [])
       if (couponsDoc) setCoupons(couponsDoc.active_list || [])
       if (pkgDoc) setPackaging(pkgDoc.list || [])
+      if (onboardDoc) {
+        setOnboardingSteps(onboardDoc.steps || [])
+        setTasteOptions(onboardDoc.taste_options || [])
+      }
 
     } catch (error) {
       console.error('Error fetching content:', error)
@@ -112,6 +120,9 @@ export default function ContentManager() {
       case 'packaging':
         handleSaveTab('packaging', { list: packaging })
         break
+      case 'onboarding':
+        handleSaveTab('onboarding', { steps: onboardingSteps, taste_options: tasteOptions })
+        break
     }
   }
 
@@ -153,6 +164,7 @@ export default function ContentManager() {
           <TabsTrigger value="deals" className="justify-start data-[state=active]:bg-white">Deals of the Day</TabsTrigger>
           <TabsTrigger value="coupons" className="justify-start data-[state=active]:bg-white">Active Coupons</TabsTrigger>
           <TabsTrigger value="packaging" className="justify-start data-[state=active]:bg-white">Packaging</TabsTrigger>
+          <TabsTrigger value="onboarding" className="justify-start data-[state=active]:bg-white">Onboarding</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0">
@@ -360,6 +372,61 @@ export default function ContentManager() {
             </Card>
           </TabsContent>
 
+          {/* ONBOARDING */}
+          <TabsContent value="onboarding" className="mt-0 space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div><CardTitle>Onboarding Steps</CardTitle><CardDescription>App introduction screens</CardDescription></div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setOnboardingSteps, { title: '', subtitle: '', desc: '', img: '' })}>+ Add Step</Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {onboardingSteps.map((step, idx) => (
+                  <div key={idx} className="flex gap-4 items-center p-3 border rounded">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2">
+                        <Input placeholder="Title" value={step.title} onChange={e => updateArray(setOnboardingSteps, idx, 'title', e.target.value)} className="w-1/2" />
+                        <Input placeholder="Subtitle" value={step.subtitle} onChange={e => updateArray(setOnboardingSteps, idx, 'subtitle', e.target.value)} className="w-1/2" />
+                      </div>
+                      <Input placeholder="Description" value={step.desc} onChange={e => updateArray(setOnboardingSteps, idx, 'desc', e.target.value)} />
+                      <ImageUpload value={step.img} onChange={url => updateArray(setOnboardingSteps, idx, 'img', url)} folder="app_content" />
+                    </div>
+                    <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setOnboardingSteps, idx)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div><CardTitle>Taste Options</CardTitle><CardDescription>Flavor profiles (e.g. eco, balance, whatshot)</CardDescription></div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setTasteOptions, { title: '', sub: '', icon: '', color: '' })}>+ Add Taste</Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {tasteOptions.map((taste, idx) => (
+                  <div key={idx} className="flex gap-4 items-center p-3 border rounded">
+                    <div className="flex-1 grid grid-cols-2 gap-2">
+                      <Input placeholder="Title" value={taste.title} onChange={e => updateArray(setTasteOptions, idx, 'title', e.target.value)} />
+                      <Input placeholder="Subtitle" value={taste.sub} onChange={e => updateArray(setTasteOptions, idx, 'sub', e.target.value)} />
+                      <Input placeholder="Icon Name (e.g. eco)" value={taste.icon} onChange={e => updateArray(setTasteOptions, idx, 'icon', e.target.value)} />
+                      <div className="flex gap-2">
+                        <div className="relative w-10 h-10 overflow-hidden rounded border shrink-0">
+                          <input 
+                            type="color" 
+                            title="Pick a color"
+                            value={taste.color?.startsWith('0xFF') ? '#' + taste.color.slice(4) : (taste.color?.startsWith('#') ? taste.color : '#000000')} 
+                            onChange={e => updateArray(setTasteOptions, idx, 'color', '0xFF' + e.target.value.slice(1).toUpperCase())} 
+                            className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer"
+                          />
+                        </div>
+                        <Input placeholder="Color Hex (e.g. 0xFF18453B)" value={taste.color} onChange={e => updateArray(setTasteOptions, idx, 'color', e.target.value)} />
+                      </div>
+                    </div>
+                    <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setTasteOptions, idx)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </div>
       </Tabs>
     </div>
