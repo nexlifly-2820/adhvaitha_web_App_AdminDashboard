@@ -9,6 +9,7 @@ import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/lib/firebase-app'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ImageUpload } from '@/components/ImageUpload'
 
 export default function NotificationsPage() {
   const [isSending, setIsSending] = useState(false)
@@ -128,11 +129,11 @@ export default function NotificationsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold">Image URL (Optional)</label>
-                    <Input 
-                      placeholder="https://..." 
+                    <label className="text-sm font-semibold">Image Upload (Optional)</label>
+                    <ImageUpload 
                       value={mktImage}
-                      onChange={(e) => setMktImage(e.target.value)}
+                      onChange={(url) => setMktImage(url)}
+                      folder="notifications"
                     />
                     <p className="text-xs text-slate-500">Rich notifications with images get 40% higher click rates.</p>
                   </div>
@@ -234,11 +235,11 @@ export default function NotificationsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold">Image URL (Optional)</label>
-                  <Input 
-                    placeholder="https://..." 
+                  <label className="text-sm font-semibold">Image Upload (Optional)</label>
+                  <ImageUpload 
                     value={custImage}
-                    onChange={(e) => setCustImage(e.target.value)}
+                    onChange={(url) => setCustImage(url)}
+                    folder="notifications"
                   />
                 </div>
                 <Button 

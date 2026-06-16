@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { db } from '@/lib/firebase-app'
+import { ImageUpload } from '@/components/ImageUpload'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, MoreHorizontal, Image as ImageIcon, X, Upload, Trash2 } from 'lucide-react'
 import {
@@ -410,17 +412,12 @@ export default function ProductsPage() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Upload Main Image</label>
-                    <div onClick={() => { if (images.length === 0) { setImages(['dummy-image-url']); setErrors({...errors, images: ''}) } }} className={`border-2 border-dashed ${errors.images ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg p-6 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer`}>
-                      <Upload className="h-8 w-8 mb-2" />
-                      <p className="text-sm font-medium">Click to upload image</p>
-                    </div>
-                    {images.length > 0 && (
-                      <div className="flex gap-2 mt-2">
-                        <div className="h-16 w-16 rounded-md border border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-900 relative">
-                          <ImageIcon className="h-5 w-5 text-slate-300" />
-                        </div>
-                      </div>
-                    )}
+                    <ImageUpload 
+                      value={images[0] || ''} 
+                      onChange={(url) => { setImages([url]); setErrors({...errors, images: ''}); }} 
+                      folder="products" 
+                    />
+                    {errors.images && <p className="text-xs text-red-500">{errors.images}</p>}
                   </div>
                 </TabsContent>
 
