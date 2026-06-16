@@ -5,6 +5,9 @@ import {
   Search, Check, Clock, Package, Truck, Home, 
   X, ChevronRight, Phone, MapPin, CreditCard, User, AlertCircle
 } from 'lucide-react';
+import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { db, appOrdersCollection } from '@/lib/firebase-app';
+import { toast } from 'sonner';
 
 // --- TYPES & DATA ---
 
@@ -28,102 +31,9 @@ type Order = {
   time: string;
   note: string;
   rejectionReason?: string;
+  trackingId?: string;
+  courierName?: string;
 };
-
-const MOCK_ORDERS: Order[] = [
-  { 
-    id: "ORD-2047", customer: "Rahul Sharma", 
-    phone: "+91 98765 43210",
-    address: "12, MG Road, Near SBI Bank, Hyderabad 500001",
-    items: [
-      { name: "Mango Pickle 500g", qty: 2, price: 180 },
-      { name: "Gongura Chutney 250g", qty: 1, price: 120 }
-    ],
-    delivery: 40, payment: "UPI Paid",
-    status: "packing", time: "10 mins ago",
-    note: "Please pack carefully" 
-  },
-  { 
-    id: "ORD-2046", customer: "Priya Nair",
-    phone: "+91 91234 56789",
-    address: "Flat 4B, Green Valley Apts, Banjara Hills, Hyderabad",
-    items: [
-      { name: "Mixed Pickle 1kg", qty: 1, price: 320 },
-      { name: "Tomato Pickle 250g", qty: 2, price: 100 }
-    ],
-    delivery: 40, payment: "Cash on Delivery",
-    status: "delivered", time: "2 hrs ago",
-    note: "" 
-  },
-  { 
-    id: "ORD-2045", customer: "Ankit Verma",
-    phone: "+91 87654 32109",
-    address: "Plot 7, KPHB Colony, Kukatpally, Hyderabad 500072",
-    items: [
-      { name: "Avakaya 500g", qty: 3, price: 200 }
-    ],
-    delivery: 40, payment: "UPI Paid",
-    status: "rejected", time: "3 hrs ago",
-    note: "No onion no garlic",
-    rejectionReason: "Item out of stock"
-  },
-  { 
-    id: "ORD-2044", customer: "Sneha Reddy",
-    phone: "+91 99887 76655",
-    address: "8-2-293, Road No.82, Jubilee Hills, Hyderabad",
-    items: [
-      { name: "Gongura Pickle 500g", qty: 1, price: 180 },
-      { name: "Homemade Sambar Powder", qty: 2, price: 150 }
-    ],
-    delivery: 40, payment: "UPI Paid",
-    status: "pending", time: "1 min ago",
-    note: "" 
-  },
-  { 
-    id: "ORD-2043", customer: "Vikram Das",
-    phone: "+91 77665 54433",
-    address: "3-6-201, Himayat Nagar, Hyderabad 500029",
-    items: [
-      { name: "Lemon Pickle 250g", qty: 4, price: 90 }
-    ],
-    delivery: 40, payment: "UPI Paid",
-    status: "out_for_delivery", time: "45 mins ago",
-    note: "Call before delivery" 
-  },
-  { 
-    id: "ORD-2042", customer: "Ramesh Babu",
-    phone: "+91 88877 66655",
-    address: "Kondapur Main Road, Near RTO Office, Hyderabad",
-    items: [
-      { name: "Pulihora Paste 250g", qty: 2, price: 110 }
-    ],
-    delivery: 40, payment: "UPI Paid",
-    status: "shipped", time: "1 hr ago",
-    note: "" 
-  },
-  { 
-    id: "ORD-2041", customer: "Aditi Rao",
-    phone: "+91 77766 55544",
-    address: "Hitech City, Cyber Towers back side, Hyderabad",
-    items: [
-      { name: "Garlic Pickle 500g", qty: 1, price: 250 }
-    ],
-    delivery: 40, payment: "Cash on Delivery",
-    status: "accepted", time: "2 hrs ago",
-    note: "Knock door loudly" 
-  },
-  { 
-    id: "ORD-2040", customer: "Sanjay Gupta",
-    phone: "+91 66655 44433",
-    address: "Gachibowli, Telecom Nagar, Phase 2, Hyderabad",
-    items: [
-      { name: "Red Chilli Pickle 250g", qty: 3, price: 120 }
-    ],
-    delivery: 40, payment: "UPI Paid",
-    status: "delivered", time: "5 hrs ago",
-    note: "" 
-  }
-];
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -156,12 +66,24 @@ const STAGES: { id: OrderStatus; label: string; icon: React.FC<any> }[] = [
 // --- MAIN PAGE ---
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('All');
   const [search, setSearch] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastOrder, setToastOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(appOrdersCollection, (snapshot) => {
+      const fetchedOrders: Order[] = [];
+      snapshot.forEach((doc) => {
+        fetchedOrders.push({ id: doc.id, ...doc.data() } as Order);
+      });
+      // Sort by some criteria if available, e.g., timestamp
+      setOrders(fetchedOrders);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Simulate real-time new order toast
@@ -182,13 +104,16 @@ export default function OrdersPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleUpdateStatus = (orderId: string, newStatus: OrderStatus, reason?: string) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id === orderId) {
-        return { ...o, status: newStatus, rejectionReason: reason };
-      }
-      return o;
-    }));
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus, reason?: string) => {
+    try {
+      const orderRef = doc(db, "orders_app", orderId);
+      const updateData: any = { status: newStatus };
+      if (reason) updateData.rejectionReason = reason;
+      await updateDoc(orderRef, updateData);
+      toast.success(`Order status updated to ${STATUS_LABELS[newStatus]}`);
+    } catch (e: any) {
+      toast.error(`Failed to update order: ${e.message}`);
+    }
   };
 
   const handleAcceptToast = () => {

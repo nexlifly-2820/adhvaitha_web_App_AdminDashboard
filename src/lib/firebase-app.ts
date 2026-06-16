@@ -16,8 +16,11 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Firestore & Storage
+import { getFunctions } from "firebase/functions";
+
 const db = getFirestore(app);
 const storage = getStorage(app);
+const functions = getFunctions(app);
 
 // Helper references exclusively for the Flutter App
 const appCollection = collection(db, "app_data");
@@ -30,6 +33,7 @@ export {
   app, 
   db, 
   storage,
+  functions,
   appCollection,
   appProductsCollection,
   appOrdersCollection,

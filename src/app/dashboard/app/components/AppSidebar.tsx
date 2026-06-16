@@ -4,17 +4,20 @@ import {
   Package, 
   ShoppingCart, 
   Users, 
-  BarChart3, 
-  Tag, 
+  Image as ImageIcon, 
   Bell, 
-  Settings 
+  Settings,
+  MessageSquare
 } from 'lucide-react'
 
 const navItems = [
   { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/app' },
-  { title: 'Products', icon: Package, href: '/dashboard/app/products' },
   { title: 'Orders', icon: ShoppingCart, href: '/dashboard/app/orders' },
-  { title: 'Settings', icon: Settings, href: '/dashboard/app/settings' },
+  { title: 'Products', icon: Package, href: '/dashboard/app/products' },
+  { title: 'Content Manager', icon: ImageIcon, href: '/dashboard/app/content' },
+  { title: 'Notifications', icon: Bell, href: '/dashboard/app/notifications' },
+  { title: 'Customer CRM', icon: MessageSquare, href: '/dashboard/app/crm' },
+  { title: 'System Settings', icon: Settings, href: '/dashboard/app/settings' },
 ]
 
 export default function AppSidebar() {
