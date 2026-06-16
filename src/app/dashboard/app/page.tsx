@@ -7,6 +7,7 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Line, LineCh
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/lib/firebase-app'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 // Keeping dummy chart data for visual aesthetics as per instructions
 const salesData = [
@@ -86,18 +87,20 @@ export default function AppManagement() {
             <p className="text-xs opacity-75">+20.1% from last month</p>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-slate-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {loading ? "..." : stats?.totalOrderCount.toLocaleString()}
-            </div>
-            <p className="text-xs text-slate-500">All-time processed</p>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/orders-management" className="block cursor-pointer">
+          <Card className="hover:shadow-lg transition-shadow duration-300 h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+              <ShoppingBag className="h-4 w-4 text-slate-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {loading ? "..." : stats?.totalOrderCount.toLocaleString()}
+              </div>
+              <p className="text-xs text-slate-500">All-time processed</p>
+            </CardContent>
+          </Card>
+        </Link>
         <Card className="hover:shadow-lg transition-shadow duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>

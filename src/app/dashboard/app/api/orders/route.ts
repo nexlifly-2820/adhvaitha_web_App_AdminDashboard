@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         updatedAt: new Date().toISOString()
       };
 
-      await setDoc(docRef, newData);
+      await setDoc(orderRef, newData);
       return NextResponse.json({ success: true, id: orderId, message: 'Order created successfully' }, { status: 201 });
     }
   } catch (error: any) {
