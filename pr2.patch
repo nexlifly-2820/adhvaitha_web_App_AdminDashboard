@@ -1,0 +1,2536 @@
+From 0f585d486acddbe3eefb5c0ad9a593cd364dbf52 Mon Sep 17 00:00:00 2001
+From: Revanth Reddy <revanth.podduturi@kalgudi.com>
+Date: Tue, 16 Jun 2026 12:51:11 +0530
+Subject: [PATCH] Changes related to order management page
+
+---
+ package-lock.json                             | 532 ++++++++++++++++++
+ package.json                                  |   3 +
+ src/app/api/dummy/[id]/route.ts               |   1 +
+ src/app/dashboard/app/api/orders/route.ts     |   2 +-
+ src/app/dashboard/app/page.tsx                |  27 +-
+ src/app/dashboard/orders-management/page.tsx  | 118 ++++
+ src/app/orders/page.tsx                       | 161 ++++++
+ .../dashboard/DashboardStatsCard.tsx          |  43 ++
+ src/components/orders/DashboardStatsCard.tsx  |  59 ++
+ src/components/orders/OrderDetailsDrawer.tsx  | 167 ++++++
+ src/components/orders/OrdersFilters.tsx       |  89 +++
+ src/components/orders/OrdersPagination.tsx    |  77 +++
+ src/components/orders/OrdersTable.tsx         | 217 +++++++
+ src/components/orders/SearchInput.tsx         |  25 +
+ src/components/shared/SearchInput.tsx         |  25 +
+ src/components/ui/pagination.tsx              | 117 ++++
+ src/components/ui/select.tsx                  | 160 ++++++
+ src/components/ui/separator.tsx               |  31 +
+ src/components/ui/sheet.tsx                   | 140 +++++
+ src/components/ui/skeleton.tsx                |  15 +
+ src/data/mock-orders.ts                       | 237 ++++++++
+ src/types/order.ts                            |  51 ++
+ 22 files changed, 2284 insertions(+), 13 deletions(-)
+ create mode 100644 src/app/api/dummy/[id]/route.ts
+ create mode 100644 src/app/dashboard/orders-management/page.tsx
+ create mode 100644 src/app/orders/page.tsx
+ create mode 100644 src/components/dashboard/DashboardStatsCard.tsx
+ create mode 100644 src/components/orders/DashboardStatsCard.tsx
+ create mode 100644 src/components/orders/OrderDetailsDrawer.tsx
+ create mode 100644 src/components/orders/OrdersFilters.tsx
+ create mode 100644 src/components/orders/OrdersPagination.tsx
+ create mode 100644 src/components/orders/OrdersTable.tsx
+ create mode 100644 src/components/orders/SearchInput.tsx
+ create mode 100644 src/components/shared/SearchInput.tsx
+ create mode 100644 src/components/ui/pagination.tsx
+ create mode 100644 src/components/ui/select.tsx
+ create mode 100644 src/components/ui/separator.tsx
+ create mode 100644 src/components/ui/sheet.tsx
+ create mode 100644 src/components/ui/skeleton.tsx
+ create mode 100644 src/data/mock-orders.ts
+ create mode 100644 src/types/order.ts
+
+diff --git a/package-lock.json b/package-lock.json
+index dfb652f..c4f964f 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -9,8 +9,11 @@
+       "version": "0.1.0",
+       "dependencies": {
+         "@hookform/resolvers": "^5.4.0",
++        "@radix-ui/react-dialog": "^1.1.17",
+         "@radix-ui/react-dropdown-menu": "^2.1.17",
+         "@radix-ui/react-label": "^2.1.9",
++        "@radix-ui/react-select": "^2.3.1",
++        "@radix-ui/react-separator": "^1.1.10",
+         "@radix-ui/react-slot": "^1.2.5",
+         "@radix-ui/react-switch": "^1.3.1",
+         "@radix-ui/react-tabs": "^1.1.14",
+@@ -2029,6 +2032,12 @@
+       "integrity": "sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg==",
+       "license": "BSD-3-Clause"
+     },
++    "node_modules/@radix-ui/number": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/@radix-ui/number/-/number-1.1.2.tgz",
++      "integrity": "sha512-ceTwaxc4I5IOi97DgCotl3pqiyRGvffcc0oOsE2dQYaJOFIDsDt4VWG6xEbg1QePv9QWausCEIppud/tJ1wNig==",
++      "license": "MIT"
++    },
+     "node_modules/@radix-ui/primitive": {
+       "version": "1.1.4",
+       "resolved": "https://registry.npmjs.org/@radix-ui/primitive/-/primitive-1.1.4.tgz",
+@@ -2114,6 +2123,159 @@
+         }
+       }
+     },
++    "node_modules/@radix-ui/react-dialog": {
++      "version": "1.1.17",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-dialog/-/react-dialog-1.1.17.tgz",
++      "integrity": "sha512-TDTYmpdq8dI2+Xgvgj9AJ8Ghqq+Eph/TRVEdaFQPDItIY+6QSkU7MJMeevw1568Yw/2Ijz8BTphPSP2XejKphw==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/primitive": "1.1.4",
++        "@radix-ui/react-compose-refs": "1.1.3",
++        "@radix-ui/react-context": "1.1.4",
++        "@radix-ui/react-dismissable-layer": "1.1.13",
++        "@radix-ui/react-focus-guards": "1.1.4",
++        "@radix-ui/react-focus-scope": "1.1.10",
++        "@radix-ui/react-id": "1.1.2",
++        "@radix-ui/react-portal": "1.1.12",
++        "@radix-ui/react-presence": "1.1.6",
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-slot": "1.3.0",
++        "@radix-ui/react-use-controllable-state": "1.2.3",
++        "aria-hidden": "^1.2.4",
++        "react-remove-scroll": "^2.7.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-dialog/node_modules/@radix-ui/react-dismissable-layer": {
++      "version": "1.1.13",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-dismissable-layer/-/react-dismissable-layer-1.1.13.tgz",
++      "integrity": "sha512-2v+zNAWWe0ySxgC0D0yeXMPQ23xZVgXZTerTz+JKlmdRj6gfTqmCcR29jb6d290DezXPGgruHWDX/vYUebtErg==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/primitive": "1.1.4",
++        "@radix-ui/react-compose-refs": "1.1.3",
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-use-callback-ref": "1.1.2",
++        "@radix-ui/react-use-escape-keydown": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-dialog/node_modules/@radix-ui/react-focus-scope": {
++      "version": "1.1.10",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-focus-scope/-/react-focus-scope-1.1.10.tgz",
++      "integrity": "sha512-Fas/lXQqhVvqwAb64s5RFeHiHYElZ6SUQbZaNd6EkfhP/Al7wTIQ9WIR4QVX475tlu5yFCEdDcJH6/UwsZjMWw==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.3",
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-use-callback-ref": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-dialog/node_modules/@radix-ui/react-portal": {
++      "version": "1.1.12",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-portal/-/react-portal-1.1.12.tgz",
++      "integrity": "sha512-m309havGzsjLHHaIX50G5PlvRs3xkgPCsGk/5PTvYm8D5q33yG0J7w/712PTOhid7NTaFETtnSXjngHQavvhVw==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-use-layout-effect": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-dialog/node_modules/@radix-ui/react-primitive": {
++      "version": "2.1.6",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-primitive/-/react-primitive-2.1.6.tgz",
++      "integrity": "sha512-wetd0QI77DbvrPpTAvH1SqOxsYF2wZe5TNxqwOd5Ty4XDpV3dpV0s8K/1MGMJBeY5o7lg8ub5VIt1Ub+yVen6g==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-slot": "1.3.0"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-dialog/node_modules/@radix-ui/react-slot": {
++      "version": "1.3.0",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.3.0.tgz",
++      "integrity": "sha512-MojKku4U/miO8Av4Dkb+ctMAQx7JmY96LmtDQlAarCRtd7rN52QCSzBF+XAvr5S6coSVj9HEPBgHAHKEJVk/WA==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/@radix-ui/react-direction": {
+       "version": "1.1.2",
+       "resolved": "https://registry.npmjs.org/@radix-ui/react-direction/-/react-direction-1.1.2.tgz",
+@@ -2439,6 +2601,312 @@
+         }
+       }
+     },
++    "node_modules/@radix-ui/react-select": {
++      "version": "2.3.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-select/-/react-select-2.3.1.tgz",
++      "integrity": "sha512-w6eDvY78LE9ZUiNnXCA1QVK8RYN7k9galFv09kjVydJqBAgHd7Y9A6h0UJ/6DCZNGZMZrB2ohcSW1Bo9d8+wWA==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/number": "1.1.2",
++        "@radix-ui/primitive": "1.1.4",
++        "@radix-ui/react-collection": "1.1.10",
++        "@radix-ui/react-compose-refs": "1.1.3",
++        "@radix-ui/react-context": "1.1.4",
++        "@radix-ui/react-direction": "1.1.2",
++        "@radix-ui/react-dismissable-layer": "1.1.13",
++        "@radix-ui/react-focus-guards": "1.1.4",
++        "@radix-ui/react-focus-scope": "1.1.10",
++        "@radix-ui/react-id": "1.1.2",
++        "@radix-ui/react-popper": "1.3.1",
++        "@radix-ui/react-portal": "1.1.12",
++        "@radix-ui/react-presence": "1.1.6",
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-slot": "1.3.0",
++        "@radix-ui/react-use-callback-ref": "1.1.2",
++        "@radix-ui/react-use-controllable-state": "1.2.3",
++        "@radix-ui/react-use-layout-effect": "1.1.2",
++        "@radix-ui/react-use-previous": "1.1.2",
++        "@radix-ui/react-visually-hidden": "1.2.6",
++        "aria-hidden": "^1.2.4",
++        "react-remove-scroll": "^2.7.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select/node_modules/@radix-ui/react-arrow": {
++      "version": "1.1.10",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-arrow/-/react-arrow-1.1.10.tgz",
++      "integrity": "sha512-j2VTDz1vgCsmuG0k5lBfOcM8n5JPFqZBcMryasFjHYMhwxYL5SRUV5lMSUpRdNtw3D/Sv8pzJtrlAgkssYSsQQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.6"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select/node_modules/@radix-ui/react-collection": {
++      "version": "1.1.10",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-collection/-/react-collection-1.1.10.tgz",
++      "integrity": "sha512-IVVz4EvBcKjrzKgof714qDnz/SzQAkLA2Emh5edlHbgcE6fNd3Un6CJLlaYcnm8N4JmAtzQgse4dOKxcD2yc9g==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.3",
++        "@radix-ui/react-context": "1.1.4",
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-slot": "1.3.0"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select/node_modules/@radix-ui/react-dismissable-layer": {
++      "version": "1.1.13",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-dismissable-layer/-/react-dismissable-layer-1.1.13.tgz",
++      "integrity": "sha512-2v+zNAWWe0ySxgC0D0yeXMPQ23xZVgXZTerTz+JKlmdRj6gfTqmCcR29jb6d290DezXPGgruHWDX/vYUebtErg==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/primitive": "1.1.4",
++        "@radix-ui/react-compose-refs": "1.1.3",
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-use-callback-ref": "1.1.2",
++        "@radix-ui/react-use-escape-keydown": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select/node_modules/@radix-ui/react-focus-scope": {
++      "version": "1.1.10",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-focus-scope/-/react-focus-scope-1.1.10.tgz",
++      "integrity": "sha512-Fas/lXQqhVvqwAb64s5RFeHiHYElZ6SUQbZaNd6EkfhP/Al7wTIQ9WIR4QVX475tlu5yFCEdDcJH6/UwsZjMWw==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.3",
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-use-callback-ref": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select/node_modules/@radix-ui/react-popper": {
++      "version": "1.3.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-popper/-/react-popper-1.3.1.tgz",
++      "integrity": "sha512-bhnq/0DEPTi2lsOD3J5rTL65qUKHbKbhqHsmN9TMiclSXpipi651ooUKPPp6G5lF/WiHBdn1s0Wuqsn+myVAvw==",
++      "license": "MIT",
++      "dependencies": {
++        "@floating-ui/react-dom": "^2.0.0",
++        "@radix-ui/react-arrow": "1.1.10",
++        "@radix-ui/react-compose-refs": "1.1.3",
++        "@radix-ui/react-context": "1.1.4",
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-use-callback-ref": "1.1.2",
++        "@radix-ui/react-use-layout-effect": "1.1.2",
++        "@radix-ui/react-use-rect": "1.1.2",
++        "@radix-ui/react-use-size": "1.1.2",
++        "@radix-ui/rect": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select/node_modules/@radix-ui/react-portal": {
++      "version": "1.1.12",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-portal/-/react-portal-1.1.12.tgz",
++      "integrity": "sha512-m309havGzsjLHHaIX50G5PlvRs3xkgPCsGk/5PTvYm8D5q33yG0J7w/712PTOhid7NTaFETtnSXjngHQavvhVw==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.6",
++        "@radix-ui/react-use-layout-effect": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select/node_modules/@radix-ui/react-primitive": {
++      "version": "2.1.6",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-primitive/-/react-primitive-2.1.6.tgz",
++      "integrity": "sha512-wetd0QI77DbvrPpTAvH1SqOxsYF2wZe5TNxqwOd5Ty4XDpV3dpV0s8K/1MGMJBeY5o7lg8ub5VIt1Ub+yVen6g==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-slot": "1.3.0"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select/node_modules/@radix-ui/react-slot": {
++      "version": "1.3.0",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.3.0.tgz",
++      "integrity": "sha512-MojKku4U/miO8Av4Dkb+ctMAQx7JmY96LmtDQlAarCRtd7rN52QCSzBF+XAvr5S6coSVj9HEPBgHAHKEJVk/WA==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-separator": {
++      "version": "1.1.10",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-separator/-/react-separator-1.1.10.tgz",
++      "integrity": "sha512-Y6K6jLQCVfCnTL2MEtGxDLffkhNfEfHsEg3Wa8JU+IWdn3EWbLXd3OuOfQRN7p/W/cUce1WyTk3QeuAoDBzN9g==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.6"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-separator/node_modules/@radix-ui/react-primitive": {
++      "version": "2.1.6",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-primitive/-/react-primitive-2.1.6.tgz",
++      "integrity": "sha512-wetd0QI77DbvrPpTAvH1SqOxsYF2wZe5TNxqwOd5Ty4XDpV3dpV0s8K/1MGMJBeY5o7lg8ub5VIt1Ub+yVen6g==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-slot": "1.3.0"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-separator/node_modules/@radix-ui/react-slot": {
++      "version": "1.3.0",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.3.0.tgz",
++      "integrity": "sha512-MojKku4U/miO8Av4Dkb+ctMAQx7JmY96LmtDQlAarCRtd7rN52QCSzBF+XAvr5S6coSVj9HEPBgHAHKEJVk/WA==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/@radix-ui/react-slot": {
+       "version": "1.2.5",
+       "resolved": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.2.5.tgz",
+@@ -2693,6 +3161,70 @@
+         }
+       }
+     },
++    "node_modules/@radix-ui/react-visually-hidden": {
++      "version": "1.2.6",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-visually-hidden/-/react-visually-hidden-1.2.6.tgz",
++      "integrity": "sha512-jCE0WljWifTI4niIMCll06kGpsJTAPiZVU9H4WR1N6qW7At9ystHbN7dDB+we2xH535roFHj7qKS+RGj0FMDWQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.6"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-visually-hidden/node_modules/@radix-ui/react-primitive": {
++      "version": "2.1.6",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-primitive/-/react-primitive-2.1.6.tgz",
++      "integrity": "sha512-wetd0QI77DbvrPpTAvH1SqOxsYF2wZe5TNxqwOd5Ty4XDpV3dpV0s8K/1MGMJBeY5o7lg8ub5VIt1Ub+yVen6g==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-slot": "1.3.0"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-visually-hidden/node_modules/@radix-ui/react-slot": {
++      "version": "1.3.0",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.3.0.tgz",
++      "integrity": "sha512-MojKku4U/miO8Av4Dkb+ctMAQx7JmY96LmtDQlAarCRtd7rN52QCSzBF+XAvr5S6coSVj9HEPBgHAHKEJVk/WA==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/@radix-ui/rect": {
+       "version": "1.1.2",
+       "resolved": "https://registry.npmjs.org/@radix-ui/rect/-/rect-1.1.2.tgz",
+diff --git a/package.json b/package.json
+index d7f86bb..8a1f32b 100644
+--- a/package.json
++++ b/package.json
+@@ -10,8 +10,11 @@
+   },
+   "dependencies": {
+     "@hookform/resolvers": "^5.4.0",
++    "@radix-ui/react-dialog": "^1.1.17",
+     "@radix-ui/react-dropdown-menu": "^2.1.17",
+     "@radix-ui/react-label": "^2.1.9",
++    "@radix-ui/react-select": "^2.3.1",
++    "@radix-ui/react-separator": "^1.1.10",
+     "@radix-ui/react-slot": "^1.2.5",
+     "@radix-ui/react-switch": "^1.3.1",
+     "@radix-ui/react-tabs": "^1.1.14",
+diff --git a/src/app/api/dummy/[id]/route.ts b/src/app/api/dummy/[id]/route.ts
+new file mode 100644
+index 0000000..e5ae6b5
+--- /dev/null
++++ b/src/app/api/dummy/[id]/route.ts
+@@ -0,0 +1 @@
++export async function GET() { return Response.json({}); }
+diff --git a/src/app/dashboard/app/api/orders/route.ts b/src/app/dashboard/app/api/orders/route.ts
+index 5a4ee1f..92d3978 100644
+--- a/src/app/dashboard/app/api/orders/route.ts
++++ b/src/app/dashboard/app/api/orders/route.ts
+@@ -58,7 +58,7 @@ export async function POST(request: Request) {
+         updatedAt: new Date().toISOString()
+       };
+ 
+-      await setDoc(docRef, newData);
++      await setDoc(orderRef, newData);
+       return NextResponse.json({ success: true, id: orderId, message: 'Order created successfully' }, { status: 201 });
+     }
+   } catch (error: any) {
+diff --git a/src/app/dashboard/app/page.tsx b/src/app/dashboard/app/page.tsx
+index cf7ed14..4f9f35a 100644
+--- a/src/app/dashboard/app/page.tsx
++++ b/src/app/dashboard/app/page.tsx
+@@ -7,6 +7,7 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Line, LineCh
+ import { httpsCallable } from 'firebase/functions'
+ import { functions } from '@/lib/firebase-app'
+ import { toast } from 'sonner'
++import Link from 'next/link'
+ 
+ // Keeping dummy chart data for visual aesthetics as per instructions
+ const salesData = [
+@@ -86,18 +87,20 @@ export default function AppManagement() {
+             <p className="text-xs opacity-75">+20.1% from last month</p>
+           </CardContent>
+         </Card>
+-        <Card className="hover:shadow-lg transition-shadow duration-300">
+-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+-            <ShoppingBag className="h-4 w-4 text-slate-500" />
+-          </CardHeader>
+-          <CardContent>
+-            <div className="text-2xl font-bold">
+-              {loading ? "..." : stats?.totalOrderCount.toLocaleString()}
+-            </div>
+-            <p className="text-xs text-slate-500">All-time processed</p>
+-          </CardContent>
+-        </Card>
++        <Link href="/dashboard/orders-management" className="block cursor-pointer">
++          <Card className="hover:shadow-lg transition-shadow duration-300 h-full">
++            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
++              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
++              <ShoppingBag className="h-4 w-4 text-slate-500" />
++            </CardHeader>
++            <CardContent>
++              <div className="text-2xl font-bold">
++                {loading ? "..." : stats?.totalOrderCount.toLocaleString()}
++              </div>
++              <p className="text-xs text-slate-500">All-time processed</p>
++            </CardContent>
++          </Card>
++        </Link>
+         <Card className="hover:shadow-lg transition-shadow duration-300">
+           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+diff --git a/src/app/dashboard/orders-management/page.tsx b/src/app/dashboard/orders-management/page.tsx
+new file mode 100644
+index 0000000..8ab6828
+--- /dev/null
++++ b/src/app/dashboard/orders-management/page.tsx
+@@ -0,0 +1,118 @@
++"use client";
++
++import React, { useState, useMemo, useEffect } from "react";
++import { OrdersTable } from "@/components/orders/OrdersTable";
++import { OrdersFilters } from "@/components/orders/OrdersFilters";
++import { OrdersPagination } from "@/components/orders/OrdersPagination";
++import { OrderDetailsDrawer } from "@/components/orders/OrderDetailsDrawer";
++import { mockOrders } from "@/data/mock-orders";
++import { OrderDetails } from "@/types/order";
++
++export default function OrdersPage() {
++  const [isLoading, setIsLoading] = useState(true);
++  const [searchTerm, setSearchTerm] = useState("");
++  const [statusFilter, setStatusFilter] = useState("all");
++  const [paymentFilter, setPaymentFilter] = useState("all");
++  const [currentPage, setCurrentPage] = useState(1);
++  const [pageSize, setPageSize] = useState(10);
++  
++  const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
++  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
++
++  // Simulate network loading
++  useEffect(() => {
++    const timer = setTimeout(() => {
++      setIsLoading(false);
++    }, 1000);
++    return () => clearTimeout(timer);
++  }, []);
++
++  const filteredOrders = useMemo(() => {
++    return mockOrders.filter((order) => {
++      const matchesSearch = 
++        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
++        order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
++        order.mobileNumber.includes(searchTerm);
++        
++      const matchesStatus = statusFilter === "all" || order.orderStatus === statusFilter;
++      const matchesPayment = paymentFilter === "all" || order.paymentStatus === paymentFilter;
++
++      return matchesSearch && matchesStatus && matchesPayment;
++    });
++  }, [searchTerm, statusFilter, paymentFilter]);
++
++  const totalRecords = filteredOrders.length;
++  const totalPages = Math.ceil(totalRecords / pageSize);
++
++  const paginatedOrders = useMemo(() => {
++    const start = (currentPage - 1) * pageSize;
++    return filteredOrders.slice(start, start + pageSize);
++  }, [filteredOrders, currentPage, pageSize]);
++
++  // Reset to first page when filters change
++  useEffect(() => {
++    setCurrentPage(1);
++  }, [searchTerm, statusFilter, paymentFilter, pageSize]);
++
++  const handleClearFilters = () => {
++    setSearchTerm("");
++    setStatusFilter("all");
++    setPaymentFilter("all");
++  };
++
++  const handleRowClick = (order: OrderDetails) => {
++    setSelectedOrder(order);
++    setIsDrawerOpen(true);
++  };
++
++  return (
++    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-7xl">
++      <div className="mb-8 space-y-4">
++        <button 
++          onClick={() => window.history.back()} 
++          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
++        >
++          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
++            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
++          </svg>
++          Back
++        </button>
++        <div>
++          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Orders Management</h1>
++          <p className="text-muted-foreground mt-2">Manage and view all customer orders</p>
++        </div>
++      </div>
++
++      <OrdersFilters
++        searchTerm={searchTerm}
++        onSearchChange={setSearchTerm}
++        statusFilter={statusFilter}
++        onStatusFilterChange={setStatusFilter}
++        paymentFilter={paymentFilter}
++        onPaymentFilterChange={setPaymentFilter}
++        onClearFilters={handleClearFilters}
++      />
++
++      <OrdersTable
++        data={paginatedOrders}
++        isLoading={isLoading}
++        onRowClick={handleRowClick}
++      />
++
++      <OrdersPagination
++        currentPage={currentPage}
++        totalPages={totalPages}
++        pageSize={pageSize}
++        totalRecords={totalRecords}
++        onPageChange={setCurrentPage}
++        onPageSizeChange={setPageSize}
++      />
++
++      <OrderDetailsDrawer
++        order={selectedOrder}
++        isOpen={isDrawerOpen}
++        onClose={() => setIsDrawerOpen(false)}
++      />
++    </div>
++  );
++}
+diff --git a/src/app/orders/page.tsx b/src/app/orders/page.tsx
+new file mode 100644
+index 0000000..6697ab1
+--- /dev/null
++++ b/src/app/orders/page.tsx
+@@ -0,0 +1,161 @@
++"use client";
++
++import { useState, useMemo } from "react";
++import { OrdersTable } from "@/components/orders/OrdersTable";
++import { OrdersFilters, FiltersState } from "@/components/orders/OrdersFilters";
++import { OrdersPagination } from "@/components/orders/OrdersPagination";
++import { SearchInput } from "@/components/orders/SearchInput";
++import { OrderDetailsDrawer } from "@/components/orders/OrderDetailsDrawer";
++import { mockOrders } from "@/data/mock-orders";
++import { OrderDetails } from "@/types/order";
++import { isWithinInterval, subDays, startOfMonth } from "date-fns";
++
++export default function OrdersPage() {
++  const [searchQuery, setSearchQuery] = useState("");
++  const [filters, setFilters] = useState<FiltersState>({
++    orderStatus: "All",
++    paymentStatus: "All",
++    dateRange: "All",
++  });
++  
++  const [currentPage, setCurrentPage] = useState(1);
++  const [pageSize, setPageSize] = useState(10);
++  
++  const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
++  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
++
++  // Memoized filtered data
++  const filteredData = useMemo(() => {
++    let data = mockOrders;
++
++    // Search filter
++    if (searchQuery.trim() !== "") {
++      const query = searchQuery.toLowerCase();
++      data = data.filter(
++        (order) =>
++          order.id.toLowerCase().includes(query) ||
++          order.customerName.toLowerCase().includes(query) ||
++          order.mobileNumber.toLowerCase().includes(query)
++      );
++    }
++
++    // Status filters
++    if (filters.orderStatus !== "All") {
++      data = data.filter((order) => order.orderStatus === filters.orderStatus);
++    }
++    
++    if (filters.paymentStatus !== "All") {
++      data = data.filter((order) => order.paymentStatus === filters.paymentStatus);
++    }
++
++    // Date range filter
++    if (filters.dateRange !== "All") {
++      const now = new Date();
++      data = data.filter((order) => {
++        const orderDate = new Date(order.orderDate);
++        if (filters.dateRange === "Last 7 Days") {
++          return isWithinInterval(orderDate, { start: subDays(now, 7), end: now });
++        }
++        if (filters.dateRange === "Last 30 Days") {
++          return isWithinInterval(orderDate, { start: subDays(now, 30), end: now });
++        }
++        if (filters.dateRange === "This Month") {
++          return isWithinInterval(orderDate, { start: startOfMonth(now), end: now });
++        }
++        return true;
++      });
++    }
++
++    return data;
++  }, [searchQuery, filters]);
++
++  // Pagination calculations
++  const totalRecords = filteredData.length;
++  const totalPages = Math.ceil(totalRecords / pageSize);
++  
++  const paginatedData = useMemo(() => {
++    const startIndex = (currentPage - 1) * pageSize;
++    return filteredData.slice(startIndex, startIndex + pageSize);
++  }, [filteredData, currentPage, pageSize]);
++
++  // Handlers
++  const handleFilterChange = (key: keyof FiltersState, value: any) => {
++    setFilters((prev) => ({ ...prev, [key]: value }));
++    setCurrentPage(1); // Reset to first page on filter change
++  };
++
++  const handleClearFilters = () => {
++    setFilters({ orderStatus: "All", paymentStatus: "All", dateRange: "All" });
++    setSearchQuery("");
++    setCurrentPage(1);
++  };
++
++  const handleRowClick = (order: OrderDetails) => {
++    setSelectedOrder(order);
++    setIsDrawerOpen(true);
++  };
++
++  return (
++    <div className="flex-1 space-y-6 p-8 pt-6">
++      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
++        <div>
++          <h2 className="text-3xl font-bold tracking-tight">Orders</h2>
++          <p className="text-muted-foreground mt-1">
++            Manage your store orders and track their status.
++          </p>
++        </div>
++      </div>
++
++      <div className="space-y-4">
++        {/* Toolbar: Search & Filters */}
++        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card p-4 rounded-lg border shadow-sm">
++          <div className="w-full sm:w-auto flex-1 max-w-sm">
++            <SearchInput
++              value={searchQuery}
++              onChange={(v) => {
++                setSearchQuery(v);
++                setCurrentPage(1);
++              }}
++              placeholder="Search ID, Customer, Phone..."
++            />
++          </div>
++          <OrdersFilters
++            filters={filters}
++            onFilterChange={handleFilterChange}
++            onClearFilters={handleClearFilters}
++          />
++        </div>
++
++        {/* Data Table */}
++        <OrdersTable
++          data={paginatedData}
++          onRowClick={handleRowClick}
++        />
++
++        {/* Pagination */}
++        {totalRecords > 0 && (
++          <div className="bg-card px-4 py-1 rounded-lg border shadow-sm">
++            <OrdersPagination
++              currentPage={currentPage}
++              totalPages={totalPages}
++              pageSize={pageSize}
++              totalRecords={totalRecords}
++              onPageChange={setCurrentPage}
++              onPageSizeChange={(size) => {
++                setPageSize(size);
++                setCurrentPage(1);
++              }}
++            />
++          </div>
++        )}
++      </div>
++
++      {/* View Order Drawer */}
++      <OrderDetailsDrawer
++        order={selectedOrder}
++        isOpen={isDrawerOpen}
++        onClose={() => setIsDrawerOpen(false)}
++      />
++    </div>
++  );
++}
+diff --git a/src/components/dashboard/DashboardStatsCard.tsx b/src/components/dashboard/DashboardStatsCard.tsx
+new file mode 100644
+index 0000000..bd58a31
+--- /dev/null
++++ b/src/components/dashboard/DashboardStatsCard.tsx
+@@ -0,0 +1,43 @@
++"use client";
++
++import React, { useState, useEffect } from "react";
++import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
++import { Skeleton } from "@/components/ui/skeleton";
++import { ShoppingCart } from "lucide-react";
++import { useRouter } from "next/navigation";
++
++interface DashboardStatsCardProps {
++  totalOrders?: number;
++  isLoading?: boolean;
++}
++
++export function DashboardStatsCard({ totalOrders, isLoading = false }: DashboardStatsCardProps) {
++  const router = useRouter();
++  const [mounted, setMounted] = useState(false);
++
++  useEffect(() => {
++    setMounted(true);
++  }, []);
++
++  return (
++    <Card 
++      className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
++      onClick={() => mounted && router.push("/dashboard/orders")}
++    >
++      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
++        <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
++        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
++      </CardHeader>
++      <CardContent>
++        {isLoading ? (
++          <Skeleton className="h-8 w-[100px]" />
++        ) : (
++          <div className="text-2xl font-bold">{totalOrders || 0}</div>
++        )}
++        <p className="text-xs text-muted-foreground mt-1">
++          Click to view all orders
++        </p>
++      </CardContent>
++    </Card>
++  );
++}
+diff --git a/src/components/orders/DashboardStatsCard.tsx b/src/components/orders/DashboardStatsCard.tsx
+new file mode 100644
+index 0000000..f4d984d
+--- /dev/null
++++ b/src/components/orders/DashboardStatsCard.tsx
+@@ -0,0 +1,59 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import Link from "next/link";
++import { Package } from "lucide-react";
++import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
++import { Skeleton } from "@/components/ui/skeleton";
++
++interface DashboardStatsCardProps {
++  totalOrders: number;
++}
++
++export function DashboardStatsCard({ totalOrders }: DashboardStatsCardProps) {
++  const [loading, setLoading] = useState(true);
++
++  // Simulate a network loading state for the skeleton
++  useEffect(() => {
++    const timer = setTimeout(() => {
++      setLoading(false);
++    }, 1000);
++    return () => clearTimeout(timer);
++  }, []);
++
++  if (loading) {
++    return (
++      <Card className="w-full rounded-xl">
++        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
++          <CardTitle className="text-sm font-medium">
++            <Skeleton className="h-4 w-24" />
++          </CardTitle>
++          <Skeleton className="h-4 w-4 rounded-full" />
++        </CardHeader>
++        <CardContent>
++          <Skeleton className="h-8 w-16 mb-1" />
++          <Skeleton className="h-3 w-32" />
++        </CardContent>
++      </Card>
++    );
++  }
++
++  return (
++    <Link href="/dashboard/orders-management" className="block w-full">
++      <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer border-l-4 border-l-primary group">
++        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
++          <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">
++            Total Orders
++          </CardTitle>
++          <Package className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
++        </CardHeader>
++        <CardContent>
++          <div className="text-2xl font-bold">{totalOrders.toLocaleString()}</div>
++          <p className="text-xs text-muted-foreground mt-1">
++            Across all time
++          </p>
++        </CardContent>
++      </Card>
++    </Link>
++  );
++}
+diff --git a/src/components/orders/OrderDetailsDrawer.tsx b/src/components/orders/OrderDetailsDrawer.tsx
+new file mode 100644
+index 0000000..197f847
+--- /dev/null
++++ b/src/components/orders/OrderDetailsDrawer.tsx
+@@ -0,0 +1,167 @@
++import {
++  Sheet,
++  SheetContent,
++  SheetDescription,
++  SheetHeader,
++  SheetTitle,
++} from "@/components/ui/sheet";
++import { OrderDetails } from "@/types/order";
++import { Separator } from "@/components/ui/separator";
++import { Badge } from "@/components/ui/badge";
++
++import { format } from "date-fns";
++import { CircleCheck, CircleDashed, CheckCircle2, Clock, Truck, XCircle } from "lucide-react";
++
++interface OrderDetailsDrawerProps {
++  order: OrderDetails | null;
++  isOpen: boolean;
++  onClose: () => void;
++}
++
++export function OrderDetailsDrawer({
++  order,
++  isOpen,
++  onClose,
++}: OrderDetailsDrawerProps) {
++  if (!order) return null;
++
++  const getStatusIcon = (status: string) => {
++    switch (status) {
++      case "Pending":
++      case "Processing":
++        return <Clock className="h-4 w-4 text-yellow-500" />;
++      case "Shipped":
++        return <Truck className="h-4 w-4 text-blue-500" />;
++      case "Delivered":
++        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
++      case "Cancelled":
++        return <XCircle className="h-4 w-4 text-red-500" />;
++      default:
++        return <CircleDashed className="h-4 w-4 text-muted-foreground" />;
++    }
++  };
++
++  return (
++    <Sheet open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
++      <SheetContent className="w-full sm:max-w-md md:max-w-lg overflow-y-auto p-0 border-l">
++        <div className="h-full overflow-y-auto">
++          <div className="p-6">
++            <SheetHeader className="mb-6 space-y-1">
++              <div className="flex items-center justify-between">
++                <SheetTitle className="text-xl font-semibold">
++                  Order {order.id}
++                </SheetTitle>
++                <div className="flex gap-2">
++                  <Badge variant={order.paymentStatus === "Paid" ? "default" : "secondary"}>
++                    {order.paymentStatus}
++                  </Badge>
++                  <Badge variant="outline">{order.orderStatus}</Badge>
++                </div>
++              </div>
++              <SheetDescription>
++                Placed on {format(new Date(order.orderDate), "MMM dd, yyyy 'at' hh:mm a")}
++              </SheetDescription>
++            </SheetHeader>
++
++            <div className="grid gap-6">
++              {/* Customer Info */}
++              <div className="space-y-3">
++                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
++                  Customer Information
++                </h3>
++                <div className="bg-muted/30 p-4 rounded-lg space-y-2 text-sm">
++                  <div className="grid grid-cols-3 gap-2">
++                    <span className="text-muted-foreground">Name:</span>
++                    <span className="col-span-2 font-medium">{order.customerInfo.name}</span>
++                  </div>
++                  <div className="grid grid-cols-3 gap-2">
++                    <span className="text-muted-foreground">Email:</span>
++                    <span className="col-span-2">{order.customerInfo.email}</span>
++                  </div>
++                  <div className="grid grid-cols-3 gap-2">
++                    <span className="text-muted-foreground">Phone:</span>
++                    <span className="col-span-2">{order.customerInfo.mobileNumber}</span>
++                  </div>
++                </div>
++              </div>
++
++              <Separator />
++
++              {/* Shipping Info */}
++              <div className="space-y-3">
++                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
++                  Shipping Information
++                </h3>
++                <div className="bg-muted/30 p-4 rounded-lg text-sm space-y-1">
++                  <p>{order.shippingInfo.address}</p>
++                  <p>
++                    {order.shippingInfo.city}, {order.shippingInfo.state} {order.shippingInfo.zipCode}
++                  </p>
++                  <p>{order.shippingInfo.country}</p>
++                </div>
++              </div>
++
++              <Separator />
++
++              {/* Product Details */}
++              <div className="space-y-3">
++                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
++                  Product Details
++                </h3>
++                <div className="space-y-4">
++                  {order.products.map((product) => (
++                    <div key={product.id} className="flex justify-between items-start text-sm">
++                      <div className="space-y-1">
++                        <p className="font-medium">{product.name}</p>
++                        <p className="text-muted-foreground text-xs">SKU: {product.sku}</p>
++                        <p className="text-muted-foreground text-xs">Qty: {product.quantity}</p>
++                      </div>
++                      <p className="font-medium">
++                        ${product.totalPrice.toFixed(2)}
++                      </p>
++                    </div>
++                  ))}
++                  <div className="pt-4 border-t flex justify-between items-center font-semibold">
++                    <span>Total Amount</span>
++                    <span className="text-lg">${order.totalAmount.toFixed(2)}</span>
++                  </div>
++                </div>
++              </div>
++
++              <Separator />
++
++              {/* Order Timeline */}
++              <div className="space-y-3">
++                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
++                  Order Timeline
++                </h3>
++                <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px before:h-full before:w-0.5 before:bg-border">
++                  {order.timeline.map((event, index) => (
++                    <div key={index} className="relative flex items-center justify-between group is-active">
++                      {/* Icon */}
++                      <div className="flex items-center justify-center w-5 h-5 rounded-full border bg-background shrink-0 z-10">
++                        {getStatusIcon(event.status)}
++                      </div>
++                      {/* Content */}
++                      <div className="w-[calc(100%-2.5rem)] p-4 rounded-lg border bg-background shadow-sm">
++                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1">
++                          <div className="font-semibold text-sm">{event.status}</div>
++                          <time className="text-xs text-muted-foreground">
++                            {format(new Date(event.date), "MMM dd, yyyy HH:mm")}
++                          </time>
++                        </div>
++                        <div className="text-xs text-muted-foreground">
++                          {event.description}
++                        </div>
++                      </div>
++                    </div>
++                  ))}
++                </div>
++              </div>
++            </div>
++          </div>
++        </div>
++      </SheetContent>
++    </Sheet>
++  );
++}
+diff --git a/src/components/orders/OrdersFilters.tsx b/src/components/orders/OrdersFilters.tsx
+new file mode 100644
+index 0000000..2b2ffd7
+--- /dev/null
++++ b/src/components/orders/OrdersFilters.tsx
+@@ -0,0 +1,89 @@
++import { Input } from "@/components/ui/input";
++import { Search, X } from "lucide-react";
++import { Button } from "@/components/ui/button";
++import {
++  Select,
++  SelectContent,
++  SelectItem,
++  SelectTrigger,
++  SelectValue,
++} from "@/components/ui/select";
++
++interface OrdersFiltersProps {
++  searchTerm: string;
++  onSearchChange: (value: string) => void;
++  statusFilter: string;
++  onStatusFilterChange: (value: string) => void;
++  paymentFilter: string;
++  onPaymentFilterChange: (value: string) => void;
++  onClearFilters: () => void;
++}
++
++export function OrdersFilters({
++  searchTerm,
++  onSearchChange,
++  statusFilter,
++  onStatusFilterChange,
++  paymentFilter,
++  onPaymentFilterChange,
++  onClearFilters,
++}: OrdersFiltersProps) {
++  const hasActiveFilters =
++    searchTerm !== "" || statusFilter !== "all" || paymentFilter !== "all";
++
++  return (
++    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card p-4 rounded-lg border shadow-sm mb-6">
++      <div className="relative w-full max-w-sm">
++        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
++          <Search className="h-4 w-4 text-muted-foreground" />
++        </div>
++        <Input
++          type="text"
++          value={searchTerm}
++          onChange={(e) => onSearchChange(e.target.value)}
++          className="pl-10 pr-4 w-full"
++          placeholder="Search ID, Customer, Phone..."
++        />
++      </div>
++
++      <div className="flex flex-wrap items-center gap-3">
++        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
++          <SelectTrigger className="w-[160px]">
++            <SelectValue placeholder="Order Status" />
++          </SelectTrigger>
++          <SelectContent>
++            <SelectItem value="all">All Statuses</SelectItem>
++            <SelectItem value="Pending">Pending</SelectItem>
++            <SelectItem value="Processing">Processing</SelectItem>
++            <SelectItem value="Shipped">Shipped</SelectItem>
++            <SelectItem value="Delivered">Delivered</SelectItem>
++            <SelectItem value="Cancelled">Cancelled</SelectItem>
++          </SelectContent>
++        </Select>
++
++        <Select value={paymentFilter} onValueChange={onPaymentFilterChange}>
++          <SelectTrigger className="w-[160px]">
++            <SelectValue placeholder="Payment Status" />
++          </SelectTrigger>
++          <SelectContent>
++            <SelectItem value="all">All Payments</SelectItem>
++            <SelectItem value="Paid">Paid</SelectItem>
++            <SelectItem value="Unpaid">Unpaid</SelectItem>
++            <SelectItem value="Refunded">Refunded</SelectItem>
++          </SelectContent>
++        </Select>
++
++        {hasActiveFilters && (
++          <Button
++            variant="ghost"
++            onClick={onClearFilters}
++            className="text-muted-foreground hover:text-foreground px-3"
++          >
++            Clear Filters
++            <X className="ml-2 h-4 w-4" />
++          </Button>
++        )}
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/orders/OrdersPagination.tsx b/src/components/orders/OrdersPagination.tsx
+new file mode 100644
+index 0000000..ac2a2d0
+--- /dev/null
++++ b/src/components/orders/OrdersPagination.tsx
+@@ -0,0 +1,77 @@
++import React from "react";
++
++interface OrdersPaginationProps {
++  currentPage: number;
++  totalPages: number;
++  pageSize: number;
++  totalRecords: number;
++  onPageChange: (page: number) => void;
++  onPageSizeChange: (size: number) => void;
++}
++
++export function OrdersPagination({
++  currentPage,
++  totalPages,
++  pageSize,
++  totalRecords,
++  onPageChange,
++  // We keep onPageSizeChange in props so we don't break the parent page, even if not used in UI
++}: OrdersPaginationProps) {
++  const startRecord = totalRecords === 0 ? 0 : (currentPage - 1) * pageSize + 1;
++  const endRecord = Math.min(currentPage * pageSize, totalRecords);
++
++  const getVisiblePages = () => {
++    const pages = [];
++    const maxVisible = 5;
++    const currentChunk = Math.floor((currentPage - 1) / maxVisible);
++    const startPage = currentChunk * maxVisible + 1;
++    const endPage = Math.min(startPage + maxVisible - 1, totalPages);
++    
++    for (let i = startPage; i <= endPage; i++) {
++      pages.push(i);
++    }
++    return pages;
++  };
++
++  return (
++    <div className="flex flex-col gap-2 py-4">
++      <div className="text-sm text-slate-700 font-medium">
++        Showing {startRecord} to {endRecord} of {totalRecords} entries
++      </div>
++
++      <div className="flex">
++        <div className="inline-flex rounded border border-slate-200 bg-white overflow-hidden shadow-sm">
++          <button
++            onClick={() => onPageChange(currentPage - 1)}
++            disabled={currentPage <= 1}
++            className="px-4 py-2 text-sm text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed border-r border-slate-200 transition-colors focus:outline-none"
++          >
++            Previous
++          </button>
++          
++          {getVisiblePages().map((page) => (
++            <button
++              key={page}
++              onClick={() => onPageChange(page)}
++              className={`px-4 py-2 text-sm border-r border-slate-200 transition-colors focus:outline-none ${
++                currentPage === page
++                  ? "bg-blue-500 text-white border-blue-500 relative z-10"
++                  : "bg-white text-slate-700 hover:bg-slate-50"
++              }`}
++            >
++              {page}
++            </button>
++          ))}
++          
++          <button
++            onClick={() => onPageChange(currentPage + 1)}
++            disabled={currentPage >= totalPages || totalPages === 0}
++            className="px-4 py-2 text-sm text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none"
++          >
++            Next
++          </button>
++        </div>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/orders/OrdersTable.tsx b/src/components/orders/OrdersTable.tsx
+new file mode 100644
+index 0000000..09b39d0
+--- /dev/null
++++ b/src/components/orders/OrdersTable.tsx
+@@ -0,0 +1,217 @@
++"use client";
++
++import { useState } from "react";
++import {
++  ColumnDef,
++  flexRender,
++  getCoreRowModel,
++  getSortedRowModel,
++  SortingState,
++  useReactTable,
++} from "@tanstack/react-table";
++
++import {
++  Table,
++  TableBody,
++  TableCell,
++  TableHead,
++  TableHeader,
++  TableRow,
++} from "@/components/ui/table";
++import { Badge } from "@/components/ui/badge";
++import { Button } from "@/components/ui/button";
++import { ArrowUpDown, Eye } from "lucide-react";
++import { OrderDetails } from "@/types/order";
++import { format } from "date-fns";
++
++interface OrdersTableProps {
++  data: OrderDetails[];
++  onRowClick: (order: OrderDetails) => void;
++  isLoading?: boolean;
++}
++
++export function OrdersTable({ data, onRowClick, isLoading = false }: OrdersTableProps) {
++  const [sorting, setSorting] = useState<SortingState>([]);
++
++  const columns: ColumnDef<OrderDetails>[] = [
++    {
++      accessorKey: "id",
++      header: "Order ID",
++      cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
++    },
++    {
++      accessorKey: "customerName",
++      header: ({ column }) => {
++        return (
++          <Button
++            variant="ghost"
++            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
++            className="-ml-4 h-8 data-[state=open]:bg-accent"
++          >
++            Customer
++            <ArrowUpDown className="ml-2 h-4 w-4" />
++          </Button>
++        );
++      },
++    },
++    {
++      accessorKey: "mobileNumber",
++      header: "Mobile Number",
++    },
++    {
++      accessorKey: "productName",
++      header: "Product",
++      cell: ({ row }) => {
++        const order = row.original;
++        const mainProduct = order.products[0]?.name || "Unknown Product";
++        const extraCount = order.products.length - 1;
++        return (
++          <div className="max-w-[200px] truncate" title={mainProduct}>
++            {mainProduct} {extraCount > 0 && <span className="text-muted-foreground text-xs">(+{extraCount})</span>}
++          </div>
++        );
++      },
++    },
++    {
++      accessorKey: "quantity",
++      header: "Qty",
++      cell: ({ row }) => <div className="text-center">{row.getValue("quantity")}</div>,
++    },
++    {
++      accessorKey: "totalAmount",
++      header: ({ column }) => {
++        return (
++          <Button
++            variant="ghost"
++            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
++            className="-ml-4 h-8"
++          >
++            Total
++            <ArrowUpDown className="ml-2 h-4 w-4" />
++          </Button>
++        );
++      },
++      cell: ({ row }) => {
++        const amount = parseFloat(row.getValue("totalAmount"));
++        const formatted = new Intl.NumberFormat("en-US", {
++          style: "currency",
++          currency: "USD",
++        }).format(amount);
++        return <div className="font-medium">{formatted}</div>;
++      },
++    },
++    {
++      accessorKey: "orderDate",
++      header: "Order Date",
++      cell: ({ row }) => {
++        return <div>{format(new Date(row.getValue("orderDate")), "MMM dd, yyyy")}</div>;
++      },
++    },
++    {
++      accessorKey: "paymentStatus",
++      header: "Payment",
++      cell: ({ row }) => {
++        const status = row.getValue("paymentStatus") as string;
++        return (
++          <Badge variant={status === "Paid" ? "default" : status === "Refunded" ? "outline" : "secondary"}>
++            {status}
++          </Badge>
++        );
++      },
++    },
++    {
++      accessorKey: "orderStatus",
++      header: "Status",
++      cell: ({ row }) => {
++        const status = row.getValue("orderStatus") as string;
++        return <Badge variant="outline">{status}</Badge>;
++      },
++    },
++    {
++      id: "actions",
++      cell: ({ row }) => {
++        return (
++          <Button
++            variant="ghost"
++            size="sm"
++            onClick={(e) => {
++              e.stopPropagation();
++              onRowClick(row.original);
++            }}
++          >
++            <Eye className="h-4 w-4 mr-2" />
++            View
++          </Button>
++        );
++      },
++    },
++  ];
++
++  const table = useReactTable({
++    data,
++    columns,
++    getCoreRowModel: getCoreRowModel(),
++    onSortingChange: setSorting,
++    getSortedRowModel: getSortedRowModel(),
++    state: {
++      sorting,
++    },
++  });
++
++  return (
++    <div className="rounded-md border bg-card">
++      <div className="relative w-full overflow-auto">
++        <Table>
++          <TableHeader className="bg-muted/50 sticky top-0 z-10">
++            {table.getHeaderGroups().map((headerGroup) => (
++              <TableRow key={headerGroup.id}>
++                {headerGroup.headers.map((header) => {
++                  return (
++                    <TableHead key={header.id} className="whitespace-nowrap">
++                      {header.isPlaceholder
++                        ? null
++                        : flexRender(
++                            header.column.columnDef.header,
++                            header.getContext()
++                          )}
++                    </TableHead>
++                  );
++                })}
++              </TableRow>
++            ))}
++          </TableHeader>
++          <TableBody>
++            {isLoading ? (
++              <TableRow>
++                <TableCell colSpan={columns.length} className="h-24 text-center">
++                  Loading orders...
++                </TableCell>
++              </TableRow>
++            ) : table.getRowModel().rows?.length ? (
++              table.getRowModel().rows.map((row) => (
++                <TableRow
++                  key={row.id}
++                  data-state={row.getIsSelected() && "selected"}
++                  className="cursor-pointer hover:bg-muted/50 transition-colors"
++                  onClick={() => onRowClick(row.original)}
++                >
++                  {row.getVisibleCells().map((cell) => (
++                    <TableCell key={cell.id} className="whitespace-nowrap">
++                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
++                    </TableCell>
++                  ))}
++                </TableRow>
++              ))
++            ) : (
++              <TableRow>
++                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
++                  No orders found.
++                </TableCell>
++              </TableRow>
++            )}
++          </TableBody>
++        </Table>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/orders/SearchInput.tsx b/src/components/orders/SearchInput.tsx
+new file mode 100644
+index 0000000..d26d613
+--- /dev/null
++++ b/src/components/orders/SearchInput.tsx
+@@ -0,0 +1,25 @@
++import { Input } from "@/components/ui/input";
++import { Search } from "lucide-react";
++
++interface SearchInputProps {
++  value: string;
++  onChange: (value: string) => void;
++  placeholder?: string;
++}
++
++export function SearchInput({ value, onChange, placeholder = "Search orders..." }: SearchInputProps) {
++  return (
++    <div className="relative w-full max-w-sm">
++      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
++        <Search className="h-4 w-4 text-muted-foreground" />
++      </div>
++      <Input
++        type="text"
++        value={value}
++        onChange={(e) => onChange(e.target.value)}
++        className="pl-10 pr-4 w-full"
++        placeholder={placeholder}
++      />
++    </div>
++  );
++}
+diff --git a/src/components/shared/SearchInput.tsx b/src/components/shared/SearchInput.tsx
+new file mode 100644
+index 0000000..8ed4074
+--- /dev/null
++++ b/src/components/shared/SearchInput.tsx
+@@ -0,0 +1,25 @@
++import React from "react";
++import { Input } from "@/components/ui/input";
++import { Search } from "lucide-react";
++
++interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
++  value: string;
++  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
++  placeholder?: string;
++}
++
++export function SearchInput({ value, onChange, placeholder = "Search...", ...props }: SearchInputProps) {
++  return (
++    <div className="relative">
++      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
++      <Input
++        type="search"
++        placeholder={placeholder}
++        className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
++        value={value}
++        onChange={onChange}
++        {...props}
++      />
++    </div>
++  );
++}
+diff --git a/src/components/ui/pagination.tsx b/src/components/ui/pagination.tsx
+new file mode 100644
+index 0000000..ea40d19
+--- /dev/null
++++ b/src/components/ui/pagination.tsx
+@@ -0,0 +1,117 @@
++import * as React from "react"
++import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
++
++import { cn } from "@/lib/utils"
++import { ButtonProps, buttonVariants } from "@/components/ui/button"
++
++const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
++  <nav
++    role="navigation"
++    aria-label="pagination"
++    className={cn("mx-auto flex w-full justify-center", className)}
++    {...props}
++  />
++)
++Pagination.displayName = "Pagination"
++
++const PaginationContent = React.forwardRef<
++  HTMLUListElement,
++  React.ComponentProps<"ul">
++>(({ className, ...props }, ref) => (
++  <ul
++    ref={ref}
++    className={cn("flex flex-row items-center gap-1", className)}
++    {...props}
++  />
++))
++PaginationContent.displayName = "PaginationContent"
++
++const PaginationItem = React.forwardRef<
++  HTMLLIElement,
++  React.ComponentProps<"li">
++>(({ className, ...props }, ref) => (
++  <li ref={ref} className={cn("", className)} {...props} />
++))
++PaginationItem.displayName = "PaginationItem"
++
++type PaginationLinkProps = {
++  isActive?: boolean
++} & Pick<ButtonProps, "size"> &
++  React.ComponentProps<"a">
++
++const PaginationLink = ({
++  className,
++  isActive,
++  size = "icon",
++  ...props
++}: PaginationLinkProps) => (
++  <a
++    aria-current={isActive ? "page" : undefined}
++    className={cn(
++      buttonVariants({
++        variant: isActive ? "outline" : "ghost",
++        size,
++      }),
++      className
++    )}
++    {...props}
++  />
++)
++PaginationLink.displayName = "PaginationLink"
++
++const PaginationPrevious = ({
++  className,
++  ...props
++}: React.ComponentProps<typeof PaginationLink>) => (
++  <PaginationLink
++    aria-label="Go to previous page"
++    size="default"
++    className={cn("gap-1 pl-2.5", className)}
++    {...props}
++  >
++    <ChevronLeft className="h-4 w-4" />
++    <span>Previous</span>
++  </PaginationLink>
++)
++PaginationPrevious.displayName = "PaginationPrevious"
++
++const PaginationNext = ({
++  className,
++  ...props
++}: React.ComponentProps<typeof PaginationLink>) => (
++  <PaginationLink
++    aria-label="Go to next page"
++    size="default"
++    className={cn("gap-1 pr-2.5", className)}
++    {...props}
++  >
++    <span>Next</span>
++    <ChevronRight className="h-4 w-4" />
++  </PaginationLink>
++)
++PaginationNext.displayName = "PaginationNext"
++
++const PaginationEllipsis = ({
++  className,
++  ...props
++}: React.ComponentProps<"span">) => (
++  <span
++    aria-hidden
++    className={cn("flex h-9 w-9 items-center justify-center", className)}
++    {...props}
++  >
++    <MoreHorizontal className="h-4 w-4" />
++    <span className="sr-only">More pages</span>
++  </span>
++)
++PaginationEllipsis.displayName = "PaginationEllipsis"
++
++export {
++  Pagination,
++  PaginationContent,
++  PaginationEllipsis,
++  PaginationItem,
++  PaginationLink,
++  PaginationNext,
++  PaginationPrevious,
++}
+diff --git a/src/components/ui/select.tsx b/src/components/ui/select.tsx
+new file mode 100644
+index 0000000..a45647c
+--- /dev/null
++++ b/src/components/ui/select.tsx
+@@ -0,0 +1,160 @@
++"use client"
++
++import * as React from "react"
++import * as SelectPrimitive from "@radix-ui/react-select"
++import { Check, ChevronDown, ChevronUp } from "lucide-react"
++
++import { cn } from "@/lib/utils"
++
++const Select = SelectPrimitive.Root
++
++const SelectGroup = SelectPrimitive.Group
++
++const SelectValue = SelectPrimitive.Value
++
++const SelectTrigger = React.forwardRef<
++  React.ElementRef<typeof SelectPrimitive.Trigger>,
++  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
++>(({ className, children, ...props }, ref) => (
++  <SelectPrimitive.Trigger
++    ref={ref}
++    className={cn(
++      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
++      className
++    )}
++    {...props}
++  >
++    {children}
++    <SelectPrimitive.Icon asChild>
++      <ChevronDown className="h-4 w-4 opacity-50" />
++    </SelectPrimitive.Icon>
++  </SelectPrimitive.Trigger>
++))
++SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
++
++const SelectScrollUpButton = React.forwardRef<
++  React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
++  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
++>(({ className, ...props }, ref) => (
++  <SelectPrimitive.ScrollUpButton
++    ref={ref}
++    className={cn(
++      "flex cursor-default items-center justify-center py-1",
++      className
++    )}
++    {...props}
++  >
++    <ChevronUp className="h-4 w-4" />
++  </SelectPrimitive.ScrollUpButton>
++))
++SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName
++
++const SelectScrollDownButton = React.forwardRef<
++  React.ElementRef<typeof SelectPrimitive.ScrollDownButton>,
++  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
++>(({ className, ...props }, ref) => (
++  <SelectPrimitive.ScrollDownButton
++    ref={ref}
++    className={cn(
++      "flex cursor-default items-center justify-center py-1",
++      className
++    )}
++    {...props}
++  >
++    <ChevronDown className="h-4 w-4" />
++  </SelectPrimitive.ScrollDownButton>
++))
++SelectScrollDownButton.displayName =
++  SelectPrimitive.ScrollDownButton.displayName
++
++const SelectContent = React.forwardRef<
++  React.ElementRef<typeof SelectPrimitive.Content>,
++  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
++>(({ className, children, position = "popper", ...props }, ref) => (
++  <SelectPrimitive.Portal>
++    <SelectPrimitive.Content
++      ref={ref}
++      className={cn(
++        "relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-select-content-transform-origin]",
++        position === "popper" &&
++          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
++        className
++      )}
++      position={position}
++      {...props}
++    >
++      <SelectScrollUpButton />
++      <SelectPrimitive.Viewport
++        className={cn(
++          "p-1",
++          position === "popper" &&
++            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
++        )}
++      >
++        {children}
++      </SelectPrimitive.Viewport>
++      <SelectScrollDownButton />
++    </SelectPrimitive.Content>
++  </SelectPrimitive.Portal>
++))
++SelectContent.displayName = SelectPrimitive.Content.displayName
++
++const SelectLabel = React.forwardRef<
++  React.ElementRef<typeof SelectPrimitive.Label>,
++  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
++>(({ className, ...props }, ref) => (
++  <SelectPrimitive.Label
++    ref={ref}
++    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
++    {...props}
++  />
++))
++SelectLabel.displayName = SelectPrimitive.Label.displayName
++
++const SelectItem = React.forwardRef<
++  React.ElementRef<typeof SelectPrimitive.Item>,
++  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
++>(({ className, children, ...props }, ref) => (
++  <SelectPrimitive.Item
++    ref={ref}
++    className={cn(
++      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
++      className
++    )}
++    {...props}
++  >
++    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
++      <SelectPrimitive.ItemIndicator>
++        <Check className="h-4 w-4" />
++      </SelectPrimitive.ItemIndicator>
++    </span>
++
++    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
++  </SelectPrimitive.Item>
++))
++SelectItem.displayName = SelectPrimitive.Item.displayName
++
++const SelectSeparator = React.forwardRef<
++  React.ElementRef<typeof SelectPrimitive.Separator>,
++  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
++>(({ className, ...props }, ref) => (
++  <SelectPrimitive.Separator
++    ref={ref}
++    className={cn("-mx-1 my-1 h-px bg-muted", className)}
++    {...props}
++  />
++))
++SelectSeparator.displayName = SelectPrimitive.Separator.displayName
++
++export {
++  Select,
++  SelectGroup,
++  SelectValue,
++  SelectTrigger,
++  SelectContent,
++  SelectLabel,
++  SelectItem,
++  SelectSeparator,
++  SelectScrollUpButton,
++  SelectScrollDownButton,
++}
+diff --git a/src/components/ui/separator.tsx b/src/components/ui/separator.tsx
+new file mode 100644
+index 0000000..12d81c4
+--- /dev/null
++++ b/src/components/ui/separator.tsx
+@@ -0,0 +1,31 @@
++"use client"
++
++import * as React from "react"
++import * as SeparatorPrimitive from "@radix-ui/react-separator"
++
++import { cn } from "@/lib/utils"
++
++const Separator = React.forwardRef<
++  React.ElementRef<typeof SeparatorPrimitive.Root>,
++  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
++>(
++  (
++    { className, orientation = "horizontal", decorative = true, ...props },
++    ref
++  ) => (
++    <SeparatorPrimitive.Root
++      ref={ref}
++      decorative={decorative}
++      orientation={orientation}
++      className={cn(
++        "shrink-0 bg-border",
++        orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
++        className
++      )}
++      {...props}
++    />
++  )
++)
++Separator.displayName = SeparatorPrimitive.Root.displayName
++
++export { Separator }
+diff --git a/src/components/ui/sheet.tsx b/src/components/ui/sheet.tsx
+new file mode 100644
+index 0000000..a37f17b
+--- /dev/null
++++ b/src/components/ui/sheet.tsx
+@@ -0,0 +1,140 @@
++"use client"
++
++import * as React from "react"
++import * as SheetPrimitive from "@radix-ui/react-dialog"
++import { cva, type VariantProps } from "class-variance-authority"
++import { X } from "lucide-react"
++
++import { cn } from "@/lib/utils"
++
++const Sheet = SheetPrimitive.Root
++
++const SheetTrigger = SheetPrimitive.Trigger
++
++const SheetClose = SheetPrimitive.Close
++
++const SheetPortal = SheetPrimitive.Portal
++
++const SheetOverlay = React.forwardRef<
++  React.ElementRef<typeof SheetPrimitive.Overlay>,
++  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
++>(({ className, ...props }, ref) => (
++  <SheetPrimitive.Overlay
++    className={cn(
++      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
++      className
++    )}
++    {...props}
++    ref={ref}
++  />
++))
++SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
++
++const sheetVariants = cva(
++  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
++  {
++    variants: {
++      side: {
++        top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
++        bottom:
++          "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
++        left: "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
++        right:
++          "inset-y-0 right-0 h-full w-3/4  border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
++      },
++    },
++    defaultVariants: {
++      side: "right",
++    },
++  }
++)
++
++interface SheetContentProps
++  extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
++    VariantProps<typeof sheetVariants> {}
++
++const SheetContent = React.forwardRef<
++  React.ElementRef<typeof SheetPrimitive.Content>,
++  SheetContentProps
++>(({ side = "right", className, children, ...props }, ref) => (
++  <SheetPortal>
++    <SheetOverlay />
++    <SheetPrimitive.Content
++      ref={ref}
++      className={cn(sheetVariants({ side }), className)}
++      {...props}
++    >
++      {children}
++      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
++        <X className="h-4 w-4" />
++        <span className="sr-only">Close</span>
++      </SheetPrimitive.Close>
++    </SheetPrimitive.Content>
++  </SheetPortal>
++))
++SheetContent.displayName = SheetPrimitive.Content.displayName
++
++const SheetHeader = ({
++  className,
++  ...props
++}: React.HTMLAttributes<HTMLDivElement>) => (
++  <div
++    className={cn(
++      "flex flex-col space-y-2 text-center sm:text-left",
++      className
++    )}
++    {...props}
++  />
++)
++SheetHeader.displayName = "SheetHeader"
++
++const SheetFooter = ({
++  className,
++  ...props
++}: React.HTMLAttributes<HTMLDivElement>) => (
++  <div
++    className={cn(
++      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
++      className
++    )}
++    {...props}
++  />
++)
++SheetFooter.displayName = "SheetFooter"
++
++const SheetTitle = React.forwardRef<
++  React.ElementRef<typeof SheetPrimitive.Title>,
++  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
++>(({ className, ...props }, ref) => (
++  <SheetPrimitive.Title
++    ref={ref}
++    className={cn("text-lg font-semibold text-foreground", className)}
++    {...props}
++  />
++))
++SheetTitle.displayName = SheetPrimitive.Title.displayName
++
++const SheetDescription = React.forwardRef<
++  React.ElementRef<typeof SheetPrimitive.Description>,
++  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
++>(({ className, ...props }, ref) => (
++  <SheetPrimitive.Description
++    ref={ref}
++    className={cn("text-sm text-muted-foreground", className)}
++    {...props}
++  />
++))
++SheetDescription.displayName = SheetPrimitive.Description.displayName
++
++export {
++  Sheet,
++  SheetPortal,
++  SheetOverlay,
++  SheetTrigger,
++  SheetClose,
++  SheetContent,
++  SheetHeader,
++  SheetFooter,
++  SheetTitle,
++  SheetDescription,
++}
+diff --git a/src/components/ui/skeleton.tsx b/src/components/ui/skeleton.tsx
+new file mode 100644
+index 0000000..01b8b6d
+--- /dev/null
++++ b/src/components/ui/skeleton.tsx
+@@ -0,0 +1,15 @@
++import { cn } from "@/lib/utils"
++
++function Skeleton({
++  className,
++  ...props
++}: React.HTMLAttributes<HTMLDivElement>) {
++  return (
++    <div
++      className={cn("animate-pulse rounded-md bg-muted", className)}
++      {...props}
++    />
++  )
++}
++
++export { Skeleton }
+diff --git a/src/data/mock-orders.ts b/src/data/mock-orders.ts
+new file mode 100644
+index 0000000..f8129d1
+--- /dev/null
++++ b/src/data/mock-orders.ts
+@@ -0,0 +1,237 @@
++import { OrderDetails } from "../types/order";
++
++export const mockOrders: OrderDetails[] = [
++  {
++    id: "ORD-7352-9A",
++    customerName: "Alice Smith",
++    mobileNumber: "+1 (555) 123-4567",
++    productName: "Wireless Noise-Cancelling Headphones",
++    quantity: 1,
++    totalAmount: 299.99,
++    orderDate: "2026-06-14T10:30:00Z",
++    paymentStatus: "Paid",
++    orderStatus: "Shipped",
++    deliveryAddress: "123 Tech Lane, San Francisco, CA 94105",
++    customerInfo: {
++      name: "Alice Smith",
++      email: "alice.smith@example.com",
++      mobileNumber: "+1 (555) 123-4567",
++    },
++    shippingInfo: {
++      address: "123 Tech Lane",
++      city: "San Francisco",
++      state: "CA",
++      zipCode: "94105",
++      country: "USA",
++    },
++    products: [
++      {
++        id: "PROD-101",
++        name: "Wireless Noise-Cancelling Headphones",
++        sku: "AUD-WH-001",
++        quantity: 1,
++        unitPrice: 299.99,
++        totalPrice: 299.99,
++      },
++    ],
++    timeline: [
++      { status: "Order Placed", date: "2026-06-14T10:30:00Z", description: "Order received successfully." },
++      { status: "Payment Confirmed", date: "2026-06-14T10:35:00Z", description: "Payment of $299.99 verified." },
++      { status: "Processing", date: "2026-06-14T14:00:00Z", description: "Order is being packed." },
++      { status: "Shipped", date: "2026-06-15T09:00:00Z", description: "Package handed over to courier." },
++    ],
++  },
++  {
++    id: "ORD-8921-3B",
++    customerName: "Bob Johnson",
++    mobileNumber: "+1 (555) 987-6543",
++    productName: "Ergonomic Office Chair",
++    quantity: 2,
++    totalAmount: 450.00,
++    orderDate: "2026-06-15T08:15:00Z",
++    paymentStatus: "Unpaid",
++    orderStatus: "Processing",
++    deliveryAddress: "456 Corporate Blvd, Austin, TX 73301",
++    customerInfo: {
++      name: "Bob Johnson",
++      email: "bob.j@example.com",
++      mobileNumber: "+1 (555) 987-6543",
++    },
++    shippingInfo: {
++      address: "456 Corporate Blvd",
++      city: "Austin",
++      state: "TX",
++      zipCode: "73301",
++      country: "USA",
++    },
++    products: [
++      {
++        id: "PROD-205",
++        name: "Ergonomic Office Chair",
++        sku: "FURN-CH-005",
++        quantity: 2,
++        unitPrice: 225.00,
++        totalPrice: 450.00,
++      },
++    ],
++    timeline: [
++      { status: "Order Placed", date: "2026-06-15T08:15:00Z", description: "Order received successfully." },
++      { status: "Processing", date: "2026-06-15T09:30:00Z", description: "Awaiting payment confirmation." },
++    ],
++  },
++  {
++    id: "ORD-1122-CC",
++    customerName: "Charlie Davis",
++    mobileNumber: "+1 (555) 321-7890",
++    productName: "4K Monitor 27-inch",
++    quantity: 1,
++    totalAmount: 349.50,
++    orderDate: "2026-06-10T11:20:00Z",
++    paymentStatus: "Paid",
++    orderStatus: "Delivered",
++    deliveryAddress: "789 Pine Road, Seattle, WA 98101",
++    customerInfo: {
++      name: "Charlie Davis",
++      email: "charlie.d@example.com",
++      mobileNumber: "+1 (555) 321-7890",
++    },
++    shippingInfo: {
++      address: "789 Pine Road",
++      city: "Seattle",
++      state: "WA",
++      zipCode: "98101",
++      country: "USA",
++    },
++    products: [
++      {
++        id: "PROD-308",
++        name: "4K Monitor 27-inch",
++        sku: "DISP-4K-008",
++        quantity: 1,
++        unitPrice: 349.50,
++        totalPrice: 349.50,
++      },
++    ],
++    timeline: [
++      { status: "Order Placed", date: "2026-06-10T11:20:00Z", description: "Order received." },
++      { status: "Shipped", date: "2026-06-11T08:00:00Z", description: "Shipped via FedEx." },
++      { status: "Delivered", date: "2026-06-13T14:45:00Z", description: "Delivered at front porch." },
++    ],
++  },
++  {
++    id: "ORD-5544-DD",
++    customerName: "Diana Evans",
++    mobileNumber: "+1 (555) 444-5555",
++    productName: "Mechanical Keyboard",
++    quantity: 1,
++    totalAmount: 120.00,
++    orderDate: "2026-06-15T14:10:00Z",
++    paymentStatus: "Refunded",
++    orderStatus: "Cancelled",
++    deliveryAddress: "321 Elm St, Denver, CO 80202",
++    customerInfo: {
++      name: "Diana Evans",
++      email: "diana.e@example.com",
++      mobileNumber: "+1 (555) 444-5555",
++    },
++    shippingInfo: {
++      address: "321 Elm St",
++      city: "Denver",
++      state: "CO",
++      zipCode: "80202",
++      country: "USA",
++    },
++    products: [
++      {
++        id: "PROD-401",
++        name: "Mechanical Keyboard",
++        sku: "PER-KB-001",
++        quantity: 1,
++        unitPrice: 120.00,
++        totalPrice: 120.00,
++      },
++    ],
++    timeline: [
++      { status: "Order Placed", date: "2026-06-15T14:10:00Z", description: "Order received." },
++      { status: "Cancelled", date: "2026-06-15T15:00:00Z", description: "Order cancelled by customer." },
++      { status: "Refund Processed", date: "2026-06-15T15:30:00Z", description: "Refund initiated." },
++    ],
++  },
++  {
++    id: "ORD-9988-EE",
++    customerName: "Evan Foster",
++    mobileNumber: "+1 (555) 666-7777",
++    productName: "Smart Home Hub",
++    quantity: 3,
++    totalAmount: 299.97,
++    orderDate: "2026-06-12T09:45:00Z",
++    paymentStatus: "Paid",
++    orderStatus: "Delivered",
++    deliveryAddress: "987 Oak Ave, Miami, FL 33101",
++    customerInfo: {
++      name: "Evan Foster",
++      email: "evan.f@example.com",
++      mobileNumber: "+1 (555) 666-7777",
++    },
++    shippingInfo: {
++      address: "987 Oak Ave",
++      city: "Miami",
++      state: "FL",
++      zipCode: "33101",
++      country: "USA",
++    },
++    products: [
++      {
++        id: "PROD-505",
++        name: "Smart Home Hub",
++        sku: "SMART-HUB-005",
++        quantity: 3,
++        unitPrice: 99.99,
++        totalPrice: 299.97,
++      },
++    ],
++    timeline: [
++      { status: "Order Placed", date: "2026-06-12T09:45:00Z", description: "Order received." },
++      { status: "Shipped", date: "2026-06-13T10:00:00Z", description: "Shipped via UPS." },
++      { status: "Delivered", date: "2026-06-14T11:20:00Z", description: "Left at front door." },
++    ],
++  },
++  // Adding more dummy data to show pagination later if needed
++  ...Array.from({ length: 100 }).map((_, i) => ({
++    id: `ORD-100${i}-FF`,
++    customerName: `Customer ${i + 6}`,
++    mobileNumber: `+1 (555) 000-00${i < 10 ? '0' + i : i}`,
++    productName: `Generic Product ${i}`,
++    quantity: 1,
++    totalAmount: 19.99 + i * 5,
++    orderDate: new Date(Date.now() - i * 86400000).toISOString(),
++    paymentStatus: (i % 3 === 0 ? "Unpaid" : "Paid") as "Unpaid" | "Paid" | "Refunded",
++    orderStatus: (i % 2 === 0 ? "Processing" : "Delivered") as "Processing" | "Delivered" | "Pending" | "Shipped" | "Cancelled",
++    deliveryAddress: `${100 + i} Generic St, Cityville, ST 12345`,
++    customerInfo: {
++      name: `Customer ${i + 6}`,
++      email: `customer${i+6}@example.com`,
++      mobileNumber: `+1 (555) 000-00${i < 10 ? '0' + i : i}`,
++    },
++    shippingInfo: {
++      address: `${100 + i} Generic St`,
++      city: "Cityville",
++      state: "ST",
++      zipCode: "12345",
++      country: "USA",
++    },
++    products: [
++      {
++        id: `PROD-${1000 + i}`,
++        name: `Generic Product ${i}`,
++        sku: `GEN-${1000 + i}`,
++        quantity: 1,
++        unitPrice: 19.99 + i * 5,
++        totalPrice: 19.99 + i * 5,
++      },
++    ],
++    timeline: [
++      { status: "Order Placed", date: new Date(Date.now() - i * 86400000).toISOString(), description: "Order received." },
++    ],
++  }))
++];
+diff --git a/src/types/order.ts b/src/types/order.ts
+new file mode 100644
+index 0000000..741e22f
+--- /dev/null
++++ b/src/types/order.ts
+@@ -0,0 +1,51 @@
++export type OrderStatus = "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
++export type PaymentStatus = "Paid" | "Unpaid" | "Refunded";
++
++export interface Order {
++  id: string;
++  customerName: string;
++  mobileNumber: string;
++  productName: string;
++  quantity: number;
++  totalAmount: number;
++  orderDate: string; // ISO format string
++  paymentStatus: PaymentStatus;
++  orderStatus: OrderStatus;
++  deliveryAddress: string;
++}
++
++export interface CustomerInfo {
++  name: string;
++  email: string;
++  mobileNumber: string;
++}
++
++export interface ShippingInfo {
++  address: string;
++  city: string;
++  state: string;
++  zipCode: string;
++  country: string;
++}
++
++export interface ProductItem {
++  id: string;
++  name: string;
++  sku: string;
++  quantity: number;
++  unitPrice: number;
++  totalPrice: number;
++}
++
++export interface OrderTimelineEvent {
++  status: string;
++  date: string; // ISO format string
++  description: string;
++}
++
++export interface OrderDetails extends Order {
++  customerInfo: CustomerInfo;
++  shippingInfo: ShippingInfo;
++  products: ProductItem[];
++  timeline: OrderTimelineEvent[];
++}
