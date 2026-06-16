@@ -1,6 +1,8 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
+import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,12 +17,19 @@ const firebaseConfig = {
 // Initialize Firebase only once to prevent errors in Next.js hot-reloading
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore & Storage
-import { getFunctions } from "firebase/functions";
-
+// Initialize Firestore, Storage, Functions, & Messaging
 const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
+
+let messaging: any = null;
+if (typeof window !== "undefined") {
+  isSupported().then((supported) => {
+    if (supported) {
+      messaging = getMessaging(app);
+    }
+  });
+}
 
 // Helper references exclusively for the Flutter App
 const appCollection = collection(db, "app_data");
@@ -34,6 +43,7 @@ export {
   db, 
   storage,
   functions,
+  messaging,
   appCollection,
   appProductsCollection,
   appOrdersCollection,
