@@ -87,7 +87,7 @@ export default function AppManagement() {
             <p className="text-xs opacity-75">+20.1% from last month</p>
           </CardContent>
         </Card>
-        <Link href="/dashboard/app/orders" className="block cursor-pointer">
+        <Link href="/dashboard/orders-management" className="block cursor-pointer">
           <Card className="hover:shadow-lg transition-shadow duration-300 h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Orders</CardTitle>

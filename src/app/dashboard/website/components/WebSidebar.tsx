@@ -11,7 +11,8 @@ import {
 const navItems = [
   { title: 'Overview', icon: Globe, href: '/dashboard/website' },
   { title: 'Gallery', icon: ImageIcon, href: '/dashboard/website/gallery' },
-  { title: 'Menu display', icon: BookOpen, href: '/dashboard/website/menu-display' },
+  { title: 'Product display', icon: BookOpen, href: '/dashboard/website/products' },
+  { title: 'Recipes display', icon: FileText, href: '/dashboard/website/recipes' },
   { title: 'Contact info', icon: Phone, href: '/dashboard/website/contact' },
 ]
 

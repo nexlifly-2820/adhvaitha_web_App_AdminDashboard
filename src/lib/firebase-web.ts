@@ -23,6 +23,7 @@ const storage = getStorage(app);
 const websiteCollection = collection(db, "website_data");
 const webProductsCollection = collection(db, "products"); // Website uses the root 'products'
 const webOrdersCollection = collection(db, "orders"); // Website uses the root 'orders'
+const webRecipesCollection = collection(db, "recipes"); // Recipes collection
 
 export { 
   app, 
@@ -30,5 +31,6 @@ export {
   storage,
   websiteCollection, 
   webProductsCollection,
-  webOrdersCollection
+  webOrdersCollection,
+  webRecipesCollection
 };
