@@ -21,6 +21,7 @@ interface Coupon { code: string; title: string; sub: string; min: string; color:
 interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
+interface Pairing { title: string; pairing: string; desc: string; product_name: string; image: string }
 
 export default function ContentManager() {
   const [isLoading, setIsLoading] = useState(true)
@@ -43,6 +44,10 @@ export default function ContentManager() {
   const [packaging, setPackaging] = useState<Packaging[]>([])
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
   const [tasteOptions, setTasteOptions] = useState<TasteOption[]>([])
+  
+  // Pairing & Products State
+  const [pairings, setPairings] = useState<Pairing[]>([])
+  const [productNames, setProductNames] = useState<string[]>([])
 
   useEffect(() => {
     fetchAllContent()
@@ -56,9 +61,10 @@ export default function ContentManager() {
         return snap.exists() ? snap.data() : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
-        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding')
+        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'),
+        fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
       if (bannersDoc) {
@@ -74,6 +80,10 @@ export default function ContentManager() {
       if (onboardDoc) {
         setOnboardingSteps(onboardDoc.steps || [])
         setTasteOptions(onboardDoc.taste_options || [])
+      }
+      if (pairingsDoc) setPairings(pairingsDoc.list || [])
+      if (productsRes && productsRes.success && productsRes.data) {
+        setProductNames(Object.values(productsRes.data).map((p: any) => p.name))
       }
 
     } catch (error) {
@@ -123,6 +133,9 @@ export default function ContentManager() {
       case 'onboarding':
         handleSaveTab('onboarding', { steps: onboardingSteps, taste_options: tasteOptions })
         break
+      case 'pairings':
+        handleSaveTab('pairings', { list: pairings })
+        break
     }
   }
 
@@ -165,6 +178,7 @@ export default function ContentManager() {
           <TabsTrigger value="coupons" className="justify-start data-[state=active]:bg-white">Active Coupons</TabsTrigger>
           <TabsTrigger value="packaging" className="justify-start data-[state=active]:bg-white">Packaging</TabsTrigger>
           <TabsTrigger value="onboarding" className="justify-start data-[state=active]:bg-white">Onboarding</TabsTrigger>
+          <TabsTrigger value="pairings" className="justify-start data-[state=active]:bg-white">Art of Pairing</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0">
@@ -422,6 +436,76 @@ export default function ContentManager() {
                       </div>
                     </div>
                     <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setTasteOptions, idx)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ART OF PAIRING */}
+          <TabsContent value="pairings" className="mt-0">
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div>
+                  <CardTitle>The Art of Pairing</CardTitle>
+                  <CardDescription>Manage the beautiful pairing cards shown in the app.</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setPairings, { title: '', pairing: '', desc: '', product_name: '', image: '' })}>
+                  + Add Pairing
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {pairings.map((pairing, idx) => (
+                  <div key={idx} className="flex flex-col gap-4 p-4 border rounded bg-slate-50 dark:bg-slate-900/50">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-semibold text-slate-700 dark:text-slate-300">Pairing #{idx + 1}</h4>
+                      <Button variant="ghost" className="text-red-500 h-8 w-8 p-0" onClick={() => removeFromArray(setPairings, idx)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-500 uppercase">Top Tag (Title)</label>
+                          <Input placeholder="e.g. THE COASTAL CLASSIC" value={pairing.title} onChange={e => updateArray(setPairings, idx, 'title', e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-500 uppercase">Main Pairing Text</label>
+                          <Input placeholder="e.g. Rice + Ghee + Avakaya" value={pairing.pairing} onChange={e => updateArray(setPairings, idx, 'pairing', e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-500 uppercase">Description</label>
+                          <textarea 
+                            value={pairing.desc} 
+                            onChange={e => updateArray(setPairings, idx, 'desc', e.target.value)}
+                            className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950" 
+                            placeholder="Describe the pairing..."
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-500 uppercase">Linked Product</label>
+                          <select 
+                            value={pairing.product_name} 
+                            onChange={e => updateArray(setPairings, idx, 'product_name', e.target.value)}
+                            className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950"
+                          >
+                            <option value="">-- Select a Product --</option>
+                            {productNames.map(name => (
+                              <option key={name} value={name}>{name}</option>
+                            ))}
+                          </select>
+                          <p className="text-[10px] text-slate-400">This ensures the exact spelling matches your database.</p>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-slate-500 uppercase">Background Image</label>
+                          <ImageUpload value={pairing.image} onChange={url => updateArray(setPairings, idx, 'image', url)} folder="app_content" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </CardContent>

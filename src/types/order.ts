@@ -15,6 +15,7 @@ export interface Order {
   deliveryAddress: string;
   trackingId?: string;
   courierName?: string;
+  shiprocketOrderId?: string;
 }
 
 export interface CustomerInfo {
