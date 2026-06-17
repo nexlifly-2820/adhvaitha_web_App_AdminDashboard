@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, Check, Clock, Package, Truck, Home, 
+import {
+  Search, Check, Clock, Package, Truck, Home,
   X, ChevronRight, Phone, MapPin, CreditCard, User, AlertCircle
 } from 'lucide-react';
 
@@ -31,8 +31,8 @@ type Order = {
 };
 
 const MOCK_ORDERS: Order[] = [
-  { 
-    id: "ORD-2047", customer: "Rahul Sharma", 
+  {
+    id: "ORD-2047", customer: "Rahul Sharma",
     phone: "+91 98765 43210",
     address: "12, MG Road, Near SBI Bank, Hyderabad 500001",
     items: [
@@ -41,9 +41,9 @@ const MOCK_ORDERS: Order[] = [
     ],
     delivery: 40, payment: "UPI Paid",
     status: "packing", time: "10 mins ago",
-    note: "Please pack carefully" 
+    note: "Please pack carefully"
   },
-  { 
+  {
     id: "ORD-2046", customer: "Priya Nair",
     phone: "+91 91234 56789",
     address: "Flat 4B, Green Valley Apts, Banjara Hills, Hyderabad",
@@ -53,9 +53,9 @@ const MOCK_ORDERS: Order[] = [
     ],
     delivery: 40, payment: "Cash on Delivery",
     status: "delivered", time: "2 hrs ago",
-    note: "" 
+    note: ""
   },
-  { 
+  {
     id: "ORD-2045", customer: "Ankit Verma",
     phone: "+91 87654 32109",
     address: "Plot 7, KPHB Colony, Kukatpally, Hyderabad 500072",
@@ -67,7 +67,7 @@ const MOCK_ORDERS: Order[] = [
     note: "No onion no garlic",
     rejectionReason: "Item out of stock"
   },
-  { 
+  {
     id: "ORD-2044", customer: "Sneha Reddy",
     phone: "+91 99887 76655",
     address: "8-2-293, Road No.82, Jubilee Hills, Hyderabad",
@@ -77,9 +77,9 @@ const MOCK_ORDERS: Order[] = [
     ],
     delivery: 40, payment: "UPI Paid",
     status: "pending", time: "1 min ago",
-    note: "" 
+    note: ""
   },
-  { 
+  {
     id: "ORD-2043", customer: "Vikram Das",
     phone: "+91 77665 54433",
     address: "3-6-201, Himayat Nagar, Hyderabad 500029",
@@ -88,9 +88,9 @@ const MOCK_ORDERS: Order[] = [
     ],
     delivery: 40, payment: "UPI Paid",
     status: "out_for_delivery", time: "45 mins ago",
-    note: "Call before delivery" 
+    note: "Call before delivery"
   },
-  { 
+  {
     id: "ORD-2042", customer: "Ramesh Babu",
     phone: "+91 88877 66655",
     address: "Kondapur Main Road, Near RTO Office, Hyderabad",
@@ -99,9 +99,9 @@ const MOCK_ORDERS: Order[] = [
     ],
     delivery: 40, payment: "UPI Paid",
     status: "shipped", time: "1 hr ago",
-    note: "" 
+    note: ""
   },
-  { 
+  {
     id: "ORD-2041", customer: "Aditi Rao",
     phone: "+91 77766 55544",
     address: "Hitech City, Cyber Towers back side, Hyderabad",
@@ -110,9 +110,9 @@ const MOCK_ORDERS: Order[] = [
     ],
     delivery: 40, payment: "Cash on Delivery",
     status: "accepted", time: "2 hrs ago",
-    note: "Knock door loudly" 
+    note: "Knock door loudly"
   },
-  { 
+  {
     id: "ORD-2040", customer: "Sanjay Gupta",
     phone: "+91 66655 44433",
     address: "Gachibowli, Telecom Nagar, Phase 2, Hyderabad",
@@ -121,7 +121,7 @@ const MOCK_ORDERS: Order[] = [
     ],
     delivery: 40, payment: "UPI Paid",
     status: "delivered", time: "5 hrs ago",
-    note: "" 
+    note: ""
   }
 ];
 
@@ -175,7 +175,7 @@ export default function OrdersPage() {
       };
       setToastOrder(newOrder);
       setShowToast(true);
-      
+
       // Auto-dismiss toast
       setTimeout(() => setShowToast(false), 8000);
     }, 2000);
@@ -215,11 +215,11 @@ export default function OrdersPage() {
 
   return (
     <div className="flex h-full w-full bg-[#f9fafb] text-slate-900 font-sans overflow-hidden">
-      <OrderList 
-        orders={filteredOrders} 
+      <OrderList
+        orders={filteredOrders}
         allOrdersCount={orders.length}
         pendingCount={orders.filter(o => o.status === 'pending').length}
-        filter={filter} 
+        filter={filter}
         setFilter={setFilter}
         search={search}
         setSearch={setSearch}
@@ -228,9 +228,9 @@ export default function OrdersPage() {
       />
       <div className="flex-1 overflow-y-auto">
         {selectedOrder ? (
-          <OrderDetail 
-            order={selectedOrder} 
-            onUpdateStatus={handleUpdateStatus} 
+          <OrderDetail
+            order={selectedOrder}
+            onUpdateStatus={handleUpdateStatus}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-slate-400">
@@ -243,8 +243,8 @@ export default function OrdersPage() {
       </div>
 
       {showToast && toastOrder && (
-        <NewOrderToast 
-          order={toastOrder} 
+        <NewOrderToast
+          order={toastOrder}
           onAccept={handleAcceptToast}
           onReject={handleRejectToast}
           onClose={() => setShowToast(false)}
@@ -256,9 +256,9 @@ export default function OrdersPage() {
 
 // --- LEFT PANEL ---
 
-function OrderList({ 
-  orders, allOrdersCount, pendingCount, filter, setFilter, 
-  search, setSearch, selectedOrderId, onSelectOrder 
+function OrderList({
+  orders, allOrdersCount, pendingCount, filter, setFilter,
+  search, setSearch, selectedOrderId, onSelectOrder
 }: any) {
   const tabs = ['All', 'Pending', 'Accepted', 'Packing', 'Shipped', 'Out for Delivery', 'Delivered', 'Rejected'];
 
@@ -279,12 +279,12 @@ function OrderList({
             </div>
           )}
         </div>
-        
+
         <div className="relative mb-4">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search by ID or customer..." 
+          <input
+            type="text"
+            placeholder="Search by ID or customer..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
@@ -293,14 +293,13 @@ function OrderList({
 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {tabs.map(t => (
-            <button 
+            <button
               key={t}
               onClick={() => setFilter(t)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                filter === t 
-                  ? 'bg-slate-900 text-white' 
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filter === t
+                  ? 'bg-slate-900 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+                }`}
             >
               {t}
             </button>
@@ -313,9 +312,9 @@ function OrderList({
           <p className="text-center text-sm text-slate-500 mt-10">No orders found.</p>
         ) : (
           orders.map((order: Order) => (
-            <OrderCard 
-              key={order.id} 
-              order={order} 
+            <OrderCard
+              key={order.id}
+              order={order}
               isSelected={selectedOrderId === order.id}
               onClick={() => onSelectOrder(order.id)}
             />
@@ -332,13 +331,12 @@ function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: b
   const isNew = order.status === 'pending';
 
   return (
-    <div 
+    <div
       onClick={onClick}
-      className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${
-        isSelected 
-          ? 'border-[#2563eb] bg-blue-50/50 shadow-sm' 
+      className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${isSelected
+          ? 'border-[#2563eb] bg-blue-50/50 shadow-sm'
           : 'border-[#e5e7eb] bg-white hover:border-slate-300 hover:shadow-sm'
-      }`}
+        }`}
       style={{
         borderLeftWidth: isSelected ? '4px' : '1px',
       }}
@@ -361,7 +359,7 @@ function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: b
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-between items-center mt-2">
         <p className="text-xs text-slate-500 truncate max-w-[180px]">
           {order.items.length} item(s) • {order.payment}
@@ -432,13 +430,13 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
 
         {order.status === 'pending' && (
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={() => setShowRejectModal(true)}
               className="px-4 py-2 border-2 border-red-200 text-red-600 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors"
             >
               Reject Order
             </button>
-            <button 
+            <button
               onClick={() => onUpdateStatus(order.id, 'accepted')}
               className="px-4 py-2 bg-[#16a34a] text-white rounded-lg font-medium text-sm hover:bg-green-700 shadow-sm transition-colors"
             >
@@ -452,7 +450,7 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl animate-in zoom-in-95 duration-200">
             <h3 className="text-lg font-bold mb-4">Reject Order</h3>
-            <textarea 
+            <textarea
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
               placeholder="Reason for rejection..."
@@ -460,7 +458,7 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
             />
             <div className="flex justify-end gap-3">
               <button onClick={() => setShowRejectModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-              <button 
+              <button
                 onClick={() => {
                   onUpdateStatus(order.id, 'rejected', rejectReason);
                   setShowRejectModal(false);
@@ -481,11 +479,11 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
           <div className="bg-white p-6 rounded-xl border border-[#e5e7eb] shadow-sm">
             <h3 className="text-lg font-semibold mb-6">Order Status</h3>
             <TrackingTimeline status={order.status} rejectionReason={order.rejectionReason} />
-            
+
             {/* SECTION 3: Admin Control */}
             {['accepted', 'packing', 'shipped', 'out_for_delivery'].includes(order.status) && (
               <div className="mt-8 pt-6 border-t flex justify-end">
-                <button 
+                <button
                   onClick={handleNextStage}
                   className="px-6 py-2.5 bg-[#2563eb] text-white rounded-lg font-medium text-sm hover:bg-blue-700 shadow-sm transition-all active:scale-95 flex items-center gap-2"
                 >
@@ -510,14 +508,14 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
 
 function TrackingTimeline({ status, rejectionReason }: { status: OrderStatus, rejectionReason?: string }) {
   const isRejected = status === 'rejected';
-  
+
   const getStageState = (stageId: OrderStatus, index: number) => {
     if (isRejected) return index === 0 ? 'rejected' : 'upcoming';
     if (status === 'pending') return 'upcoming';
-    
+
     const sequence: OrderStatus[] = ['accepted', 'packing', 'shipped', 'out_for_delivery', 'delivered'];
     const currentIdx = sequence.indexOf(status);
-    
+
     if (index < currentIdx) return 'completed';
     if (index === currentIdx) return 'current';
     return 'upcoming';
@@ -528,15 +526,14 @@ function TrackingTimeline({ status, rejectionReason }: { status: OrderStatus, re
       {STAGES.map((stage, idx) => {
         const state = getStageState(stage.id, idx);
         const isLast = idx === STAGES.length - 1;
-        
+
         return (
           <div key={stage.id} className="relative flex gap-6 pb-8 last:pb-0 group">
             {/* Connector Line */}
             {!isLast && (
-              <div className={`absolute left-[11px] top-8 bottom-0 w-[2px] transition-colors duration-500 ${
-                state === 'completed' || (state === 'current' && !isRejected) ? 'bg-[#16a34a]' : 'bg-slate-200 dashed-line'
-              }`} 
-              style={state === 'completed' ? {} : { backgroundImage: 'linear-gradient(to bottom, #e5e7eb 50%, transparent 50%)', backgroundSize: '100% 8px', backgroundColor: 'transparent' }}
+              <div className={`absolute left-[11px] top-8 bottom-0 w-[2px] transition-colors duration-500 ${state === 'completed' || (state === 'current' && !isRejected) ? 'bg-[#16a34a]' : 'bg-slate-200 dashed-line'
+                }`}
+                style={state === 'completed' ? {} : { backgroundImage: 'linear-gradient(to bottom, #e5e7eb 50%, transparent 50%)', backgroundSize: '100% 8px', backgroundColor: 'transparent' }}
               />
             )}
 
@@ -568,15 +565,13 @@ function TrackingTimeline({ status, rejectionReason }: { status: OrderStatus, re
             </div>
 
             {/* Content */}
-            <div className={`flex-1 -mt-1.5 transition-all duration-500 ${
-              state === 'upcoming' ? 'opacity-50' : 'opacity-100'
-            }`}>
+            <div className={`flex-1 -mt-1.5 transition-all duration-500 ${state === 'upcoming' ? 'opacity-50' : 'opacity-100'
+              }`}>
               <div className="flex items-center gap-3">
-                <h4 className={`text-sm font-semibold ${
-                  state === 'rejected' ? 'text-red-600' : 
-                  state === 'current' ? 'text-slate-900' : 
-                  state === 'completed' ? 'text-slate-800' : 'text-slate-500'
-                }`}>
+                <h4 className={`text-sm font-semibold ${state === 'rejected' ? 'text-red-600' :
+                    state === 'current' ? 'text-slate-900' :
+                      state === 'completed' ? 'text-slate-800' : 'text-slate-500'
+                  }`}>
                   {state === 'rejected' ? 'Order Rejected' : stage.label}
                 </h4>
                 {state === 'current' && (
@@ -585,13 +580,13 @@ function TrackingTimeline({ status, rejectionReason }: { status: OrderStatus, re
                   </span>
                 )}
               </div>
-              
+
               {state === 'completed' && (
                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Update recorded
                 </p>
               )}
-              
+
               {state === 'rejected' && (
                 <p className="text-xs text-red-500 mt-1.5 font-medium flex items-start gap-1.5 p-2 bg-red-50 rounded-md border border-red-100 w-fit">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
@@ -608,7 +603,7 @@ function TrackingTimeline({ status, rejectionReason }: { status: OrderStatus, re
 
 function OrderItems({ order }: { order: Order }) {
   const itemsTotal = order.items.reduce((s, i) => s + (i.price * i.qty), 0);
-  
+
   return (
     <div className="bg-white p-6 rounded-xl border border-[#e5e7eb] shadow-sm">
       <h3 className="text-lg font-semibold mb-4">Order Items</h3>
@@ -628,9 +623,9 @@ function OrderItems({ order }: { order: Order }) {
           </div>
         ))}
       </div>
-      
+
       <hr className="my-5 border-[#e5e7eb]" />
-      
+
       <div className="space-y-3">
         <div className="flex justify-between text-sm text-slate-600">
           <p>Subtotal</p>
@@ -653,7 +648,7 @@ function CustomerInfo({ order }: { order: Order }) {
   return (
     <div className="bg-white p-6 rounded-xl border border-[#e5e7eb] shadow-sm space-y-6">
       <h3 className="text-lg font-semibold">Customer Details</h3>
-      
+
       <div className="space-y-4">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-slate-50 rounded-lg text-slate-500 mt-0.5"><User className="h-4 w-4" /></div>
@@ -662,7 +657,7 @@ function CustomerInfo({ order }: { order: Order }) {
             <p className="text-sm font-medium text-slate-900">{order.customer}</p>
           </div>
         </div>
-        
+
         <div className="flex items-start gap-3">
           <div className="p-2 bg-slate-50 rounded-lg text-slate-500 mt-0.5"><Phone className="h-4 w-4" /></div>
           <div>
@@ -678,14 +673,13 @@ function CustomerInfo({ order }: { order: Order }) {
             <p className="text-sm font-medium text-slate-900 leading-snug">{order.address}</p>
           </div>
         </div>
-        
+
         <div className="flex items-start gap-3">
           <div className="p-2 bg-slate-50 rounded-lg text-slate-500 mt-0.5"><CreditCard className="h-4 w-4" /></div>
           <div>
             <p className="text-xs text-slate-500 mb-0.5">Payment Method</p>
-            <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border ${
-              order.payment.includes('UPI') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'
-            }`}>
+            <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border ${order.payment.includes('UPI') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'
+              }`}>
               {order.payment}
             </span>
           </div>
@@ -704,12 +698,12 @@ function CustomerInfo({ order }: { order: Order }) {
 
 function NewOrderToast({ order, onAccept, onReject, onClose }: any) {
   const total = order.items.reduce((sum: number, i: any) => sum + (i.price * i.qty), 0) + order.delivery;
-  
+
   return (
     <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
       <div className="bg-white rounded-xl shadow-2xl border border-[#2563eb] p-4 w-[360px] overflow-hidden relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-[#2563eb] animate-[shrink_8s_linear]"></div>
-        
+
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2 text-[#2563eb] font-bold">
             <span className="relative flex h-2.5 w-2.5">
@@ -720,22 +714,22 @@ function NewOrderToast({ order, onAccept, onReject, onClose }: any) {
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button>
         </div>
-        
+
         <p className="text-sm text-slate-700 font-medium mb-1">
           {order.customer} placed {order.id}
         </p>
         <p className="text-xs text-slate-500 mb-4">
           Total value: <span className="font-bold text-slate-900">₹{total}</span> • {order.items.length} items
         </p>
-        
+
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={onReject}
             className="flex-1 px-3 py-2 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors"
           >
             Reject
           </button>
-          <button 
+          <button
             onClick={onAccept}
             className="flex-1 px-3 py-2 bg-[#16a34a] text-white rounded-lg text-xs font-semibold hover:bg-green-700 shadow-sm transition-colors"
           >

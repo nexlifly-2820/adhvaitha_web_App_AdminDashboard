@@ -10,8 +10,11 @@ export interface Order {
   totalAmount: number;
   orderDate: string; // ISO format string
   paymentStatus: PaymentStatus;
+  paymentMethod?: string;
   orderStatus: OrderStatus;
   deliveryAddress: string;
+  trackingId?: string;
+  courierName?: string;
 }
 
 export interface CustomerInfo {

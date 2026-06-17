@@ -33,14 +33,15 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
       const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
       const storageRef = ref(storage, `${folder}/${fileName}`)
       
-      const snapshot = await uploadBytes(storageRef, file)
+      const metadata = { contentType: file.type }
+      const snapshot = await uploadBytes(storageRef, file, metadata)
       const downloadURL = await getDownloadURL(snapshot.ref)
       
       onChange(downloadURL)
       toast.success('Image uploaded successfully')
     } catch (error: any) {
       console.error('Upload error:', error)
-      toast.error(error.message || 'Failed to upload image')
+      toast.error(error.message || 'Failed to upload image. Please check your Firebase Storage Rules.')
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {

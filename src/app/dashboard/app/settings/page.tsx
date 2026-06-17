@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase-app'
 import { toast } from 'sonner'
-import { Settings, ShieldAlert, Smartphone, Save, AlertTriangle } from 'lucide-react'
+import { Settings, ShieldAlert, Smartphone, Save, AlertTriangle, Truck } from 'lucide-react'
 
 export default function SystemSettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -17,6 +17,11 @@ export default function SystemSettingsPage() {
   // App Config State (Targeting exact Firestore Guide keys)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [minAppVersion, setMinAppVersion] = useState('1.0.0')
+
+  // Shipping Config State
+  const [baseFee, setBaseFee] = useState(40)
+  const [freeThreshold, setFreeThreshold] = useState(500)
+  const [enableFreeDelivery, setEnableFreeDelivery] = useState(true)
 
   useEffect(() => {
     fetchConfig()
@@ -32,6 +37,22 @@ export default function SystemSettingsPage() {
         const data = docSnap.data()
         setMaintenanceMode(data.maintenance_mode || false)
         setMinAppVersion(data.min_version || '1.0.0')
+      }
+
+      const deliveryRef = doc(db, 'app_data', 'delivery_config')
+      const deliverySnap = await getDoc(deliveryRef)
+      if (deliverySnap.exists()) {
+        const deliveryData = deliverySnap.data()
+        setBaseFee(deliveryData.base_fee || 40)
+        
+        // If threshold is >= 99999, it means free delivery is disabled
+        if (deliveryData.free_threshold >= 99999) {
+          setEnableFreeDelivery(false)
+          setFreeThreshold(500) // Keep a normal value in the input box for when they turn it back on
+        } else {
+          setEnableFreeDelivery(true)
+          setFreeThreshold(deliveryData.free_threshold || 500)
+        }
       }
     } catch (error) {
       console.error('Error fetching app config:', error)
@@ -49,6 +70,13 @@ export default function SystemSettingsPage() {
         maintenance_mode: maintenanceMode,
         min_version: minAppVersion,
       }, { merge: true })
+
+      const deliveryRef = doc(db, 'app_data', 'delivery_config')
+      await setDoc(deliveryRef, {
+        base_fee: Number(baseFee),
+        free_threshold: enableFreeDelivery ? Number(freeThreshold) : 99999
+      }, { merge: true })
+
       toast.success('System settings saved successfully!')
     } catch (error) {
       console.error('Error saving app config:', error)
@@ -133,6 +161,61 @@ export default function SystemSettingsPage() {
               />
               <p className="text-xs text-slate-500">Any app version lower than this string will be forced to update.</p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Shipping Configuration Card */}
+        <Card className="border-transparent shadow-md md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-indigo-600">
+              <Truck className="h-5 w-5" />
+              Shipping Configuration
+            </CardTitle>
+            <CardDescription>
+              Manage delivery fees and free shipping thresholds. Changes instantly update on user carts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">Standard Delivery Fee (₹)</label>
+                <Input 
+                  type="number"
+                  value={baseFee}
+                  onChange={(e) => setBaseFee(Number(e.target.value))}
+                  className="bg-white"
+                />
+                <p className="text-xs text-slate-500">The base shipping cost applied to all orders.</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 border rounded-lg p-4 bg-slate-50">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-bold text-slate-900">Enable Free Delivery</label>
+                  <p className="text-xs text-slate-500">Waive shipping fee on large orders.</p>
+                </div>
+                <Switch 
+                  checked={enableFreeDelivery} 
+                  onCheckedChange={setEnableFreeDelivery}
+                  className={enableFreeDelivery ? 'bg-indigo-600' : ''}
+                />
+              </div>
+              
+              <div className={`space-y-2 transition-opacity ${enableFreeDelivery ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+                <label className="text-sm font-semibold">Free Delivery Threshold (₹)</label>
+                <Input 
+                  type="number"
+                  value={freeThreshold}
+                  onChange={(e) => setFreeThreshold(Number(e.target.value))}
+                  className="bg-white"
+                  disabled={!enableFreeDelivery}
+                />
+                <p className="text-xs text-slate-500">Orders above this amount will get free shipping.</p>
+              </div>
+            </div>
+
           </CardContent>
         </Card>
       </div>
