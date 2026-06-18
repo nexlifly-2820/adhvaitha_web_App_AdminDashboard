@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle } from 'lucide-react'
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase-app'
@@ -23,6 +23,20 @@ interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
 interface Pairing { title: string; pairing: string; desc: string; product_name: string; image: string }
+
+interface KitchenStoryIngredient { image_url: string; text: string; is_left: boolean }
+interface KitchenStory {
+  app_bar: { title: string };
+  sections: {
+    beginning: { image_url: string; label: string; angle: number; has_pin: boolean };
+    history: { text: string };
+    authentic: { image_url: string; banner_text: string; angle: number };
+    ingredients: { header_text: string; items: KitchenStoryIngredient[]; footer_title: string; footer_subtitle: string };
+    vision: { main_text: string; highlight_text: string; suffix_text: string };
+    reach: { image_url: string; label: string; description: string };
+    footer: { image_url: string; top_text: string; big_text: string; cursive_text: string };
+  }
+}
 
 export default function ContentManager() {
   const [isLoading, setIsLoading] = useState(true)
@@ -48,6 +62,19 @@ export default function ContentManager() {
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
   const [tasteOptions, setTasteOptions] = useState<TasteOption[]>([])
   
+  const [kitchenStory, setKitchenStory] = useState<KitchenStory>({
+    app_bar: { title: "OUR JOURNEY" },
+    sections: {
+      beginning: { image_url: "", label: "OUR BEGINNING", angle: -0.05, has_pin: true },
+      history: { text: "Founded with a passion for tradition..." },
+      authentic: { image_url: "", banner_text: "PURE & AUTHENTIC", angle: 0.05 },
+      ingredients: { header_text: "WHILE YOU ARE BROWSING OUR APP\nWE'RE PROBABLY OUT", items: [], footer_title: "& CHOOSING THE PUREST\nCOLD-PRESSED OILS", footer_subtitle: "FROM DIFFERENT\nFARMS ACROSS\nINDIA" },
+      vision: { main_text: "Our vision of making ", highlight_text: "HONESTLY\nGOOD", suffix_text: ", authentic and traditional Indian food came to life" },
+      reach: { image_url: "", label: "OUR REACH", description: "The same love and authenticity goes into every Adhvaitha pack!" },
+      footer: { image_url: "", top_text: "Bring home the taste of tradition.", big_text: "SO TRADITIONAL", cursive_text: "good" }
+    }
+  })
+  
   // Pairing & Products State
   const [pairings, setPairings] = useState<Pairing[]>([])
   const [productNames, setProductNames] = useState<string[]>([])
@@ -65,9 +92,9 @@ export default function ContentManager() {
         return snap.exists() ? snap.data() : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
-        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'),
+        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -99,6 +126,7 @@ export default function ContentManager() {
         setTasteOptions(onboardDoc.taste_options || [])
       }
       if (pairingsDoc) setPairings(pairingsDoc.list || [])
+      if (kitchenStoryDoc) setKitchenStory(kitchenStoryDoc as KitchenStory)
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -162,6 +190,9 @@ export default function ContentManager() {
         break
       case 'pairings':
         handleSaveTab('pairings', { list: pairings })
+        break
+      case 'kitchen_story':
+        handleSaveTab('kitchen_story', kitchenStory)
         break
     }
   }
@@ -342,8 +373,8 @@ export default function ContentManager() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex gap-6 flex-col lg:flex-row">
-        <TabsList className="flex flex-col justify-start h-auto bg-slate-100 dark:bg-slate-900 w-full lg:w-48 items-stretch p-2 gap-2 shrink-0">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex gap-6 flex-col lg:flex-row items-start">
+        <TabsList className="flex flex-col justify-start bg-slate-100 dark:bg-slate-900 w-full lg:w-56 items-stretch p-2 gap-2 shrink-0 lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl">
           <TabsTrigger value="banners" className="justify-start data-[state=active]:bg-white">Banners</TabsTrigger>
           <TabsTrigger value="stories" className="justify-start data-[state=active]:bg-white">Stories</TabsTrigger>
           <TabsTrigger value="bento" className="justify-start data-[state=active]:bg-white">Bento Selection</TabsTrigger>
@@ -353,6 +384,7 @@ export default function ContentManager() {
           <TabsTrigger value="packaging" className="justify-start data-[state=active]:bg-white">Packaging</TabsTrigger>
           <TabsTrigger value="onboarding" className="justify-start data-[state=active]:bg-white">Onboarding</TabsTrigger>
           <TabsTrigger value="pairings" className="justify-start data-[state=active]:bg-white">Art of Pairing</TabsTrigger>
+          <TabsTrigger value="kitchen_story" className="justify-start data-[state=active]:bg-white">Kitchen Story</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0">
@@ -545,6 +577,15 @@ export default function ContentManager() {
                   {productNames.length === 0 && (
                     <p className="text-sm text-slate-500 italic p-4 border rounded bg-slate-50 dark:bg-slate-900">No products found. Please add products first.</p>
                   )}
+                  {deals.product_names.length < 3 && (
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-amber-800">Minimum 3 Products Required</h4>
+                        <p className="text-xs text-amber-700 mt-0.5">You have selected fewer than 3 products. The app will automatically fill the remaining slots with random products to maintain the "minimum three" UI design rule.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -718,6 +759,288 @@ export default function ContentManager() {
                     </div>
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="kitchen_story" className="space-y-6 mt-0">
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div>
+                  <CardTitle>Kitchen Story (Our Journey)</CardTitle>
+                  <CardDescription>Manage the completely dynamic 'Our Journey' vertical scrolling page.</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Header */}
+                <div className="p-4 border rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">1. Header Settings</h3>
+                  <div>
+                    <label className="text-sm font-medium">App Bar Title</label>
+                    <Input 
+                      value={kitchenStory.app_bar.title} 
+                      onChange={e => setKitchenStory({ ...kitchenStory, app_bar: { title: e.target.value } })} 
+                    />
+                  </div>
+                </div>
+
+                {/* Beginning */}
+                <div className="p-4 border rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">2. The Beginning & History</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-sm font-medium block mb-2">Polaroid Image</label>
+                      <ImageUpload 
+                        value={kitchenStory.sections.beginning.image_url} 
+                        onChange={(url) => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, beginning: { ...kitchenStory.sections.beginning, image_url: url } } })} 
+                        folder="app_content"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Image Label</label>
+                        <Input 
+                          value={kitchenStory.sections.beginning.label} 
+                          onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, beginning: { ...kitchenStory.sections.beginning, label: e.target.value } } })} 
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 mt-4">
+                        <input 
+                          type="checkbox" 
+                          id="hasPin"
+                          checked={kitchenStory.sections.beginning.has_pin}
+                          onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, beginning: { ...kitchenStory.sections.beginning, has_pin: e.target.checked } } })}
+                          className="w-4 h-4"
+                        />
+                        <label htmlFor="hasPin" className="text-sm font-medium">Show Red Pin on Photo</label>
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium">History Text Paragraph</label>
+                      <textarea 
+                        className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 mt-1"
+                        value={kitchenStory.sections.history.text}
+                        onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, history: { ...kitchenStory.sections.history, text: e.target.value } } })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Authentic */}
+                <div className="p-4 border rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">3. Pure & Authentic Section</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-sm font-medium block mb-2">Main Image</label>
+                      <ImageUpload 
+                        value={kitchenStory.sections.authentic.image_url} 
+                        onChange={(url) => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, authentic: { ...kitchenStory.sections.authentic, image_url: url } } })} 
+                        folder="app_content"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Banner Text</label>
+                      <Input 
+                        value={kitchenStory.sections.authentic.banner_text} 
+                        onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, authentic: { ...kitchenStory.sections.authentic, banner_text: e.target.value } } })} 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ingredients List */}
+                <div className="p-4 border rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">4. Dynamic Ingredients Sourcing List</h3>
+                  <div>
+                    <label className="text-sm font-medium">Header Introduction Text</label>
+                    <textarea 
+                      className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm shadow-sm focus-visible:outline-none mt-1 mb-6"
+                      value={kitchenStory.sections.ingredients.header_text}
+                      onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, ingredients: { ...kitchenStory.sections.ingredients, header_text: e.target.value } } })}
+                    />
+                  </div>
+                  
+                  <div className="space-y-4 border-l-2 border-slate-200 pl-4 ml-2">
+                    {kitchenStory.sections.ingredients.items.map((item, i) => (
+                      <div key={i} className="p-4 border border-slate-200 bg-white dark:bg-slate-950 rounded-xl relative">
+                        <button 
+                          onClick={() => {
+                            const n = [...kitchenStory.sections.ingredients.items];
+                            n.splice(i, 1);
+                            setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, ingredients: { ...kitchenStory.sections.ingredients, items: n } } });
+                          }}
+                          className="absolute top-4 right-4 text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium block mb-2">Ingredient Image</label>
+                            <ImageUpload 
+                              value={item.image_url} 
+                              onChange={(url) => {
+                                const n = [...kitchenStory.sections.ingredients.items];
+                                n[i].image_url = url;
+                                setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, ingredients: { ...kitchenStory.sections.ingredients, items: n } } });
+                              }} 
+                              folder="app_content"
+                            />
+                          </div>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium block">Text Layout Side</label>
+                              <select 
+                                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm mt-1"
+                                value={item.is_left ? "left" : "right"}
+                                onChange={e => {
+                                  const n = [...kitchenStory.sections.ingredients.items];
+                                  n[i].is_left = e.target.value === "left";
+                                  setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, ingredients: { ...kitchenStory.sections.ingredients, items: n } } });
+                                }}
+                              >
+                                <option value="left">Text on Left, Image on Right</option>
+                                <option value="right">Text on Right, Image on Left</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium block">Action Text (Multi-line)</label>
+                              <textarea 
+                                className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm mt-1"
+                                value={item.text}
+                                onChange={e => {
+                                  const n = [...kitchenStory.sections.ingredients.items];
+                                  n[i].text = e.target.value;
+                                  setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, ingredients: { ...kitchenStory.sections.ingredients, items: n } } });
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <Button variant="outline" onClick={() => {
+                      const n = [...kitchenStory.sections.ingredients.items, { image_url: '', text: '', is_left: true }];
+                      setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, ingredients: { ...kitchenStory.sections.ingredients, items: n } } });
+                    }} className="w-full">
+                      <Plus className="w-4 h-4 mr-2" /> Add Ingredient Block
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
+                    <div>
+                      <label className="text-sm font-medium block">Footer Title (e.g. & CHOOSING...)</label>
+                      <textarea 
+                        className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm mt-1"
+                        value={kitchenStory.sections.ingredients.footer_title}
+                        onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, ingredients: { ...kitchenStory.sections.ingredients, footer_title: e.target.value } } })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium block">Footer Subtitle (e.g. FROM FARMS...)</label>
+                      <textarea 
+                        className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm mt-1"
+                        value={kitchenStory.sections.ingredients.footer_subtitle}
+                        onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, ingredients: { ...kitchenStory.sections.ingredients, footer_subtitle: e.target.value } } })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vision */}
+                <div className="p-4 border rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">5. Vision Statement Editor</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-slate-500">Normal Prefix Text</label>
+                      <Input 
+                        value={kitchenStory.sections.vision.main_text} 
+                        onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, vision: { ...kitchenStory.sections.vision, main_text: e.target.value } } })} 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-blue-600 font-bold">Highlighted Bold Text</label>
+                      <textarea 
+                        className="w-full min-h-[40px] rounded-md border border-input bg-background px-3 py-2 text-sm font-bold mt-1 text-center"
+                        value={kitchenStory.sections.vision.highlight_text} 
+                        onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, vision: { ...kitchenStory.sections.vision, highlight_text: e.target.value } } })} 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-500">Normal Suffix Text</label>
+                      <Input 
+                        value={kitchenStory.sections.vision.suffix_text} 
+                        onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, vision: { ...kitchenStory.sections.vision, suffix_text: e.target.value } } })} 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reach & Footer */}
+                <div className="p-4 border rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">6. Reach & Footer Branding</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-slate-200 pb-8">
+                    <div>
+                      <label className="text-sm font-medium block mb-2">Reach Map Image</label>
+                      <ImageUpload 
+                        value={kitchenStory.sections.reach.image_url} 
+                        onChange={(url) => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, reach: { ...kitchenStory.sections.reach, image_url: url } } })} 
+                        folder="app_content"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Reach Label (e.g. OUR REACH)</label>
+                        <Input 
+                          value={kitchenStory.sections.reach.label} 
+                          onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, reach: { ...kitchenStory.sections.reach, label: e.target.value } } })} 
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Description Paragraph</label>
+                        <textarea 
+                          className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
+                          value={kitchenStory.sections.reach.description} 
+                          onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, reach: { ...kitchenStory.sections.reach, description: e.target.value } } })} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                    <div>
+                      <label className="text-sm font-medium block mb-2">Footer Signature Image</label>
+                      <ImageUpload 
+                        value={kitchenStory.sections.footer.image_url} 
+                        onChange={(url) => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, footer: { ...kitchenStory.sections.footer, image_url: url } } })} 
+                        folder="app_content"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Top Intro Text</label>
+                        <Input 
+                          value={kitchenStory.sections.footer.top_text} 
+                          onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, footer: { ...kitchenStory.sections.footer, top_text: e.target.value } } })} 
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Big Bold Text</label>
+                        <Input 
+                          value={kitchenStory.sections.footer.big_text} 
+                          onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, footer: { ...kitchenStory.sections.footer, big_text: e.target.value } } })} 
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium font-serif italic text-rose-600">Cursive Accent Word</label>
+                        <Input 
+                          value={kitchenStory.sections.footer.cursive_text} 
+                          onChange={e => setKitchenStory({ ...kitchenStory, sections: { ...kitchenStory.sections, footer: { ...kitchenStory.sections.footer, cursive_text: e.target.value } } })} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
