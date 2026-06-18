@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, Save, Image as ImageIcon, Box } from 'lucide-react'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase-app'
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db, storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageUpload } from '@/components/ImageUpload'
@@ -15,9 +16,9 @@ import { ImageUpload } from '@/components/ImageUpload'
 interface MainBanner { title: string; sub: string; img: string }
 interface AdBanner { tag: string; title: string; sub: string; img: string }
 interface Story { label: string; icon: string; tag: string }
-interface BentoSelection { section_title: string; best_seller_product: string; card1_label: string; card2_label: string; card2_icon: string; card3_label: string }
+interface BentoSelection { section_title: string; best_seller_product: string; card1_label: string; card2_label: string; card2_sub: string; card2_icon: string; card3_label: string; card3_sub: string; card3_icon: string }
 interface Category { label: string; img: string }
-interface Coupon { code: string; title: string; sub: string; min: string; color: string }
+interface Coupon { code: string; title: string; sub: string }
 interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
@@ -35,11 +36,13 @@ export default function ContentManager() {
   const [stories, setStories] = useState<Story[]>([])
   
   const [bento, setBento] = useState<BentoSelection>({
-    section_title: '', best_seller_product: '', card1_label: '', card2_label: '', card2_icon: '', card3_label: ''
+    section_title: '', best_seller_product: '', card1_label: '', card2_label: '', card2_sub: '', card2_icon: '', card3_label: '', card3_sub: '', card3_icon: ''
   })
   
   const [categories, setCategories] = useState<Category[]>([])
-  const [deals, setDeals] = useState<string[]>([])
+  const [deals, setDeals] = useState<{product_names: string[], end_time: string | null, title: string}>({
+    product_names: [], end_time: null, title: 'DEALS OF THE DAY'
+  })
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [packaging, setPackaging] = useState<Packaging[]>([])
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
@@ -48,6 +51,7 @@ export default function ContentManager() {
   // Pairing & Products State
   const [pairings, setPairings] = useState<Pairing[]>([])
   const [productNames, setProductNames] = useState<string[]>([])
+  const [allProducts, setAllProducts] = useState<any[]>([])
 
   useEffect(() => {
     fetchAllContent()
@@ -74,7 +78,20 @@ export default function ContentManager() {
       if (storiesDoc) setStories(storiesDoc.list || [])
       if (bentoDoc) setBento(bentoDoc as BentoSelection)
       if (catDoc) setCategories(catDoc.list || [])
-      if (dealsDoc) setDeals(dealsDoc.product_names || [])
+      if (dealsDoc) {
+        let end_time_str = '';
+        if (dealsDoc.end_time && dealsDoc.end_time.toDate) {
+          const d = dealsDoc.end_time.toDate();
+          end_time_str = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        } else if (typeof dealsDoc.end_time === 'string') {
+          end_time_str = dealsDoc.end_time.substring(0, 16);
+        }
+        setDeals({
+          product_names: dealsDoc.product_names || [],
+          end_time: end_time_str,
+          title: dealsDoc.title || 'DEALS OF THE DAY'
+        })
+      }
       if (couponsDoc) setCoupons(couponsDoc.active_list || [])
       if (pkgDoc) setPackaging(pkgDoc.list || [])
       if (onboardDoc) {
@@ -83,7 +100,9 @@ export default function ContentManager() {
       }
       if (pairingsDoc) setPairings(pairingsDoc.list || [])
       if (productsRes && productsRes.success && productsRes.data) {
-        setProductNames(Object.values(productsRes.data).map((p: any) => p.name))
+        const prods = Object.values(productsRes.data)
+        setProductNames(prods.map((p: any) => p.name))
+        setAllProducts(prods)
       }
 
     } catch (error) {
@@ -122,7 +141,15 @@ export default function ContentManager() {
         handleSaveTab('categories', { list: categories })
         break
       case 'deals':
-        handleSaveTab('deals', { product_names: deals })
+        let endTimeTimestamp = null;
+        if (deals.end_time) {
+          endTimeTimestamp = Timestamp.fromDate(new Date(deals.end_time));
+        }
+        handleSaveTab('deals', { 
+          product_names: deals.product_names,
+          end_time: endTimeTimestamp,
+          title: deals.title
+        })
         break
       case 'coupons':
         handleSaveTab('coupons', { active_list: coupons })
@@ -136,6 +163,145 @@ export default function ContentManager() {
       case 'pairings':
         handleSaveTab('pairings', { list: pairings })
         break
+    }
+  }
+
+  const handleSeedData = async (productsToUse?: any[]) => {
+    if (!confirm('This will overwrite all current content with demo data. Are you sure?')) return;
+    setIsSaving(true)
+    try {
+      const activeProducts = productsToUse || allProducts;
+      const getImg = (keywords: string[]) => {
+        const prod = activeProducts.find(p => p.image && keywords.some(k => p.name.toLowerCase().includes(k.toLowerCase())))
+        if (prod) return prod.image
+        const anyProdWithImg = activeProducts.find(p => p.image)
+        return anyProdWithImg ? anyProdWithImg.image : 'https://placehold.co/600x400'
+      }
+
+      const img1 = getImg(['bellam', 'avakaya', 'pickle'])
+      const img2 = getImg(['laddu', 'sweet', 'jamun'])
+      const img3 = getImg(['podi', 'masala', 'spice'])
+      const img4 = getImg(['chips', 'mixture', 'snack'])
+      
+      const defaultProduct = activeProducts.length > 0 ? activeProducts[0].name : 'Bellam Avakaya'
+
+      await Promise.all([
+        setDoc(doc(db, 'app_data', 'banners'), {
+          main_banners: [{ title: 'Handmade Pickles', sub: 'Since 1982', img: img1 }],
+          ad_banners: [{ tag: 'FEATURED', title: 'Summer Sale', sub: 'Up to 20% off', img: img2 }]
+        }),
+        setDoc(doc(db, 'app_data', 'stories'), {
+          list: [
+            { label: 'Our Origin', icon: 'auto_stories', tag: 'ORIGIN' },
+            { label: 'Packaging', icon: 'inventory_2', tag: 'PACKAGING' }
+          ]
+        }),
+        setDoc(doc(db, 'app_data', 'bento_selection'), {
+          section_title: "Today's Selection",
+          best_seller_product: defaultProduct,
+          card1_label: "Best Seller",
+          card2_label: "Royal",
+          card2_sub: "Spices",
+          card2_icon: "auto_awesome",
+          card3_label: "Crunchy",
+          card3_sub: "Snacks",
+          card3_icon: "restaurant_menu_rounded"
+        }),
+        setDoc(doc(db, 'app_data', 'categories'), {
+          list: [
+            { label: 'Pickles', img: img1 },
+            { label: 'Sweets', img: img2 },
+            { label: 'Spices', img: img3 }
+          ]
+        }),
+        setDoc(doc(db, 'app_data', 'deals'), {
+          product_names: [defaultProduct],
+          end_time: Timestamp.fromDate(new Date(Date.now() + 86400000)),
+          title: 'DEALS OF THE DAY'
+        }),
+        setDoc(doc(db, 'app_data', 'coupons'), {
+          active_list: [{ code: 'ROYAL10', title: '10% OFF', sub: 'On your first order' }]
+        }),
+        setDoc(doc(db, 'app_data', 'packaging'), {
+          list: [{ title: 'Premium Glass Jars', desc: 'Sealed for freshness', img: img4 }]
+        }),
+        setDoc(doc(db, 'app_data', 'onboarding'), {
+          steps: [
+            { title: 'Welcome to Adhvaitha', subtitle: 'Authentic Taste', desc: 'Discover the traditional flavors of our handmade delicacies.', img: img1 }
+          ],
+          taste_options: [
+            { title: 'Spicy', sub: 'Traditional heat', icon: 'local_fire_department', color: '#ff4500' },
+            { title: 'Sweet', sub: 'Pure jaggery', icon: 'eco', color: '#8b4513' }
+          ]
+        }),
+        setDoc(doc(db, 'app_data', 'pairings'), {
+          list: [
+            { title: 'THE COASTAL CLASSIC', pairing: 'Rice + Ghee + Avakaya', desc: 'A timeless combination that brings out the best of Andhra flavors.', product_name: defaultProduct, image: img1 }
+          ]
+        })
+      ])
+      toast.success('Demo data seeded successfully!')
+      fetchAllContent()
+    } catch (error) {
+      console.error('Error seeding data:', error)
+      toast.error('Failed to seed data.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleMigrateImages = async () => {
+    if (!confirm('This will upload all local product images to Firebase Storage. This might take a minute. Proceed?')) return;
+    setIsSaving(true);
+    
+    let updatedProducts = [...allProducts];
+    
+    try {
+      let migratedCount = 0;
+      for (let i = 0; i < updatedProducts.length; i++) {
+        const p = updatedProducts[i];
+        if (p.image && p.image.startsWith('/images/')) {
+          toast.loading(`Uploading image for ${p.name}...`, { id: 'migrate' });
+          
+          // Fetch local image
+          const response = await fetch(p.image);
+          const blob = await response.blob();
+          
+          // Create Firebase Storage ref
+          const fileName = `${Date.now()}_${p.name.replace(/[^a-zA-Z0-9]/g, '_')}.jpeg`;
+          const storageRef = ref(storage, `products/${fileName}`);
+          
+          // Upload and get URL
+          await uploadBytes(storageRef, blob, { contentType: blob.type });
+          const downloadURL = await getDownloadURL(storageRef);
+          
+          // Update product in DB
+          await fetch('/dashboard/app/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...p, documentId: p.id, image: downloadURL })
+          });
+          
+          updatedProducts[i].image = downloadURL;
+          migratedCount++;
+        }
+      }
+      
+      setAllProducts(updatedProducts);
+      
+      if (migratedCount > 0) {
+        toast.success(`Successfully uploaded ${migratedCount} images to Firebase Storage!`, { id: 'migrate' });
+        // Automatically seed demo data with new Firebase URLs
+        await handleSeedData(updatedProducts);
+      } else {
+        toast.success(`All product images are already in Firebase Storage.`, { id: 'migrate' });
+      }
+      
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Failed to migrate images.', { id: 'migrate' });
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -153,8 +319,8 @@ export default function ContentManager() {
   if (isLoading) return <div className="flex h-[400px] items-center justify-center">Loading Content...</div>
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto p-4 sm:p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-6xl mx-auto p-4 sm:p-6 pb-20">
+      <div className="flex items-center justify-between sticky top-0 z-20 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-sm py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <ImageIcon className="h-6 w-6 text-[#f97316]" />
@@ -162,14 +328,22 @@ export default function ContentManager() {
           </h2>
           <p className="text-slate-500">Manage all app_data documents reflecting directly in the app.</p>
         </div>
-        <Button onClick={saveCurrentTab} disabled={isSaving} className="bg-orange-600 hover:bg-orange-700">
-          <Save className="h-4 w-4 mr-2" />
-          {isSaving ? 'Saving...' : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleMigrateImages} disabled={isSaving} variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950">
+            Migrate Images
+          </Button>
+          <Button onClick={handleSeedData} disabled={isSaving} variant="outline" className="text-orange-600 border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950">
+            Seed Demo Data
+          </Button>
+          <Button onClick={saveCurrentTab} disabled={isSaving} className="bg-orange-600 hover:bg-orange-700">
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? 'Saving...' : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex gap-6 flex-col lg:flex-row">
-        <TabsList className="flex flex-col h-auto bg-slate-100 dark:bg-slate-900 w-full lg:w-48 items-stretch p-2 gap-2 shrink-0">
+        <TabsList className="flex flex-col justify-start h-auto bg-slate-100 dark:bg-slate-900 w-full lg:w-48 items-stretch p-2 gap-2 shrink-0">
           <TabsTrigger value="banners" className="justify-start data-[state=active]:bg-white">Banners</TabsTrigger>
           <TabsTrigger value="stories" className="justify-start data-[state=active]:bg-white">Stories</TabsTrigger>
           <TabsTrigger value="bento" className="justify-start data-[state=active]:bg-white">Bento Selection</TabsTrigger>
@@ -274,12 +448,24 @@ export default function ContentManager() {
                     <Input value={bento.card2_label} onChange={e => setBento({...bento, card2_label: e.target.value})} />
                   </div>
                   <div className="space-y-2">
+                    <label className="text-sm font-medium">Card 2 Sub</label>
+                    <Input value={bento.card2_sub} onChange={e => setBento({...bento, card2_sub: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-sm font-medium">Card 2 Icon</label>
                     <Input value={bento.card2_icon} onChange={e => setBento({...bento, card2_icon: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Card 3 Label</label>
                     <Input value={bento.card3_label} onChange={e => setBento({...bento, card3_label: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Card 3 Sub</label>
+                    <Input value={bento.card3_sub} onChange={e => setBento({...bento, card3_sub: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Card 3 Icon</label>
+                    <Input value={bento.card3_icon} onChange={e => setBento({...bento, card3_icon: e.target.value})} />
                   </div>
                 </div>
               </CardContent>
@@ -310,19 +496,56 @@ export default function ContentManager() {
           {/* DEALS OF THE DAY */}
           <TabsContent value="deals" className="mt-0">
             <Card>
-              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div><CardTitle>Deals of the Day</CardTitle><CardDescription>Exact product names to feature in the dark deals section.</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setDeals, '')}>+ Add Deal Product</Button>
+              <CardHeader>
+                <CardTitle>Deals of the Day</CardTitle>
+                <CardDescription>Configure the dynamic deals section on the home page.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {deals.map((deal, idx) => (
-                  <div key={idx} className="flex gap-4 items-center">
-                    <Input placeholder="Exact Product Name (e.g., Bellam Avakaya)" value={deal} onChange={e => {
-                      const n = [...deals]; n[idx] = e.target.value; setDeals(n)
-                    }} />
-                    <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setDeals, idx)}><Trash2 className="h-4 w-4" /></Button>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Section Title</label>
+                  <Input 
+                    placeholder="e.g., DEALS OF THE DAY" 
+                    value={deals.title} 
+                    onChange={e => setDeals({ ...deals, title: e.target.value })} 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Deal Expiry Time</label>
+                  <Input 
+                    type="datetime-local" 
+                    value={deals.end_time || ''} 
+                    onChange={e => setDeals({ ...deals, end_time: e.target.value })} 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-medium">Selected Products</label>
+                    <span className="text-xs text-slate-500">{deals.product_names.length} selected</span>
                   </div>
-                ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto p-1">
+                    {productNames.map(name => (
+                      <label key={name} className="flex items-center space-x-2 border p-2 rounded cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                        <input 
+                          type="checkbox" 
+                          checked={deals.product_names.includes(name)}
+                          onChange={(e) => {
+                            const newProducts = e.target.checked 
+                              ? [...deals.product_names, name]
+                              : deals.product_names.filter(p => p !== name);
+                            setDeals({ ...deals, product_names: newProducts });
+                          }}
+                          className="rounded border-slate-300 w-4 h-4 text-orange-600 focus:ring-orange-600"
+                        />
+                        <span className="text-sm line-clamp-1">{name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {productNames.length === 0 && (
+                    <p className="text-sm text-slate-500 italic p-4 border rounded bg-slate-50 dark:bg-slate-900">No products found. Please add products first.</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -332,28 +555,15 @@ export default function ContentManager() {
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
                 <div><CardTitle>Active Coupons</CardTitle><CardDescription>Discount codes displayed in the app</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setCoupons, { code: '', title: '', sub: '', min: '', color: '' })}>+ Add Coupon</Button>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setCoupons, { code: '', title: '', sub: '' })}>+ Add Coupon</Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {coupons.map((coupon, idx) => (
                   <div key={idx} className="flex gap-4 items-start p-3 border rounded">
                     <div className="flex-1 grid grid-cols-2 gap-2">
-                      <Input placeholder="Code (e.g. WELCOME10)" value={coupon.code} onChange={e => updateArray(setCoupons, idx, 'code', e.target.value)} />
-                      <div className="flex gap-2">
-                        <div className="relative w-10 h-10 overflow-hidden rounded border shrink-0">
-                          <input 
-                            type="color" 
-                            title="Pick a color"
-                            value={coupon.color?.startsWith('0xFF') ? '#' + coupon.color.slice(4) : (coupon.color?.startsWith('#') ? coupon.color : '#000000')} 
-                            onChange={e => updateArray(setCoupons, idx, 'color', '0xFF' + e.target.value.slice(1).toUpperCase())} 
-                            className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer"
-                          />
-                        </div>
-                        <Input placeholder="Color Hex (e.g. 0xFF18453B)" value={coupon.color} onChange={e => updateArray(setCoupons, idx, 'color', e.target.value)} />
-                      </div>
+                      <Input placeholder="Code (e.g. ROYAL10)" value={coupon.code} onChange={e => updateArray(setCoupons, idx, 'code', e.target.value)} />
                       <Input placeholder="Title" value={coupon.title} onChange={e => updateArray(setCoupons, idx, 'title', e.target.value)} />
-                      <Input placeholder="Subtitle" value={coupon.sub} onChange={e => updateArray(setCoupons, idx, 'sub', e.target.value)} />
-                      <Input placeholder="Minimum Order Text" value={coupon.min} onChange={e => updateArray(setCoupons, idx, 'min', e.target.value)} className="col-span-2" />
+                      <Input placeholder="Subtitle" value={coupon.sub} onChange={e => updateArray(setCoupons, idx, 'sub', e.target.value)} className="col-span-2" />
                     </div>
                     <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setCoupons, idx)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
