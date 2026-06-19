@@ -30,8 +30,8 @@ export default function WebsiteRecipesPage() {
   }, [fetchRecipes]);
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] p-8 pt-6 space-y-6 overflow-hidden">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Website Recipes</h2>
           <p className="text-muted-foreground mt-1">
@@ -41,7 +41,9 @@ export default function WebsiteRecipesPage() {
         <AddRecipeDialog onRecipeAdded={fetchRecipes} />
       </div>
 
-      <RecipesTable data={recipes} isLoading={isLoading} onRefresh={fetchRecipes} />
+      <div className="flex-1 overflow-hidden">
+        <RecipesTable data={recipes} isLoading={isLoading} onRefresh={fetchRecipes} />
+      </div>
     </div>
   );
 }

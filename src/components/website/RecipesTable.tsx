@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AddRecipeDialog } from "@/components/website/AddRecipeDialog";
 import { Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import Swal from "sweetalert2";
 import {
   ColumnDef,
@@ -31,6 +32,7 @@ export interface WebsiteRecipe {
   makingProcess: string;
   difficulty: string;
   makingTime: { value: string, unit: string };
+  images?: string[];
   createdAt: string;
 }
 
@@ -44,7 +46,7 @@ export function RecipesTable({ data, isLoading = false, onRefresh }: RecipesTabl
   const [editingRecipe, setEditingRecipe] = useState<WebsiteRecipe | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     Swal.fire({
       title: 'Are you sure?',
       text: "Are you sure to delete this recipe?",
@@ -61,18 +63,30 @@ export function RecipesTable({ data, isLoading = false, onRefresh }: RecipesTabl
           });
           const data = await res.json();
           if (data.success) {
-            Swal.fire('Deleted!', data.message, 'success');
+            Swal.fire('Deleted!', data.message || 'Deleted successfully!', 'success');
             if (onRefresh) onRefresh();
           } else {
-            Swal.fire('Error', data.error, 'error');
+            Swal.fire('Error', data.error || 'Failed to delete', 'error');
           }
         } catch (error: any) {
-          Swal.fire('Error', error.message, 'error');
+          Swal.fire('Error', error.message || 'Error occurred', 'error');
         }
       }
     });
   };
   const columns: ColumnDef<WebsiteRecipe>[] = [
+    {
+      accessorKey: "images",
+      header: "Image",
+      cell: ({ row }) => {
+        const images = row.getValue("images") as string[];
+        return images && images.length > 0 ? (
+          <img src={images[0]} alt="Recipe" className="h-10 w-10 object-cover rounded-md" />
+        ) : (
+          <div className="h-10 w-10 bg-muted rounded-md flex items-center justify-center text-xs">No img</div>
+        );
+      },
+    },
     {
       accessorKey: "recipeName",
       header: "Recipe Name",
@@ -130,11 +144,10 @@ export function RecipesTable({ data, isLoading = false, onRefresh }: RecipesTabl
   });
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border bg-card">
-        <div className="relative w-full overflow-auto">
+    <div className="flex flex-col h-full space-y-4">
+      <div className="rounded-md border bg-card flex-1 min-h-0 relative [&>div]:h-full [&>div]:overflow-auto">
           <Table>
-            <TableHeader className="bg-muted/50">
+            <TableHeader className="bg-muted sticky top-0 z-10 shadow-sm">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
@@ -176,27 +189,46 @@ export function RecipesTable({ data, isLoading = false, onRefresh }: RecipesTabl
               )}
             </TableBody>
           </Table>
-        </div>
       </div>
       
-      {/* Basic Pagination Controls */}
-      <div className="flex items-center justify-end space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
+      {/* Advanced Pagination & Total Count */}
+      <div className="flex flex-col items-center justify-center space-y-2 shrink-0 py-2">
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          
+          <div className="flex items-center gap-1">
+            {Array.from({ length: table.getPageCount() }).map((_, i) => (
+              <Button
+                key={i}
+                variant={table.getState().pagination.pageIndex === i ? "default" : "outline"}
+                size="sm"
+                className="w-8 h-8 p-0"
+                onClick={() => table.setPageIndex(i)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          <b>Total recipes :</b> {data.length}
+        </div>
       </div>
       
       {isEditDialogOpen && (
@@ -204,7 +236,7 @@ export function RecipesTable({ data, isLoading = false, onRefresh }: RecipesTabl
           open={isEditDialogOpen} 
           setOpen={setIsEditDialogOpen} 
           initialData={editingRecipe} 
-          onRecipeAdded={() => { if (onRefresh) onRefresh(); setIsEditDialogOpen(false); }} 
+          onRecipeAdded={() => { if (onRefresh) onRefresh(); }} 
         />
       )}
     </div>

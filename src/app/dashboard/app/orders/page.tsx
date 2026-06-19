@@ -389,20 +389,20 @@ function OrderList({
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide shrink-0">
-            {tabs.map(t => (
-              <button
-                key={t}
-                onClick={() => setFilter(t)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 border ${filter === t
-                    ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white border-slate-900 shadow-md transform scale-[1.02]'
-                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm'
-                  }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {tabs.map(t => (
+            <button
+              key={t}
+              onClick={() => setFilter(t)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filter === t
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
         </div>
       </div>
 
@@ -438,9 +438,9 @@ function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: b
   return (
     <div
       onClick={onClick}
-      className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 transform hover:-translate-y-1 ${isSelected
-          ? 'border-indigo-400 bg-indigo-50/50 shadow-md ring-4 ring-indigo-50'
-          : 'border-slate-200 bg-white hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100/50'
+      className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${isSelected
+        ? 'border-[#2563eb] bg-blue-50/50 shadow-sm'
+        : 'border-[#e5e7eb] bg-white hover:border-slate-300 hover:shadow-sm'
         }`}
       style={{
         borderLeftWidth: isSelected ? '4px' : '1px',
@@ -719,8 +719,8 @@ function TrackingTimeline({ status, rejectionReason }: { status: OrderStatus, re
               }`}>
               <div className="flex items-center gap-3">
                 <h4 className={`text-sm font-semibold ${state === 'rejected' ? 'text-red-600' :
-                    state === 'current' ? 'text-slate-900' :
-                      state === 'completed' ? 'text-slate-800' : 'text-slate-500'
+                  state === 'current' ? 'text-slate-900' :
+                    state === 'completed' ? 'text-slate-800' : 'text-slate-500'
                   }`}>
                   {state === 'rejected' ? 'Order Rejected' : stage.label}
                 </h4>

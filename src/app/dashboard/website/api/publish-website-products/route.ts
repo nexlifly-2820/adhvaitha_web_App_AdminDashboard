@@ -34,26 +34,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'At least one image is required.' }, { status: 400 });
     }
 
-    const generateSlug = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-    const slug = generateSlug(productName);
+    const documentId = body.id;
+    if (!documentId) {
+      return NextResponse.json({ success: false, error: 'Product ID is required.' }, { status: 400 });
+    }
     
-    const productDocRef = doc(webProductsCollection, slug);
+    const productDocRef = doc(webProductsCollection, documentId);
     
-    const newData = {
-      id: slug,
+    const newData: any = {
+      id: documentId,
       productName,
       productDescription,
       category,
       minQuantity: { value: minInput, unit: minUnit },
       maxQuantity: { value: maxInput, unit: maxUnit },
       images: images || [],
-      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
+    if (body.isNew) {
+      newData.createdAt = new Date().toISOString();
+    }
+
     await setDoc(productDocRef, newData, { merge: true });
     
-    return NextResponse.json({ success: true, id: slug, message: 'Product published successfully' }, { status: 201 });
+    return NextResponse.json({ success: true, id: documentId, message: body.isNew ? 'Product published successfully' : 'Product updated successfully' }, { status: 201 });
   } catch (error: any) {
     console.error('Error publishing website product:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

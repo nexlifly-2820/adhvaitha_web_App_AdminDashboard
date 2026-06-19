@@ -15,6 +15,7 @@ export async function POST(request: Request) {
       ingredients,
       makingProcess,
       difficulty,
+      images,
     } = body;
 
     // Strict validation
@@ -40,13 +41,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Process difficulty is required.' }, { status: 400 });
     }
 
-    const generateSlug = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-    const slug = generateSlug(recipeName);
+    const documentId = body.id;
+    if (!documentId) {
+      return NextResponse.json({ success: false, error: 'Recipe ID is required.' }, { status: 400 });
+    }
     
-    const recipeDocRef = doc(webRecipesCollection, slug);
+    const recipeDocRef = doc(webRecipesCollection, documentId);
     
-    const newData = {
-      id: slug,
+    const newData: any = {
+      id: documentId,
       recipeName,
       recipeDescription,
       category,
@@ -54,13 +57,17 @@ export async function POST(request: Request) {
       ingredients,
       makingProcess,
       difficulty,
-      createdAt: new Date().toISOString(),
+      images: images || [],
       updatedAt: new Date().toISOString()
     };
 
+    if (body.isNew) {
+      newData.createdAt = new Date().toISOString();
+    }
+
     await setDoc(recipeDocRef, newData, { merge: true });
     
-    return NextResponse.json({ success: true, id: slug, message: 'Recipe published successfully' }, { status: 201 });
+    return NextResponse.json({ success: true, id: documentId, message: body.isNew ? 'Recipe published successfully' : 'Recipe updated successfully' }, { status: 201 });
   } catch (error: any) {
     console.error('Error publishing website recipe:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
