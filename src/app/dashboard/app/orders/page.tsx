@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search, Check, Clock, Package, Truck, Home,
-  X, ChevronRight, Phone, MapPin, CreditCard, User, AlertCircle
+  X, ChevronRight, Phone, MapPin, CreditCard, User, AlertCircle,
+  Fingerprint, Calendar, BookOpen, Save
 } from 'lucide-react';
 
 // --- TYPES & DATA ---
@@ -30,6 +31,9 @@ type Order = {
   rejectionReason?: string;
   shiprocketOrderId?: string;
   rawOrder?: any;
+  batchId?: string;
+  preparationDate?: string;
+  spiceOrigin?: string;
 };
 
 const MOCK_ORDERS: Order[] = [
@@ -243,7 +247,10 @@ export default function OrdersPage() {
             note: o.note || '',
             rejectionReason: o.rejectionReason,
             shiprocketOrderId: o.shiprocketOrderId,
-            rawOrder: o
+            rawOrder: o,
+            batchId: o.batchId,
+            preparationDate: o.preparationDate,
+            spiceOrigin: o.spiceOrigin
           };
         });
 
@@ -287,6 +294,31 @@ export default function OrdersPage() {
       }
     } catch(err) {
       console.error('Failed to update status', err);
+    }
+  };
+
+  const handleUpdateHeritage = async (orderId: string, heritage: any) => {
+    setOrders(prev => prev.map(o => {
+      if (o.id === orderId) {
+        return { ...o, ...heritage };
+      }
+      return o;
+    }));
+
+    try {
+      const orderToUpdate = orders.find(o => o.id === orderId);
+      if (orderToUpdate) {
+        await fetch('/dashboard/app/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            documentId: orderToUpdate.rawOrder?.id || orderId,
+            ...heritage
+          })
+        });
+      }
+    } catch(err) {
+      console.error('Failed to update heritage', err);
     }
   };
 
@@ -334,6 +366,7 @@ export default function OrdersPage() {
             <OrderDetail
               order={selectedOrder}
               onUpdateStatus={handleUpdateStatus}
+              onUpdateHeritage={handleUpdateHeritage}
             />
           </div>
         </div>
@@ -481,17 +514,31 @@ function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: b
 
 // --- RIGHT PANEL ---
 
-function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: (id: string, s: OrderStatus, reason?: string) => void }) {
+function OrderDetail({ order, onUpdateStatus, onUpdateHeritage }: { order: Order, onUpdateStatus: (id: string, s: OrderStatus, reason?: string) => void, onUpdateHeritage: (id: string, heritage: any) => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
+  
+  const [batchId, setBatchId] = useState(order.batchId || '');
+  const [preparationDate, setPreparationDate] = useState(order.preparationDate || '');
+  const [spiceOrigin, setSpiceOrigin] = useState(order.spiceOrigin || '');
+  const [isSavingHeritage, setIsSavingHeritage] = useState(false);
 
   // Simulate loading on order change
   useEffect(() => {
     setIsLoading(true);
+    setBatchId(order.batchId || '');
+    setPreparationDate(order.preparationDate || '');
+    setSpiceOrigin(order.spiceOrigin || '');
     const t = setTimeout(() => setIsLoading(false), 400);
     return () => clearTimeout(t);
-  }, [order.id]);
+  }, [order.id, order.batchId, order.preparationDate, order.spiceOrigin]);
+
+  const handleSaveHeritage = async () => {
+    setIsSavingHeritage(true);
+    await onUpdateHeritage(order.id, { batchId, preparationDate, spiceOrigin });
+    setIsSavingHeritage(false);
+  };
 
   if (isLoading) {
     return (
@@ -651,6 +698,63 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
         <div className="space-y-6">
           {/* SECTION 5: Customer Info */}
           <CustomerInfo order={order} />
+
+          {/* SECTION 6: Batch Heritage */}
+          <div className="bg-white p-6 rounded-xl border border-amber-200 shadow-[0_4px_20px_-4px_rgba(251,191,36,0.15)] relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-amber-500" /> Batch Heritage
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-500 uppercase flex items-center gap-1.5">
+                  <Fingerprint className="h-3.5 w-3.5" /> Batch Tracking Code
+                </label>
+                <input 
+                  type="text" 
+                  value={batchId}
+                  onChange={e => setBatchId(e.target.value)}
+                  placeholder="e.g. BATCH-102-AP"
+                  className="w-full text-sm border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:bg-white transition-colors"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-500 uppercase flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" /> Preparation Date
+                </label>
+                <input 
+                  type="date" 
+                  value={preparationDate}
+                  onChange={e => setPreparationDate(e.target.value)}
+                  className="w-full text-sm border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:bg-white transition-colors"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-500 uppercase flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" /> Spice Origin
+                </label>
+                <input 
+                  type="text" 
+                  value={spiceOrigin}
+                  onChange={e => setSpiceOrigin(e.target.value)}
+                  placeholder="e.g. Stone-ground Guntur Chillies"
+                  className="w-full text-sm border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:bg-white transition-colors"
+                />
+              </div>
+
+              <button 
+                onClick={handleSaveHeritage}
+                disabled={isSavingHeritage}
+                className="w-full mt-2 flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold py-2 rounded-lg transition-colors text-sm"
+              >
+                <Save className="h-4 w-4" /> 
+                {isSavingHeritage ? 'Saving...' : 'Save Heritage Details'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

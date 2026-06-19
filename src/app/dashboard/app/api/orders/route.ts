@@ -27,15 +27,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { documentId, ...orderData } = body;
 
-    if (!orderData.userId || !orderData.items || !orderData.total) {
-      return NextResponse.json(
-        { success: false, error: 'Order must contain userId, items, and total' },
-        { status: 400 }
-      );
-    }
-
     if (documentId) {
-      // Update existing order (e.g., updating tracking info)
+      // Update existing order (e.g., updating tracking info, status, or heritage fields)
       const docRef = doc(appOrdersCollection, documentId);
       await updateDoc(docRef, {
         ...orderData,
@@ -43,6 +36,13 @@ export async function POST(request: Request) {
       });
       return NextResponse.json({ success: true, message: 'Order updated successfully' }, { status: 200 });
     } else {
+      if (!orderData.userId || !orderData.items || !orderData.total) {
+        return NextResponse.json(
+          { success: false, error: 'Order must contain userId, items, and total' },
+          { status: 400 }
+        );
+      }
+      
       // Create new order (document ID is orderId, e.g. ADH-1234)
       const orderId = orderData.orderId || `ADH-${Date.now()}`;
       const orderRef = doc(appOrdersCollection, orderId);
