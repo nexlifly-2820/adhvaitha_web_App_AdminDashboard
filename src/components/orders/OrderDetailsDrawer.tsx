@@ -31,6 +31,7 @@ export function OrderDetailsDrawer({
   onClose,
 }: OrderDetailsDrawerProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isPushingShiprocket, setIsPushingShiprocket] = useState(false);
   const [newStatus, setNewStatus] = useState<string>("Placed");
   const [trackingId, setTrackingId] = useState("");
   const [courierName, setCourierName] = useState("");
@@ -66,6 +67,29 @@ export function OrderDetailsDrawer({
       toast.error("Failed to update order.");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handlePushToShiprocket = async () => {
+    setIsPushingShiprocket(true);
+    try {
+      const response = await fetch('/api/shiprocket/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success("Successfully pushed to Shiprocket!");
+        onClose(); 
+      } else {
+        toast.error(data.error || "Failed to push to Shiprocket");
+      }
+    } catch (error: any) {
+      toast.error("An error occurred while pushing to Shiprocket");
+    } finally {
+      setIsPushingShiprocket(false);
     }
   };
 
@@ -161,6 +185,22 @@ export function OrderDetailsDrawer({
                     {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Order Updates
                   </Button>
+                  
+                  <div className="pt-3 border-t border-blue-100 mt-2">
+                    <Button 
+                      onClick={handlePushToShiprocket} 
+                      disabled={isPushingShiprocket || !!order.shiprocketOrderId}
+                      variant="outline"
+                      className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                    >
+                      {isPushingShiprocket ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Truck className="mr-2 h-4 w-4" />
+                      )}
+                      {order.shiprocketOrderId ? "Already Pushed to Shiprocket" : "Push to Shiprocket"}
+                    </Button>
+                  </div>
                 </div>
               </div>
 

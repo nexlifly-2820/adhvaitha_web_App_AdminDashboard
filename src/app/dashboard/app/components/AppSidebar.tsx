@@ -10,7 +10,8 @@ import {
   Image as ImageIcon, 
   Bell, 
   Settings,
-  MessageSquare
+  MessageSquare,
+  Star
 } from 'lucide-react'
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { title: 'Content Manager', icon: ImageIcon, href: '/dashboard/app/content' },
   { title: 'Notifications', icon: Bell, href: '/dashboard/app/notifications' },
   { title: 'Customer CRM', icon: MessageSquare, href: '/dashboard/app/crm' },
+  { title: 'Reviews', icon: Star, href: '/dashboard/app/reviews' },
   { title: 'System Settings', icon: Settings, href: '/dashboard/app/settings' },
 ]
 

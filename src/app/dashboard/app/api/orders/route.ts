@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { appOrdersCollection, db } from '@/lib/firebase-app';
 
+import { createShiprocketOrder } from '@/lib/shiprocket';
+
 // GET: Fetch all orders
 export async function GET() {
   try {

@@ -28,6 +28,8 @@ type Order = {
   time: string;
   note: string;
   rejectionReason?: string;
+  shiprocketOrderId?: string;
+  rawOrder?: any;
 };
 
 const MOCK_ORDERS: Order[] = [
@@ -146,6 +148,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 const STAGES: { id: OrderStatus; label: string; icon: React.FC<any> }[] = [
+  { id: 'pending', label: 'Order Placed', icon: Clock },
   { id: 'accepted', label: 'Order Accepted', icon: Check },
   { id: 'packing', label: 'Packing', icon: Package },
   { id: 'shipped', label: 'Shipped', icon: Truck },
@@ -156,54 +159,139 @@ const STAGES: { id: OrderStatus; label: string; icon: React.FC<any> }[] = [
 // --- MAIN PAGE ---
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('All');
   const [search, setSearch] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastOrder, setToastOrder] = useState<Order | null>(null);
 
-  useEffect(() => {
-    // Simulate real-time new order toast
-    const timer = setTimeout(() => {
-      const newOrder: Order = {
-        id: "ORD-2051", customer: "Priya S.", phone: "+91 99988 77766",
-        address: "Plot 12, Madhapur, Hyderabad",
-        items: [{ name: "Mango Pickle 1kg", qty: 1, price: 320 }],
-        delivery: 40, payment: "UPI Paid",
-        status: "pending", time: "Just now", note: ""
-      };
-      setToastOrder(newOrder);
-      setShowToast(true);
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch('/dashboard/app/api/orders');
+      const data = await res.json();
+      if (data.success && data.data) {
+        const liveOrders: Order[] = Object.values(data.data).map((o: any) => {
+          // Map Firestore order to UI Order format
+          const statusMap: Record<string, OrderStatus> = {
+            'Placed': 'pending',
+            'Pending': 'pending',
+            'Accepted': 'accepted',
+            'Processing': 'packing',
+            'Shipped': 'shipped',
+            'Out for Delivery': 'out_for_delivery',
+            'Delivered': 'delivered',
+            'Cancelled': 'rejected'
+          };
+          
+          let uiStatus: OrderStatus = statusMap[o.orderStatus] || statusMap[o.status] || 'pending';
+          
+          // Reverse map handling if the DB has lowercase
+          if (['pending', 'accepted', 'packing', 'shipped', 'out_for_delivery', 'delivered', 'rejected'].includes(o.status)) {
+            uiStatus = o.status as OrderStatus;
+          }
 
-      // Auto-dismiss toast
-      setTimeout(() => setShowToast(false), 8000);
-    }, 2000);
-    return () => clearTimeout(timer);
+          const items: OrderItem[] = (o.products || o.items || []).map((item: any) => ({
+            name: item.name || 'Product',
+            qty: item.quantity || item.qty || 1,
+            price: item.unitPrice || item.price || 0
+          }));
+
+          const address = typeof o.shippingAddress === 'string' 
+            ? o.shippingAddress 
+            : o.shippingInfo?.address ? `${o.shippingInfo.address}, ${o.shippingInfo.city}` : o.deliveryAddress || 'Unknown Address';
+
+          // Try to extract name from address or use a fallback
+          let customerName = o.customerName || o.customerInfo?.name;
+          if (!customerName && address.includes('\n')) {
+             customerName = address.split('\n')[0];
+          }
+          if (!customerName) customerName = `User (${o.userId?.substring(0, 5) || 'Unknown'})`;
+
+          // Try to extract phone
+          let phone = o.mobileNumber || o.customerInfo?.mobileNumber || o.phone;
+          if (!phone) {
+             const phoneMatch = address.match(/\d{10}/);
+             if (phoneMatch) phone = phoneMatch[0];
+             else phone = 'Not provided';
+          }
+
+          // Try to extract date
+          let timeString = 'Recent';
+          if (o.orderDate) timeString = new Date(o.orderDate).toLocaleString();
+          else if (o.createdAt?.seconds) timeString = new Date(o.createdAt.seconds * 1000).toLocaleString();
+          else if (o.createdAt) timeString = new Date(o.createdAt).toLocaleString();
+          else {
+             // Fallback to Order ID timestamp if ADH-17...
+             const idMatch = (o.orderId || o.id || '').match(/ADH-(\d+)/);
+             if (idMatch && idMatch[1]) {
+                timeString = new Date(parseInt(idMatch[1])).toLocaleString();
+             }
+          }
+
+          return {
+            id: o.orderId || o.id,
+            customer: customerName,
+            phone: phone,
+            address: address,
+            items: items,
+            delivery: o.deliveryFee || 40,
+            payment: o.paymentMethod || o.paymentStatus || 'Online',
+            status: uiStatus,
+            time: timeString,
+            note: o.note || '',
+            rejectionReason: o.rejectionReason,
+            shiprocketOrderId: o.shiprocketOrderId,
+            rawOrder: o
+          };
+        });
+
+        // Sort by time descending
+        liveOrders.sort((a, b) => new Date(b.rawOrder?.createdAt || 0).getTime() - new Date(a.rawOrder?.createdAt || 0).getTime());
+        setOrders(liveOrders);
+      }
+    } catch (err) {
+      console.error('Failed to fetch live orders', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
   }, []);
 
-  const handleUpdateStatus = (orderId: string, newStatus: OrderStatus, reason?: string) => {
+  // Removed mock toast for brevity
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus, reason?: string) => {
+    // Optimistic update
     setOrders(prev => prev.map(o => {
       if (o.id === orderId) {
         return { ...o, status: newStatus, rejectionReason: reason };
       }
       return o;
     }));
-  };
 
-  const handleAcceptToast = () => {
-    if (toastOrder) {
-      setOrders(prev => [{ ...toastOrder, status: 'accepted' }, ...prev]);
-      setShowToast(false);
+    try {
+      const orderToUpdate = orders.find(o => o.id === orderId);
+      if (orderToUpdate) {
+        await fetch('/dashboard/app/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            documentId: orderToUpdate.rawOrder?.id || orderId,
+            status: newStatus,
+            rejectionReason: reason || ''
+          })
+        });
+      }
+    } catch(err) {
+      console.error('Failed to update status', err);
     }
   };
 
-  const handleRejectToast = () => {
-    if (toastOrder) {
-      setOrders(prev => [{ ...toastOrder, status: 'rejected', rejectionReason: 'Rejected via toast' }, ...prev]);
-      setShowToast(false);
-    }
-  };
+  const handleAcceptToast = () => setShowToast(false);
+  const handleRejectToast = () => setShowToast(false);
 
   const filteredOrders = orders.filter(o => {
     if (filter !== 'All' && o.status !== filter.toLowerCase().replace(/ /g, '_')) return false;
@@ -213,34 +301,43 @@ export default function OrdersPage() {
 
   const selectedOrder = orders.find(o => o.id === selectedOrderId);
 
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full">Loading Orders...</div>;
+  }
+
   return (
-    <div className="flex h-full w-full bg-[#f9fafb] text-slate-900 font-sans overflow-hidden">
-      <OrderList
-        orders={filteredOrders}
-        allOrdersCount={orders.length}
-        pendingCount={orders.filter(o => o.status === 'pending').length}
-        filter={filter}
-        setFilter={setFilter}
-        search={search}
-        setSearch={setSearch}
-        selectedOrderId={selectedOrderId}
-        onSelectOrder={setSelectedOrderId}
-      />
-      <div className="flex-1 overflow-y-auto">
-        {selectedOrder ? (
-          <OrderDetail
-            order={selectedOrder}
-            onUpdateStatus={handleUpdateStatus}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-slate-400">
-            <div className="text-center">
-              <Package className="mx-auto h-12 w-12 text-slate-300 mb-4" />
-              <p>Select an order to view details</p>
-            </div>
-          </div>
-        )}
+    <div className="h-full w-full bg-[#f9fafb] text-slate-900 font-sans overflow-y-auto">
+      <div className="max-w-7xl mx-auto">
+        <OrderList
+          orders={filteredOrders}
+          allOrdersCount={orders.length}
+          pendingCount={orders.filter(o => o.status === 'pending').length}
+          filter={filter}
+          setFilter={setFilter}
+          search={search}
+          setSearch={setSearch}
+          selectedOrderId={selectedOrderId}
+          onSelectOrder={setSelectedOrderId}
+        />
       </div>
+
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#f9fafb] w-full max-w-6xl max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl relative border border-slate-200 animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setSelectedOrderId(null)}
+              className="absolute top-6 right-6 p-2 bg-white rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 shadow-sm z-50 border transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            
+            <OrderDetail
+              order={selectedOrder}
+              onUpdateStatus={handleUpdateStatus}
+            />
+          </div>
+        </div>
+      )}
 
       {showToast && toastOrder && (
         <NewOrderToast
@@ -263,33 +360,34 @@ function OrderList({
   const tabs = ['All', 'Pending', 'Accepted', 'Packing', 'Shipped', 'Out for Delivery', 'Delivered', 'Rejected'];
 
   return (
-    <div className="w-[400px] border-r border-[#e5e7eb] bg-white flex flex-col h-full shrink-0">
-      <div className="p-4 border-b border-[#e5e7eb] shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            Orders <span className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">{allOrdersCount}</span>
+    <div className="w-full bg-[#f9fafb] flex flex-col p-6">
+      <div className="mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <h2 className="text-2xl font-bold flex items-center gap-3">
+            Orders <span className="bg-slate-200 text-slate-700 text-sm px-3 py-1 rounded-full">{allOrdersCount}</span>
           </h2>
           {pendingCount > 0 && (
-            <div className="flex items-center gap-2 text-sm text-red-600 font-medium">
+            <div className="flex items-center gap-2 text-sm text-red-600 font-medium bg-red-50 px-3 py-1.5 rounded-full border border-red-100">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
               </span>
-              {pendingCount} new
+              {pendingCount} new orders
             </div>
           )}
         </div>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by ID or customer..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
-          />
-        </div>
+        <div className="flex flex-col gap-4">
+          <div className="relative w-full max-w-xl">
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by Order ID or customer name..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
+            />
+          </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {tabs.map(t => (
@@ -305,11 +403,15 @@ function OrderList({
             </button>
           ))}
         </div>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {orders.length === 0 ? (
-          <p className="text-center text-sm text-slate-500 mt-10">No orders found.</p>
+          <div className="col-span-full py-20 text-center">
+            <Package className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+            <p className="text-lg font-medium text-slate-500">No orders found.</p>
+          </div>
         ) : (
           orders.map((order: Order) => (
             <OrderCard
@@ -326,7 +428,10 @@ function OrderList({
 }
 
 function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: boolean, onClick: () => void }) {
-  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2);
+  const getInitials = (name: string) => {
+    const cleanName = name.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+    return cleanName ? cleanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+  };
   const total = order.items.reduce((sum, i) => sum + (i.price * i.qty), 0) + order.delivery;
   const isNew = order.status === 'pending';
 
@@ -341,30 +446,32 @@ function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: b
         borderLeftWidth: isSelected ? '4px' : '1px',
       }}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-semibold text-sm">
+      <div className="flex justify-between items-start mb-4 gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="h-11 w-11 shrink-0 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-700 font-bold text-sm shadow-sm border border-white">
             {getInitials(order.customer)}
           </div>
-          <div>
-            <p className="font-semibold text-sm text-slate-900">{order.customer}</p>
-            <p className="text-xs text-slate-500">{order.id}</p>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm text-slate-800 truncate tracking-tight">
+              {order.customer.length > 20 && !order.customer.includes(' ') ? `User (${order.customer.substring(0, 5)})` : order.customer}
+            </p>
+            <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5 uppercase tracking-wider">{order.id}</p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="font-semibold text-sm text-slate-900">₹{total}</p>
-          <div className="flex items-center justify-end gap-1.5 mt-0.5">
-            {isNew && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"></span>}
-            <span className="text-[11px] text-slate-500">{order.time}</span>
+        <div className="text-right shrink-0">
+          <p className="font-extrabold text-base text-slate-900 tracking-tight">₹{total}</p>
+          <div className="flex items-center justify-end gap-1.5 mt-1">
+            {isNew && <span className="h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse"></span>}
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{order.time}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-2">
-        <p className="text-xs text-slate-500 truncate max-w-[180px]">
-          {order.items.length} item(s) • {order.payment}
+      <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100 gap-2">
+        <p className="text-xs text-slate-500 truncate flex-1 font-medium min-w-0">
+          <span className="text-slate-700 font-semibold">{order.items.length}</span> item(s) • <span className="truncate">{order.payment}</span>
         </p>
-        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${STATUS_COLORS[order.status]}`}>
+        <span className={`px-2.5 py-1 text-[10px] font-bold rounded-md border shrink-0 uppercase tracking-widest ${STATUS_COLORS[order.status]}`}>
           {STATUS_LABELS[order.status]}
         </span>
       </div>
@@ -414,22 +521,51 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
     }
   };
 
+  const handlePushToShiprocket = async () => {
+    if (!order.rawOrder) {
+      alert("Raw order data missing!");
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const res = await fetch('/dashboard/app/api/shiprocket/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: order.rawOrder })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Pushed to Shiprocket successfully! Tracking ID: ${data.shiprocketOrderId}`);
+        // Optionally update UI here
+        order.shiprocketOrderId = data.shiprocketOrderId;
+      } else {
+        alert(`Failed: ${data.error}`);
+      }
+    } catch(err) {
+      console.error(err);
+      alert("Failed to push to Shiprocket");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="p-6 lg:p-10 max-w-4xl mx-auto space-y-6 pb-24">
+    <div className="p-6 lg:p-12 max-w-6xl mx-auto space-y-8 pb-24">
       {/* SECTION 1: Header */}
-      <div className="flex justify-between items-start bg-white p-6 rounded-xl border border-[#e5e7eb] shadow-sm">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-bold">{order.id}</h1>
-            <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${STATUS_COLORS[order.status]}`}>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl border border-[#e5e7eb] shadow-sm gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
+            <h1 className="text-2xl font-bold truncate max-w-[280px] md:max-w-full" title={order.id}>{order.id}</h1>
+            <span className={`px-3 py-1 text-xs font-semibold rounded-full border shrink-0 ${STATUS_COLORS[order.status]}`}>
               {STATUS_LABELS[order.status]}
             </span>
           </div>
-          <p className="text-sm text-slate-500">Placed on {order.time} • {order.items.length} items</p>
+          <p className="text-sm text-slate-500 truncate">Placed on {order.time} • {order.items.length} items</p>
         </div>
 
         {order.status === 'pending' && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 shrink-0 flex-wrap">
             <button
               onClick={() => setShowRejectModal(true)}
               className="px-4 py-2 border-2 border-red-200 text-red-600 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors"
@@ -473,8 +609,8 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 space-y-6">
           {/* SECTION 2: Timeline */}
           <div className="bg-white p-6 rounded-xl border border-[#e5e7eb] shadow-sm">
             <h3 className="text-lg font-semibold mb-6">Order Status</h3>
@@ -482,7 +618,22 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order, onUpdateStatus: 
 
             {/* SECTION 3: Admin Control */}
             {['accepted', 'packing', 'shipped', 'out_for_delivery'].includes(order.status) && (
-              <div className="mt-8 pt-6 border-t flex justify-end">
+              <div className="mt-8 pt-6 border-t flex justify-end gap-3">
+                {['accepted', 'packing'].includes(order.status) && (
+                  <button
+                    onClick={handlePushToShiprocket}
+                    disabled={!!order.shiprocketOrderId}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 shadow-sm transition-all ${
+                      order.shiprocketOrderId 
+                        ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed' 
+                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                    }`}
+                  >
+                    <Truck className="h-4 w-4" /> 
+                    {order.shiprocketOrderId ? `Shiprocket ID: ${order.shiprocketOrderId}` : 'Push to Shiprocket'}
+                  </button>
+                )}
+                
                 <button
                   onClick={handleNextStage}
                   className="px-6 py-2.5 bg-[#2563eb] text-white rounded-lg font-medium text-sm hover:bg-blue-700 shadow-sm transition-all active:scale-95 flex items-center gap-2"
@@ -511,9 +662,8 @@ function TrackingTimeline({ status, rejectionReason }: { status: OrderStatus, re
 
   const getStageState = (stageId: OrderStatus, index: number) => {
     if (isRejected) return index === 0 ? 'rejected' : 'upcoming';
-    if (status === 'pending') return 'upcoming';
 
-    const sequence: OrderStatus[] = ['accepted', 'packing', 'shipped', 'out_for_delivery', 'delivered'];
+    const sequence: OrderStatus[] = ['pending', 'accepted', 'packing', 'shipped', 'out_for_delivery', 'delivered'];
     const currentIdx = sequence.indexOf(status);
 
     if (index < currentIdx) return 'completed';
@@ -649,37 +799,39 @@ function CustomerInfo({ order }: { order: Order }) {
     <div className="bg-white p-6 rounded-xl border border-[#e5e7eb] shadow-sm space-y-6">
       <h3 className="text-lg font-semibold">Customer Details</h3>
 
-      <div className="space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-slate-50 rounded-lg text-slate-500 mt-0.5"><User className="h-4 w-4" /></div>
-          <div>
+      <div className="space-y-5">
+        <div className="flex items-start gap-4">
+          <User className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-slate-500 mb-0.5">Name</p>
-            <p className="text-sm font-medium text-slate-900">{order.customer}</p>
+            <p className="text-sm font-medium text-slate-900 truncate" title={order.customer}>
+              {order.customer.length > 20 && !order.customer.includes(' ') ? `User (${order.customer.substring(0, 5)})` : order.customer}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-slate-50 rounded-lg text-slate-500 mt-0.5"><Phone className="h-4 w-4" /></div>
-          <div>
+        <div className="flex items-start gap-4">
+          <Phone className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-slate-500 mb-0.5">Phone</p>
-            <p className="text-sm font-medium text-slate-900">{order.phone}</p>
+            <p className="text-sm font-medium text-slate-900 truncate">{order.phone}</p>
           </div>
         </div>
 
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-slate-50 rounded-lg text-slate-500 mt-0.5"><MapPin className="h-4 w-4" /></div>
-          <div>
+        <div className="flex items-start gap-4">
+          <MapPin className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-slate-500 mb-0.5">Delivery Address</p>
             <p className="text-sm font-medium text-slate-900 leading-snug">{order.address}</p>
           </div>
         </div>
 
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-slate-50 rounded-lg text-slate-500 mt-0.5"><CreditCard className="h-4 w-4" /></div>
-          <div>
+        <div className="flex items-start gap-4">
+          <CreditCard className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-slate-500 mb-0.5">Payment Method</p>
-            <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border ${order.payment.includes('UPI') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'
-              }`}>
+            <span className={`inline-block max-w-full truncate px-2 py-0.5 text-xs font-semibold rounded-full border ${order.payment.includes('UPI') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'
+              }`} title={order.payment}>
               {order.payment}
             </span>
           </div>
