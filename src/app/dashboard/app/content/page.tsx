@@ -26,6 +26,7 @@ interface TasteOption { title: string; sub: string; icon: string; color: string 
 interface Pairing { title: string; pairing: string; desc: string; product_name: string; image: string }
 interface DeliveryConfig { free_threshold: number; base_fee: number; packing_fee: number; gst_percentage: number }
 interface CartConfig { freshness_tagline: string; dispatch_reassurance: string; upsell_section_title: string }
+interface BillingConfig { delivery_estimate_text: string; support_chat_text: string; savings_highlight_text: string }
 
 interface KitchenStoryIngredient { image_url: string; text: string; is_left: boolean }
 interface KitchenStory {
@@ -57,6 +58,9 @@ export default function ContentManager() {
   })
   const [cartConfig, setCartConfig] = useState<CartConfig>({
     freshness_tagline: 'FRESHNESS GUARANTEED', dispatch_reassurance: 'Order in the next 2 hrs for same-day dispatch.', upsell_section_title: 'COMPLETES THE EXPERIENCE'
+  })
+  const [billingConfig, setBillingConfig] = useState<BillingConfig>({
+    delivery_estimate_text: 'Estimated Delivery: 3-5 Business Days', support_chat_text: 'Need help? Chat with our heritage kitchen', savings_highlight_text: 'Total Savings on this order:'
   })
 
   const [bento, setBento] = useState<BentoSelection>({
@@ -106,10 +110,10 @@ export default function ContentManager() {
         return snap.exists() ? snap.data() : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -146,6 +150,7 @@ export default function ContentManager() {
       if (catPageConfigDoc) setCategoryPageConfig(catPageConfigDoc as CategoryPageConfig)
       if (deliveryConfigDoc) setDeliveryConfig(deliveryConfigDoc as DeliveryConfig)
       if (cartConfigDoc) setCartConfig(cartConfigDoc as CartConfig)
+      if (billingConfigDoc) setBillingConfig(billingConfigDoc as BillingConfig)
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -220,6 +225,7 @@ export default function ContentManager() {
       case 'cart_delivery':
         handleSaveTab('delivery_config', deliveryConfig)
         handleSaveTab('cart_config', cartConfig)
+        handleSaveTab('billing_config', billingConfig)
         break
     }
   }
@@ -413,7 +419,7 @@ export default function ContentManager() {
           <TabsTrigger value="pairings" className="justify-start data-[state=active]:bg-white">Art of Pairing</TabsTrigger>
           <TabsTrigger value="kitchen_story" className="justify-start data-[state=active]:bg-white">Kitchen Story</TabsTrigger>
           <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
-          <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Delivery</TabsTrigger>
+          <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Billing</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pr-2 pb-20 custom-scrollbar">
@@ -1197,6 +1203,31 @@ export default function ContentManager() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Upsell Section Title</label>
                     <Input value={cartConfig.upsell_section_title} onChange={e => setCartConfig({ ...cartConfig, upsell_section_title: e.target.value })} placeholder="e.g. COMPLETES THE EXPERIENCE" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div>
+                  <CardTitle>Billing Page Marketing</CardTitle>
+                  <CardDescription>Manage the urgency, support, and reassurance text right before payment.</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Estimated Delivery Text</label>
+                    <Input value={billingConfig.delivery_estimate_text} onChange={e => setBillingConfig({ ...billingConfig, delivery_estimate_text: e.target.value })} placeholder="e.g. Estimated Delivery: 3-5 Business Days" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Support Chat Text</label>
+                    <Input value={billingConfig.support_chat_text} onChange={e => setBillingConfig({ ...billingConfig, support_chat_text: e.target.value })} placeholder="e.g. Need help? Chat with our heritage kitchen" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Savings Highlight Text</label>
+                    <Input value={billingConfig.savings_highlight_text} onChange={e => setBillingConfig({ ...billingConfig, savings_highlight_text: e.target.value })} placeholder="e.g. Total Savings on this order:" />
                   </div>
                 </div>
               </CardContent>
