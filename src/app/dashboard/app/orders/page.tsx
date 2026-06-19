@@ -297,8 +297,8 @@ function OrderList({
               key={t}
               onClick={() => setFilter(t)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filter === t
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
             >
               {t}
@@ -334,8 +334,8 @@ function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: b
     <div
       onClick={onClick}
       className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${isSelected
-          ? 'border-[#2563eb] bg-blue-50/50 shadow-sm'
-          : 'border-[#e5e7eb] bg-white hover:border-slate-300 hover:shadow-sm'
+        ? 'border-[#2563eb] bg-blue-50/50 shadow-sm'
+        : 'border-[#e5e7eb] bg-white hover:border-slate-300 hover:shadow-sm'
         }`}
       style={{
         borderLeftWidth: isSelected ? '4px' : '1px',
@@ -569,8 +569,8 @@ function TrackingTimeline({ status, rejectionReason }: { status: OrderStatus, re
               }`}>
               <div className="flex items-center gap-3">
                 <h4 className={`text-sm font-semibold ${state === 'rejected' ? 'text-red-600' :
-                    state === 'current' ? 'text-slate-900' :
-                      state === 'completed' ? 'text-slate-800' : 'text-slate-500'
+                  state === 'current' ? 'text-slate-900' :
+                    state === 'completed' ? 'text-slate-800' : 'text-slate-500'
                   }`}>
                   {state === 'rejected' ? 'Order Rejected' : stage.label}
                 </h4>

@@ -75,3 +75,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* SweetAlert custom overrides */
+.swal2-confirm {
+  @apply bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors !important;
+}
+.swal2-cancel {
+  @apply bg-red-600 text-white px-4 py-2 rounded-md font-medium hover:bg-red-700 transition-colors !important;
+}
+.swal2-actions {
+  @apply gap-2 !important;
+}
+
+body[data-scroll-locked] .swal2-container {
+  pointer-events: auto !important;
+}

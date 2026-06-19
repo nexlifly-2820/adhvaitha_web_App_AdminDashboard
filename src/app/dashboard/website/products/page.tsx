@@ -30,8 +30,8 @@ export default function WebsiteProductsPage() {
   }, [fetchProducts]);
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] p-8 pt-6 space-y-6 overflow-hidden">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Website Products</h2>
           <p className="text-muted-foreground mt-1">
@@ -41,7 +41,9 @@ export default function WebsiteProductsPage() {
         <AddProductDialog onProductAdded={fetchProducts} />
       </div>
 
-      <ProductsTable data={products} isLoading={isLoading} onRefresh={fetchProducts} />
+      <div className="flex-1 overflow-hidden">
+        <ProductsTable data={products} isLoading={isLoading} onRefresh={fetchProducts} />
+      </div>
     </div>
   );
 }
