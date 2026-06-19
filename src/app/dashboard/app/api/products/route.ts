@@ -65,6 +65,8 @@ export async function POST(request: Request) {
         category: productData.category || 'Pickles',
         isBestSeller: productData.isBestSeller ?? false,
         isOutOfStock: productData.isOutOfStock ?? false,
+        isVeg: productData.isVeg ?? true,
+        subCategory: productData.subCategory || '',
         stockCount: productData.stockCount || 0,
         rating: productData.rating || 0,
         image: productData.image || '',
@@ -78,6 +80,10 @@ export async function POST(request: Request) {
         servingSuggestion: productData.servingSuggestion || '',
         shelfLife: productData.shelfLife || '',
         pairings: productData.pairings || [],
+        trustBadges: productData.trustBadges || [],
+        artisanName: productData.artisanName || '',
+        artisanDescription: productData.artisanDescription || '',
+        recipes: productData.recipes || [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };

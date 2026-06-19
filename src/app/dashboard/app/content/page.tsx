@@ -17,13 +17,15 @@ interface MainBanner { title: string; sub: string; img: string }
 interface AdBanner { tag: string; title: string; sub: string; img: string }
 interface Story { label: string; icon: string; tag: string }
 interface BentoSelection { section_title: string; best_seller_product: string; card1_label: string; card2_label: string; card2_sub: string; card2_icon: string; card3_label: string; card3_sub: string; card3_icon: string }
-interface Category { label: string; img: string }
+interface Category { label: string; img: string; tagline?: string; badge?: string; description?: string; banner_img?: string; }
 interface CategoryPageConfig { hero_title: string; hero_subtitle: string; hero_image: string; hero_tag: string }
 interface Coupon { code: string; title: string; sub: string }
 interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
 interface Pairing { title: string; pairing: string; desc: string; product_name: string; image: string }
+interface DeliveryConfig { free_threshold: number; base_fee: number; packing_fee: number; gst_percentage: number }
+interface CartConfig { freshness_tagline: string; dispatch_reassurance: string; upsell_section_title: string }
 
 interface KitchenStoryIngredient { image_url: string; text: string; is_left: boolean }
 interface KitchenStory {
@@ -50,6 +52,13 @@ export default function ContentManager() {
   
   const [stories, setStories] = useState<Story[]>([])
   
+  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>({
+    free_threshold: 500, base_fee: 40, packing_fee: 20, gst_percentage: 5
+  })
+  const [cartConfig, setCartConfig] = useState<CartConfig>({
+    freshness_tagline: 'FRESHNESS GUARANTEED', dispatch_reassurance: 'Order in the next 2 hrs for same-day dispatch.', upsell_section_title: 'COMPLETES THE EXPERIENCE'
+  })
+
   const [bento, setBento] = useState<BentoSelection>({
     section_title: '', best_seller_product: '', card1_label: '', card2_label: '', card2_sub: '', card2_icon: '', card3_label: '', card3_sub: '', card3_icon: ''
   })
@@ -97,9 +106,10 @@ export default function ContentManager() {
         return snap.exists() ? snap.data() : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
+        getDocData('delivery_config'), getDocData('cart_config'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -134,6 +144,8 @@ export default function ContentManager() {
       if (kitchenStoryDoc) setKitchenStory(kitchenStoryDoc as KitchenStory)
       if (searchConfigDoc && searchConfigDoc.trending_keywords) setTrendingKeywords(searchConfigDoc.trending_keywords)
       if (catPageConfigDoc) setCategoryPageConfig(catPageConfigDoc as CategoryPageConfig)
+      if (deliveryConfigDoc) setDeliveryConfig(deliveryConfigDoc as DeliveryConfig)
+      if (cartConfigDoc) setCartConfig(cartConfigDoc as CartConfig)
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -204,6 +216,10 @@ export default function ContentManager() {
         break
       case 'trending_searches':
         handleSaveTab('search_config', { trending_keywords: trendingKeywords })
+        break
+      case 'cart_delivery':
+        handleSaveTab('delivery_config', deliveryConfig)
+        handleSaveTab('cart_config', cartConfig)
         break
     }
   }
@@ -397,6 +413,7 @@ export default function ContentManager() {
           <TabsTrigger value="pairings" className="justify-start data-[state=active]:bg-white">Art of Pairing</TabsTrigger>
           <TabsTrigger value="kitchen_story" className="justify-start data-[state=active]:bg-white">Kitchen Story</TabsTrigger>
           <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
+          <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Delivery</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pr-2 pb-20 custom-scrollbar">
@@ -564,7 +581,7 @@ export default function ContentManager() {
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
                 <div><CardTitle>Royal Collections (Categories)</CardTitle><CardDescription>App category icons with tags and badges</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', tagline: '', badge: '' })}>+ Add Category</Button>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', tagline: '', badge: '', description: '', banner_img: '' })}>+ Add Category</Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {categories.map((cat, idx) => (
@@ -586,8 +603,21 @@ export default function ContentManager() {
                         <Input placeholder="e.g. Sun-dried purity (Optional)" value={cat.tagline || ''} onChange={e => updateArray(setCategories, idx, 'tagline', e.target.value)} />
                       </div>
                       <div className="space-y-1.5 sm:col-span-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Image</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Description</label>
+                        <textarea 
+                          className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300 min-h-[60px]"
+                          placeholder="e.g. Experience the ancestral flavors of Coastal Andhra..." 
+                          value={cat.description || ''} 
+                          onChange={e => updateArray(setCategories, idx, 'description', e.target.value)} 
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Icon</label>
                         <ImageUpload value={cat.img || ''} onChange={url => updateArray(setCategories, idx, 'img', url)} folder="app_content" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Banner Image</label>
+                        <ImageUpload value={cat.banner_img || ''} onChange={url => updateArray(setCategories, idx, 'banner_img', url)} folder="app_content" />
                       </div>
                     </div>
                   </div>
@@ -1110,6 +1140,63 @@ export default function ContentManager() {
                         />
                       </div>
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* CART & DELIVERY CONFIG */}
+          <TabsContent value="cart_delivery" className="mt-0 space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div>
+                  <CardTitle>Delivery Logic</CardTitle>
+                  <CardDescription>Configure base fees and the threshold to trigger the free delivery progress bar.</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Free Delivery Threshold (₹)</label>
+                    <Input type="number" value={deliveryConfig.free_threshold} onChange={e => setDeliveryConfig({ ...deliveryConfig, free_threshold: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Base Delivery Fee (₹)</label>
+                    <Input type="number" value={deliveryConfig.base_fee} onChange={e => setDeliveryConfig({ ...deliveryConfig, base_fee: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Packing Fee (₹)</label>
+                    <Input type="number" value={deliveryConfig.packing_fee} onChange={e => setDeliveryConfig({ ...deliveryConfig, packing_fee: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">GST Percentage (%)</label>
+                    <Input type="number" value={deliveryConfig.gst_percentage} onChange={e => setDeliveryConfig({ ...deliveryConfig, gst_percentage: Number(e.target.value) })} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div>
+                  <CardTitle>Cart Messaging</CardTitle>
+                  <CardDescription>Manage the marketing and urgency text shown in the cart.</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Freshness Tagline</label>
+                    <Input value={cartConfig.freshness_tagline} onChange={e => setCartConfig({ ...cartConfig, freshness_tagline: e.target.value })} placeholder="e.g. FRESHNESS GUARANTEED" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Dispatch Reassurance (Great for Holidays!)</label>
+                    <Input value={cartConfig.dispatch_reassurance} onChange={e => setCartConfig({ ...cartConfig, dispatch_reassurance: e.target.value })} placeholder="e.g. Order in the next 2 hrs for same-day dispatch." />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Upsell Section Title</label>
+                    <Input value={cartConfig.upsell_section_title} onChange={e => setCartConfig({ ...cartConfig, upsell_section_title: e.target.value })} placeholder="e.g. COMPLETES THE EXPERIENCE" />
                   </div>
                 </div>
               </CardContent>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { db } from '@/lib/firebase-app'
+import { doc, getDoc } from 'firebase/firestore'
 import { ImageUpload } from '@/components/ImageUpload'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, MoreHorizontal, Image as ImageIcon, X, Upload, Trash2 } from 'lucide-react'
@@ -31,13 +32,16 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [dynamicCategories, setDynamicCategories] = useState<{label: string}[]>([])
   
   // Basic Info
   const [productName, setProductName] = useState('')
   const [productDesc, setProductDesc] = useState('')
   const [category, setCategory] = useState('Pickles')
+  const [subCategory, setSubCategory] = useState('')
   const [isBestSeller, setIsBestSeller] = useState(false)
   const [isOutOfStock, setIsOutOfStock] = useState(false)
+  const [isVeg, setIsVeg] = useState(true)
   const [stockCount, setStockCount] = useState<number>(100)
   const [rating, setRating] = useState('0')
   const [images, setImages] = useState<string[]>([])
@@ -51,6 +55,10 @@ export default function ProductsPage() {
   const [storageInstructions, setStorageInstructions] = useState('')
   const [servingSuggestion, setServingSuggestion] = useState('')
   const [shelfLife, setShelfLife] = useState('')
+  const [trustBadges, setTrustBadges] = useState<string[]>([])
+  const [artisanName, setArtisanName] = useState('')
+  const [artisanDescription, setArtisanDescription] = useState('')
+  const [recipes, setRecipes] = useState<{title: string, instruction: string}[]>([])
 
   // Ingredients & Pairings
   const [ingredients, setIngredients] = useState<string[]>([])
@@ -68,6 +76,14 @@ export default function ProductsPage() {
       if (result.success && result.data) {
         setProducts(Object.values(result.data))
       }
+      
+      const catDoc = await getDoc(doc(db, 'app_data', 'categories'))
+      if (catDoc.exists()) {
+        const catData = catDoc.data()
+        if (catData.list && Array.isArray(catData.list)) {
+          setDynamicCategories(catData.list)
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch products', err)
     } finally {
@@ -79,12 +95,22 @@ export default function ProductsPage() {
     fetchProducts()
   }, [])
 
+  useEffect(() => {
+    if (dynamicCategories.length > 0 && !editingProductId) {
+      if (!dynamicCategories.find(c => c.label === category)) {
+        setCategory(dynamicCategories[0].label)
+      }
+    }
+  }, [dynamicCategories])
+
   const handleReset = () => {
     setProductName('')
     setProductDesc('')
-    setCategory('Pickles')
+    setCategory(dynamicCategories.length > 0 ? dynamicCategories[0].label : 'Pickles')
+    setSubCategory('')
     setIsBestSeller(false)
     setIsOutOfStock(false)
+    setIsVeg(true)
     setStockCount(100)
     setRating('0')
     setImages([])
@@ -95,6 +121,10 @@ export default function ProductsPage() {
     setStorageInstructions('')
     setServingSuggestion('')
     setShelfLife('')
+    setTrustBadges([])
+    setArtisanName('')
+    setArtisanDescription('')
+    setRecipes([])
 
     setIngredients([])
     setSecretIngredient({ name: '', description: '', image: '' })
@@ -110,8 +140,10 @@ export default function ProductsPage() {
     setProductName(product.name || '')
     setProductDesc(product.description || '')
     setCategory(product.category || 'Pickles')
+    setSubCategory(product.subCategory || '')
     setIsBestSeller(product.isBestSeller || false)
     setIsOutOfStock(product.isOutOfStock || false)
+    setIsVeg(product.isVeg !== undefined ? product.isVeg : true)
     setStockCount(product.stockCount !== undefined ? product.stockCount : 100)
     setRating(product.rating ? String(product.rating) : '0')
     setImages(product.image ? [product.image] : [])
@@ -130,6 +162,10 @@ export default function ProductsPage() {
     setStorageInstructions(product.storageInstructions || '')
     setServingSuggestion(product.servingSuggestion || '')
     setShelfLife(product.shelfLife || '')
+    setTrustBadges(product.trustBadges || [])
+    setArtisanName(product.artisanName || '')
+    setArtisanDescription(product.artisanDescription || '')
+    setRecipes(product.recipes || [])
 
     setIngredients(product.ingredients || [])
     if (product.secretIngredient) {
@@ -203,8 +239,10 @@ export default function ProductsPage() {
           name: productName,
           description: productDesc,
           category: category,
+          subCategory: subCategory,
           isBestSeller: isBestSeller,
           isOutOfStock: isOutOfStock,
+          isVeg: isVeg,
           stockCount: Number(stockCount),
           rating: Number(rating),
           image: images[0] || '', // Only taking first image for now based on schema
@@ -215,6 +253,10 @@ export default function ProductsPage() {
           storageInstructions: storageInstructions,
           servingSuggestion: servingSuggestion,
           shelfLife: shelfLife,
+          trustBadges: trustBadges.filter(b => b.trim() !== ''),
+          artisanName: artisanName,
+          artisanDescription: artisanDescription,
+          recipes: recipes.filter(r => r.title.trim() !== '' && r.instruction.trim() !== ''),
 
           ingredients: ingredients.filter(i => i.trim() !== ''),
           secretIngredient: secretIngredient.name ? secretIngredient : null,
@@ -376,14 +418,28 @@ export default function ProductsPage() {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Category</label>
                       <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 h-9 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300">
-                        <option value="Pickles">Pickles</option>
-                        <option value="Snacks">Snacks</option>
-                        <option value="Spices">Spices</option>
-                        <option value="Sweets">Sweets</option>
+                        {dynamicCategories.length > 0 ? (
+                          dynamicCategories.map((cat, idx) => (
+                            <option key={idx} value={cat.label}>{cat.label}</option>
+                          ))
+                        ) : (
+                          <>
+                            <option value="Pickles">Pickles</option>
+                            <option value="Snacks">Snacks</option>
+                            <option value="Spices">Spices</option>
+                            <option value="Sweets">Sweets</option>
+                          </>
+                        )}
                       </select>
                     </div>
                   </div>
                   
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Sub-Category (Filter Tag)</label>
+                    <Input value={subCategory} onChange={(e) => setSubCategory(e.target.value)} placeholder="e.g. Classic, Mango Based, Spicy" />
+                    <p className="text-xs text-slate-500">Automatically creates filter chips at the top of the category page.</p>
+                  </div>
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Description</label>
                     <textarea 
@@ -395,7 +451,13 @@ export default function ProductsPage() {
                     {errors.productDesc && <p className="text-xs text-red-500">{errors.productDesc}</p>}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="space-y-2 flex flex-col justify-center">
+                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
+                        <input type="checkbox" checked={isVeg} onChange={(e) => setIsVeg(e.target.checked)} className="rounded border-slate-300 text-green-600 focus:ring-green-600" />
+                        <span className="text-green-600">Pure Veg</span>
+                      </label>
+                    </div>
                     <div className="space-y-2 flex flex-col justify-center">
                       <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
                         <input type="checkbox" checked={isBestSeller} onChange={(e) => setIsBestSeller(e.target.checked)} className="rounded border-slate-300" />
@@ -484,6 +546,49 @@ export default function ProductsPage() {
                     <label className="text-sm font-medium">Shelf Life</label>
                     <Input value={shelfLife} onChange={(e) => setShelfLife(e.target.value)} placeholder="e.g. 6 Months" />
                   </div>
+
+                  <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Master Artisan</h4>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-slate-500">Artisan Name</label>
+                        <Input value={artisanName} onChange={(e) => setArtisanName(e.target.value)} placeholder="e.g. Smt. Annapurna" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-slate-500">Artisan Description</label>
+                        <textarea value={artisanDescription} onChange={(e) => setArtisanDescription(e.target.value)} className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300" placeholder="e.g. 40 years of experience..." />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <label className="text-sm font-medium">Purity & Trust Badges</label>
+                    <p className="text-xs text-slate-500">Highlights shown in a horizontal row of icons.</p>
+                    {trustBadges.map((badge, idx) => (
+                      <div key={idx} className="flex gap-2 mb-2">
+                        <Input value={badge} onChange={(e) => { const n = [...trustBadges]; n[idx] = e.target.value; setTrustBadges(n) }} placeholder="e.g. Zero Preservatives" />
+                        <Button variant="ghost" size="icon" onClick={() => setTrustBadges(trustBadges.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => setTrustBadges([...trustBadges, ''])}>+ Add Trust Badge</Button>
+                  </div>
+
+                  <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <label className="text-sm font-medium">Royal Recipes (Serving Suggestions)</label>
+                    <p className="text-xs text-slate-500">Quick recipes to help users imagine how they will use the product.</p>
+                    {recipes.map((recipe, idx) => (
+                      <div key={idx} className="flex flex-col gap-2 mb-4 p-3 border rounded">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-medium text-slate-500">Recipe {idx + 1}</label>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setRecipes(recipes.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
+                        </div>
+                        <Input value={recipe.title} onChange={(e) => { const n = [...recipes]; n[idx].title = e.target.value; setRecipes(n) }} placeholder="Recipe Title (e.g. Spicy Marinade)" />
+                        <Input value={recipe.instruction} onChange={(e) => { const n = [...recipes]; n[idx].instruction = e.target.value; setRecipes(n) }} placeholder="Instruction (e.g. Use 2 spoons with prawns...)" />
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => setRecipes([...recipes, {title: '', instruction: ''}])}>+ Add Recipe</Button>
+                  </div>
+
                 </TabsContent>
 
                 {/* TAB 4: INGREDIENTS & PAIRINGS */}
