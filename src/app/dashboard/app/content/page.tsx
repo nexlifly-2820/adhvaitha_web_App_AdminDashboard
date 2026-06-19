@@ -18,6 +18,7 @@ interface AdBanner { tag: string; title: string; sub: string; img: string }
 interface Story { label: string; icon: string; tag: string }
 interface BentoSelection { section_title: string; best_seller_product: string; card1_label: string; card2_label: string; card2_sub: string; card2_icon: string; card3_label: string; card3_sub: string; card3_icon: string }
 interface Category { label: string; img: string }
+interface CategoryPageConfig { hero_title: string; hero_subtitle: string; hero_image: string; hero_tag: string }
 interface Coupon { code: string; title: string; sub: string }
 interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string }
@@ -54,6 +55,9 @@ export default function ContentManager() {
   })
   
   const [categories, setCategories] = useState<Category[]>([])
+  const [categoryPageConfig, setCategoryPageConfig] = useState<CategoryPageConfig>({
+    hero_title: '', hero_subtitle: '', hero_image: '', hero_tag: ''
+  })
   const [deals, setDeals] = useState<{product_names: string[], end_time: string | null, title: string}>({
     product_names: [], end_time: null, title: 'DEALS OF THE DAY'
   })
@@ -93,9 +97,9 @@ export default function ContentManager() {
         return snap.exists() ? snap.data() : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
-        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'),
+        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -129,6 +133,7 @@ export default function ContentManager() {
       if (pairingsDoc) setPairings(pairingsDoc.list || [])
       if (kitchenStoryDoc) setKitchenStory(kitchenStoryDoc as KitchenStory)
       if (searchConfigDoc && searchConfigDoc.trending_keywords) setTrendingKeywords(searchConfigDoc.trending_keywords)
+      if (catPageConfigDoc) setCategoryPageConfig(catPageConfigDoc as CategoryPageConfig)
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -169,6 +174,7 @@ export default function ContentManager() {
         break
       case 'categories':
         handleSaveTab('categories', { list: categories })
+        handleSaveTab('category_page_config', categoryPageConfig)
         break
       case 'deals':
         let endTimeTimestamp = null;
@@ -511,7 +517,50 @@ export default function ContentManager() {
           </TabsContent>
 
           {/* CATEGORIES */}
-          <TabsContent value="categories" className="mt-0">
+          <TabsContent value="categories" className="mt-0 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Category Page Hero Banner</CardTitle>
+                <CardDescription>Configure the featured collection banner at the top of the Categories page.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tag / Label</label>
+                    <Input 
+                      placeholder="e.g. FEATURED COLLECTION" 
+                      value={categoryPageConfig.hero_tag} 
+                      onChange={e => setCategoryPageConfig({ ...categoryPageConfig, hero_tag: e.target.value })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Hero Title</label>
+                    <Input 
+                      placeholder="e.g. The Royal Summer Festival" 
+                      value={categoryPageConfig.hero_title} 
+                      onChange={e => setCategoryPageConfig({ ...categoryPageConfig, hero_title: e.target.value })} 
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">Hero Subtitle</label>
+                    <Input 
+                      placeholder="e.g. Authentic sun-dried mango delicacies" 
+                      value={categoryPageConfig.hero_subtitle} 
+                      onChange={e => setCategoryPageConfig({ ...categoryPageConfig, hero_subtitle: e.target.value })} 
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">Hero Image</label>
+                    <ImageUpload 
+                      value={categoryPageConfig.hero_image} 
+                      onChange={url => setCategoryPageConfig({ ...categoryPageConfig, hero_image: url })} 
+                      folder="app_content" 
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
                 <div><CardTitle>Royal Collections (Categories)</CardTitle><CardDescription>App category icons with tags and badges</CardDescription></div>
