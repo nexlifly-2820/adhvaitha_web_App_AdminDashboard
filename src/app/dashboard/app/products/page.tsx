@@ -38,6 +38,7 @@ export default function ProductsPage() {
   const [category, setCategory] = useState('Pickles')
   const [isBestSeller, setIsBestSeller] = useState(false)
   const [isOutOfStock, setIsOutOfStock] = useState(false)
+  const [stockCount, setStockCount] = useState<number>(100)
   const [rating, setRating] = useState('0')
   const [images, setImages] = useState<string[]>([])
   
@@ -84,6 +85,7 @@ export default function ProductsPage() {
     setCategory('Pickles')
     setIsBestSeller(false)
     setIsOutOfStock(false)
+    setStockCount(100)
     setRating('0')
     setImages([])
     setWeightPriceEntries([{ weight: '250g', price: '' }])
@@ -110,6 +112,7 @@ export default function ProductsPage() {
     setCategory(product.category || 'Pickles')
     setIsBestSeller(product.isBestSeller || false)
     setIsOutOfStock(product.isOutOfStock || false)
+    setStockCount(product.stockCount !== undefined ? product.stockCount : 100)
     setRating(product.rating ? String(product.rating) : '0')
     setImages(product.image ? [product.image] : [])
     
@@ -202,6 +205,7 @@ export default function ProductsPage() {
           category: category,
           isBestSeller: isBestSeller,
           isOutOfStock: isOutOfStock,
+          stockCount: Number(stockCount),
           rating: Number(rating),
           image: images[0] || '', // Only taking first image for now based on schema
           weightPriceMap: weightPriceMap,
@@ -422,7 +426,20 @@ export default function ProductsPage() {
                 </TabsContent>
 
                 {/* TAB 2: INVENTORY & PRICING */}
-                <TabsContent value="inventory" className="space-y-6">
+                <TabsContent value="inventory" className="space-y-8">
+                  <div className="space-y-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Current Stock Level</h4>
+                    <div className="space-y-2 max-w-xs">
+                      <label className="text-sm font-medium">Stock Count</label>
+                      <Input 
+                        type="number" 
+                        value={stockCount} 
+                        onChange={(e) => setStockCount(Number(e.target.value))} 
+                      />
+                      <p className="text-xs text-slate-500">Controls the "ONLY X LEFT!" badge on the app.</p>
+                    </div>
+                  </div>
+
                   <div className="flex justify-between items-center">
                     <div>
                       <h4 className="font-medium text-slate-900 dark:text-slate-100">Weights & Prices</h4>

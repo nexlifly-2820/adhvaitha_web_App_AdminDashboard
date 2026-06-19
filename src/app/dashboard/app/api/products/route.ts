@@ -42,6 +42,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (productData.stockCount !== undefined) {
+      productData.stockCount = Number(productData.stockCount);
+    }
+
     if (documentId) {
       // Update existing product
       const docRef = doc(appProductsCollection, documentId);
@@ -61,6 +65,7 @@ export async function POST(request: Request) {
         category: productData.category || 'Pickles',
         isBestSeller: productData.isBestSeller ?? false,
         isOutOfStock: productData.isOutOfStock ?? false,
+        stockCount: productData.stockCount || 0,
         rating: productData.rating || 0,
         image: productData.image || '',
         weightPriceMap: productData.weightPriceMap || {},

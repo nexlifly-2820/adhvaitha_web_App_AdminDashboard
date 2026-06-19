@@ -78,6 +78,7 @@ export default function ContentManager() {
   // Pairing & Products State
   const [pairings, setPairings] = useState<Pairing[]>([])
   const [productNames, setProductNames] = useState<string[]>([])
+  const [trendingKeywords, setTrendingKeywords] = useState<string[]>(['Mango Special', 'New Snacks', 'Spicy Chicken', 'Ladoo', 'Combos'])
   const [allProducts, setAllProducts] = useState<any[]>([])
 
   useEffect(() => {
@@ -92,9 +93,9 @@ export default function ContentManager() {
         return snap.exists() ? snap.data() : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
-        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'),
+        getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -127,6 +128,7 @@ export default function ContentManager() {
       }
       if (pairingsDoc) setPairings(pairingsDoc.list || [])
       if (kitchenStoryDoc) setKitchenStory(kitchenStoryDoc as KitchenStory)
+      if (searchConfigDoc && searchConfigDoc.trending_keywords) setTrendingKeywords(searchConfigDoc.trending_keywords)
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -193,6 +195,9 @@ export default function ContentManager() {
         break
       case 'kitchen_story':
         handleSaveTab('kitchen_story', kitchenStory)
+        break
+      case 'trending_searches':
+        handleSaveTab('search_config', { trending_keywords: trendingKeywords })
         break
     }
   }
@@ -373,8 +378,8 @@ export default function ContentManager() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex gap-6 flex-col lg:flex-row items-start">
-        <TabsList className="flex flex-col justify-start bg-slate-100 dark:bg-slate-900 w-full lg:w-56 items-stretch p-2 gap-2 shrink-0 lg:sticky lg:top-24 lg:h-[calc(100vh-120px)] overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex gap-6 flex-col lg:flex-row items-start lg:h-[calc(100vh-180px)]">
+        <TabsList className="flex flex-col justify-start bg-slate-100 dark:bg-slate-900 w-full lg:w-56 items-stretch p-2 gap-2 shrink-0 lg:h-full overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl custom-scrollbar">
           <TabsTrigger value="banners" className="justify-start data-[state=active]:bg-white">Banners</TabsTrigger>
           <TabsTrigger value="stories" className="justify-start data-[state=active]:bg-white">Stories</TabsTrigger>
           <TabsTrigger value="bento" className="justify-start data-[state=active]:bg-white">Bento Selection</TabsTrigger>
@@ -385,9 +390,10 @@ export default function ContentManager() {
           <TabsTrigger value="onboarding" className="justify-start data-[state=active]:bg-white">Onboarding</TabsTrigger>
           <TabsTrigger value="pairings" className="justify-start data-[state=active]:bg-white">Art of Pairing</TabsTrigger>
           <TabsTrigger value="kitchen_story" className="justify-start data-[state=active]:bg-white">Kitchen Story</TabsTrigger>
+          <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
         </TabsList>
         
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pr-2 pb-20 custom-scrollbar">
           {/* BANNERS */}
           <TabsContent value="banners" className="mt-0 space-y-6">
             <Card>
@@ -508,17 +514,33 @@ export default function ContentManager() {
           <TabsContent value="categories" className="mt-0">
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div><CardTitle>Royal Collections (Categories)</CardTitle><CardDescription>App category icons</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '' })}>+ Add Category</Button>
+                <div><CardTitle>Royal Collections (Categories)</CardTitle><CardDescription>App category icons with tags and badges</CardDescription></div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', tagline: '', badge: '' })}>+ Add Category</Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {categories.map((cat, idx) => (
-                  <div key={idx} className="flex gap-4 items-center p-3 border rounded">
-                    <div className="flex-1 flex gap-2">
-                      <Input placeholder="Label" value={cat.label} onChange={e => updateArray(setCategories, idx, 'label', e.target.value)} className="w-1/3" />
-                      <ImageUpload value={cat.img} onChange={url => updateArray(setCategories, idx, 'img', url)} folder="app_content" className="w-2/3" />
+                  <div key={idx} className="flex flex-col gap-4 p-4 border rounded bg-white dark:bg-slate-900 relative">
+                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-red-500 h-8 w-8 hover:bg-red-50 dark:hover:bg-red-950/50" onClick={() => removeFromArray(setCategories, idx)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pr-10">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Name</label>
+                        <Input placeholder="e.g. Pickles" value={cat.label || ''} onChange={e => updateArray(setCategories, idx, 'label', e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Corner Badge</label>
+                        <Input placeholder="e.g. HOT, NEW (Optional)" value={cat.badge || ''} onChange={e => updateArray(setCategories, idx, 'badge', e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Editorial Tagline</label>
+                        <Input placeholder="e.g. Sun-dried purity (Optional)" value={cat.tagline || ''} onChange={e => updateArray(setCategories, idx, 'tagline', e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Image</label>
+                        <ImageUpload value={cat.img || ''} onChange={url => updateArray(setCategories, idx, 'img', url)} folder="app_content" />
+                      </div>
                     </div>
-                    <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setCategories, idx)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 ))}
               </CardContent>
@@ -1041,6 +1063,40 @@ export default function ContentManager() {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* TRENDING SEARCHES */}
+          <TabsContent value="trending_searches" className="mt-0">
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div>
+                  <CardTitle>Trending Searches</CardTitle>
+                  <CardDescription>Manage the search keyword chips shown below the app search bar</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setTrendingKeywords, '')}>
+                  + Add Keyword
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {trendingKeywords.map((keyword, idx) => (
+                  <div key={idx} className="flex gap-4 items-center p-3 border rounded">
+                    <Input 
+                      placeholder="e.g. Mango Pickle" 
+                      value={keyword} 
+                      onChange={e => {
+                        const newKeywords = [...trendingKeywords];
+                        newKeywords[idx] = e.target.value;
+                        setTrendingKeywords(newKeywords);
+                      }} 
+                      className="flex-1"
+                    />
+                    <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setTrendingKeywords, idx)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </TabsContent>

@@ -17,6 +17,7 @@ export default function SystemSettingsPage() {
   // App Config State (Targeting exact Firestore Guide keys)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [minAppVersion, setMinAppVersion] = useState('1.0.0')
+  const [inventoryThreshold, setInventoryThreshold] = useState(10)
 
   // Shipping Config State
   const [baseFee, setBaseFee] = useState(40)
@@ -39,6 +40,7 @@ export default function SystemSettingsPage() {
         const data = docSnap.data()
         setMaintenanceMode(data.maintenance_mode || false)
         setMinAppVersion(data.min_version || '1.0.0')
+        setInventoryThreshold(data.inventory_threshold ?? 10)
       }
 
       const deliveryRef = doc(db, 'app_data', 'delivery_config')
@@ -73,6 +75,7 @@ export default function SystemSettingsPage() {
       await setDoc(docRef, {
         maintenance_mode: maintenanceMode,
         min_version: minAppVersion,
+        inventory_threshold: Number(inventoryThreshold),
       }, { merge: true })
 
       const deliveryRef = doc(db, 'app_data', 'delivery_config')
@@ -166,6 +169,31 @@ export default function SystemSettingsPage() {
                 className="font-mono bg-white"
               />
               <p className="text-xs text-slate-500">Any app version lower than this string will be forced to update.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Scarcity Marketing & Inventory Card */}
+        <Card className="border-transparent shadow-md md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-600">
+              <AlertTriangle className="h-5 w-5" />
+              Scarcity Marketing & Inventory
+            </CardTitle>
+            <CardDescription>
+              Configure the global threshold for when to show the "ONLY X LEFT!" badge on products.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2 max-w-sm">
+              <label className="text-sm font-semibold">Inventory Warning Threshold</label>
+              <Input 
+                type="number"
+                value={inventoryThreshold}
+                onChange={(e) => setInventoryThreshold(Number(e.target.value))}
+                className="bg-white"
+              />
+              <p className="text-xs text-slate-500">Products with stock at or below this number will display the low stock badge.</p>
             </div>
           </CardContent>
         </Card>
