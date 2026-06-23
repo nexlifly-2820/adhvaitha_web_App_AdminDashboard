@@ -12,9 +12,10 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   folder?: string;
   className?: string;
+  maxSizeMB?: number;
 }
 
-export function ImageUpload({ value, onChange, folder = 'uploads', className = '' }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, folder = 'uploads', className = '', maxSizeMB = 5 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -22,9 +23,9 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate size (e.g. 5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be less than 5MB')
+    // Validate size
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      toast.error(`Image must be less than ${maxSizeMB}MB`)
       return
     }
 
