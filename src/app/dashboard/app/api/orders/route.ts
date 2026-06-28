@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { appOrdersCollection, db } from '@/lib/firebase-app';
