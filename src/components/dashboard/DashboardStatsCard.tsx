@@ -22,7 +22,7 @@ export function DashboardStatsCard({ totalOrders, isLoading = false }: Dashboard
   return (
     <Card 
       className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
-      onClick={() => mounted && router.push("/dashboard/orders")}
+      onClick={() => mounted && router.push("/dashboard/app/orders-management")}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Total Orders</CardTitle>

@@ -39,7 +39,7 @@ export function DashboardStatsCard({ totalOrders }: DashboardStatsCardProps) {
   }
 
   return (
-    <Link href="/dashboard/orders-management" className="block w-full">
+    <Link href="/dashboard/app/orders-management" className="block w-full">
       <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer border-l-4 border-l-primary group">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">

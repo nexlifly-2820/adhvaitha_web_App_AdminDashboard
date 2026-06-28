@@ -66,8 +66,8 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-7xl">
-      <div className="mb-8 space-y-4">
+    <div className="container mx-auto pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl h-[calc(100vh-2rem)] flex flex-col">
+      <div className="mb-4 space-y-2 shrink-0">
         <button 
           onClick={() => window.history.back()} 
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
@@ -83,30 +83,37 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <OrdersFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        paymentFilter={paymentFilter}
-        onPaymentFilterChange={setPaymentFilter}
-        onClearFilters={handleClearFilters}
-      />
+      <div className="shrink-0 mb-4">
+        <OrdersFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          paymentFilter={paymentFilter}
+          onPaymentFilterChange={setPaymentFilter}
+          onClearFilters={handleClearFilters}
+        />
+      </div>
 
-      <OrdersTable
-        data={paginatedOrders}
-        isLoading={isLoading}
-        onRowClick={handleRowClick}
-      />
+      <div className="flex-1 min-h-0 overflow-hidden mb-4 rounded-md border bg-card flex flex-col">
+        <OrdersTable
+          data={paginatedOrders}
+          isLoading={isLoading}
+          onRowClick={handleRowClick}
+          startIndex={(currentPage - 1) * pageSize}
+        />
+      </div>
 
-      <OrdersPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        totalRecords={totalRecords}
-        onPageChange={setCurrentPage}
-        onPageSizeChange={setPageSize}
-      />
+      <div className="shrink-0 mt-auto">
+        <OrdersPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalRecords={totalRecords}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
+      </div>
 
       <OrderDetailsDrawer
         order={selectedOrder}

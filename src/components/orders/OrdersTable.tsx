@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Eye } from "lucide-react";
+import { ArrowUpDown, Eye, Loader2 } from "lucide-react";
 import { OrderDetails } from "@/types/order";
 import { format } from "date-fns";
 
@@ -28,12 +28,18 @@ interface OrdersTableProps {
   data: OrderDetails[];
   onRowClick: (order: OrderDetails) => void;
   isLoading?: boolean;
+  startIndex?: number;
 }
 
-export function OrdersTable({ data, onRowClick, isLoading = false }: OrdersTableProps) {
+export function OrdersTable({ data, onRowClick, isLoading = false, startIndex = 0 }: OrdersTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns: ColumnDef<OrderDetails>[] = [
+    {
+      id: "serialNumber",
+      header: "S.No",
+      cell: ({ row }) => <div className="text-center font-medium text-muted-foreground">{startIndex + row.index + 1}</div>,
+    },
     {
       accessorKey: "id",
       header: "Order ID",
@@ -164,59 +170,60 @@ export function OrdersTable({ data, onRowClick, isLoading = false }: OrdersTable
   });
 
   return (
-    <div className="rounded-md border bg-card">
-      <div className="relative w-full overflow-auto">
-        <Table>
-          <TableHeader className="bg-muted/50 sticky top-0 z-10">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id} className="whitespace-nowrap">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+    <div className="w-full h-full flex flex-col overflow-hidden bg-card">
+      <Table wrapperClassName="flex-1 min-h-0 overflow-auto">
+        <TableHeader className="bg-slate-800 text-slate-100 dark:bg-slate-900 sticky top-0 z-10 shadow-sm [&_th]:text-slate-200 [&_button]:text-slate-200 hover:[&_button]:text-slate-100 hover:[&_button]:bg-slate-700">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableHead key={header.id} className="whitespace-nowrap">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-orange-500 mr-3" />
+                  <span className="text-slate-500">Loading orders...</span>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+                className="cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                onClick={() => onRowClick(row.original)}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id} className="whitespace-nowrap">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Loading orders...
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => onRowClick(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-nowrap">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  No orders found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                No orders found.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }

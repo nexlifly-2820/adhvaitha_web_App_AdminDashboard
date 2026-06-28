@@ -31,9 +31,12 @@ export default function AppSidebar() {
   return (
     <nav className="flex-1 space-y-1 p-4">
       {navItems.map((item) => {
-        const isActive = item.href === '/dashboard/app' 
-          ? pathname === item.href 
-          : pathname.startsWith(item.href);
+        let isActive = false;
+        if (item.href === '/dashboard/app') {
+          isActive = pathname === '/dashboard/app' || pathname === '/dashboard/app/orders-management';
+        } else {
+          isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+        }
 
         return (
           <Link
@@ -41,11 +44,11 @@ export default function AppSidebar() {
             href={item.href}
             className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               isActive 
-                ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-500' 
+                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-sm' 
                 : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
             }`}
           >
-            <item.icon className={`h-5 w-5 ${isActive ? 'text-orange-600 dark:text-orange-500' : 'text-slate-500'}`} />
+            <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
             {item.title}
           </Link>
         )
