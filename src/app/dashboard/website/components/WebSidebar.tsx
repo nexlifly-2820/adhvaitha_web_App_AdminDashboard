@@ -9,12 +9,14 @@ import {
   FileText, 
   MessageSquare, 
   Phone,
-  Home
+  Home,
+  HelpCircle
 } from 'lucide-react'
 
 const navItems = [
   { title: 'Overview', icon: Globe, href: '/dashboard/website' },
   { title: 'Homepage', icon: Home, href: '/dashboard/website/homepage' },
+  { title: 'FAQ', icon: HelpCircle, href: '/dashboard/website/faq' },
   { title: 'Gallery', icon: ImageIcon, href: '/dashboard/website/gallery' },
   { title: 'Product display', icon: BookOpen, href: '/dashboard/website/products' },
   { title: 'Recipes display', icon: FileText, href: '/dashboard/website/recipes' },
