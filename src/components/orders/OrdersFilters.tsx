@@ -32,7 +32,7 @@ export function OrdersFilters({
     searchTerm !== "" || statusFilter !== "all" || paymentFilter !== "all";
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card p-4 rounded-lg border shadow-sm mb-6">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card p-4 rounded-lg border shadow-sm">
       <div className="relative w-full max-w-sm">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -77,7 +77,7 @@ export function OrdersFilters({
           <Button
             variant="ghost"
             onClick={onClearFilters}
-            className="text-muted-foreground hover:text-foreground px-3"
+            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 px-3"
           >
             Clear Filters
             <X className="ml-2 h-4 w-4" />
