@@ -97,43 +97,43 @@ export default function AppManagement() {
             <p className="text-xs opacity-75">All time revenue</p>
           </CardContent>
         </Card>
-        <Link href="/dashboard/app/orders" className="block cursor-pointer">
-          <Card className="hover:shadow-lg transition-shadow duration-300 h-full">
+        <Link href="/dashboard/app/orders-management" className="block cursor-pointer">
+          <Card className="hover:shadow-lg transition-shadow duration-300 h-full border-none bg-gradient-to-br from-orange-500 to-amber-500 text-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-              <ShoppingBag className="h-4 w-4 text-slate-500" />
+              <ShoppingBag className="h-4 w-4 opacity-75" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {loading ? "..." : stats?.totalOrderCount.toLocaleString()}
               </div>
-              <p className="text-xs text-slate-500">All-time processed</p>
+              <p className="text-xs opacity-75">All-time processed</p>
             </CardContent>
           </Card>
         </Link>
-        <Card className="hover:shadow-lg transition-shadow duration-300">
+        <Card className="hover:shadow-lg transition-shadow duration-300 border-none bg-gradient-to-br from-orange-500 to-amber-500 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-slate-500" />
+            <Users className="h-4 w-4 opacity-75" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {loading ? "..." : stats?.totalUserCount.toLocaleString()}
             </div>
-            <p className="text-xs text-slate-500">Registered customers</p>
+            <p className="text-xs opacity-75">Registered customers</p>
           </CardContent>
         </Card>
-        <Link href="/dashboard/app/orders" className="block cursor-pointer">
-          <Card className="hover:shadow-lg transition-shadow duration-300 h-full">
+        <Link href="/dashboard/app/orders-management" className="block cursor-pointer">
+          <Card className="hover:shadow-lg transition-shadow duration-300 h-full border-none bg-gradient-to-br from-orange-500 to-amber-500 text-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-              <TrendingUp className="h-4 w-4 text-slate-500" />
+              <TrendingUp className="h-4 w-4 opacity-75" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {loading ? "..." : stats?.activeOrders}
               </div>
-              <p className="text-xs text-slate-500">Currently in-transit/processing</p>
+              <p className="text-xs opacity-75">Currently in-transit/processing</p>
             </CardContent>
           </Card>
         </Link>
@@ -234,7 +234,7 @@ export default function AppManagement() {
             <CardTitle>Recent Orders</CardTitle>
             <CardDescription>Latest 5 orders placed on the platform.</CardDescription>
           </div>
-          <Link href="/dashboard/app/orders" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+          <Link href="/dashboard/app/orders-management" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
             View All Orders &rarr;
           </Link>
         </CardHeader>
