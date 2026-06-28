@@ -8,11 +8,13 @@ import {
   BookOpen, 
   FileText, 
   MessageSquare, 
-  Phone 
+  Phone,
+  Home
 } from 'lucide-react'
 
 const navItems = [
   { title: 'Overview', icon: Globe, href: '/dashboard/website' },
+  { title: 'Homepage', icon: Home, href: '/dashboard/website/homepage' },
   { title: 'Gallery', icon: ImageIcon, href: '/dashboard/website/gallery' },
   { title: 'Product display', icon: BookOpen, href: '/dashboard/website/products' },
   { title: 'Recipes display', icon: FileText, href: '/dashboard/website/recipes' },
