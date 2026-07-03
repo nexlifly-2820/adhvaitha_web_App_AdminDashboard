@@ -105,7 +105,7 @@ export default function CompleteHomepageManagement() {
           {data.heroImages.map((img: string, i: number) => (
             <div key={i} className="flex gap-4 items-center">
               <div className="flex-1"><ImageUpload value={img} onChange={(url) => { const n = [...data.heroImages]; n[i] = url; setData({...data, heroImages: n}); }} /></div>
-              <Button variant="ghost" onClick={() => setData({...data, heroImages: data.heroImages.filter((_, idx) => idx !== i)})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
+              <Button variant="ghost" onClick={() => setData({...data, heroImages: data.heroImages.filter((_: any, idx: number) => idx !== i)})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
             </div>
           ))}
           <Button variant="outline" onClick={() => setData({...data, heroImages: [...data.heroImages, '']})}>+ Add Hero Image</Button>
@@ -131,7 +131,7 @@ export default function CompleteHomepageManagement() {
              <h3 className="font-semibold">Ingredient Cards</h3>
              {data.ingredients.map((ing: any, i: number) => (
                 <div key={i} className="flex flex-col md:flex-row gap-4 items-center border p-4 rounded bg-white dark:bg-slate-950 relative">
-                  <Button variant="ghost" className="absolute top-2 right-2" onClick={() => setData({...data, ingredients: data.ingredients.filter((_, idx) => idx !== i)})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
+                  <Button variant="ghost" className="absolute top-2 right-2" onClick={() => setData({...data, ingredients: data.ingredients.filter((_: any, idx: number) => idx !== i)})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
                   <div className="flex-1 space-y-2 w-full">
                     <Input value={ing.name} onChange={(e) => { const n = [...data.ingredients]; n[i].name = e.target.value; setData({...data, ingredients: n})}} placeholder="Ingredient Name" />
                     <Input value={ing.source} onChange={(e) => { const n = [...data.ingredients]; n[i].source = e.target.value; setData({...data, ingredients: n})}} placeholder="Source" />
@@ -161,7 +161,7 @@ export default function CompleteHomepageManagement() {
              <h3 className="font-semibold">Floating Cards</h3>
              {data.highlight.cards.map((card: any, i: number) => (
                 <div key={i} className="flex flex-col sm:flex-row gap-4 items-center border p-4 rounded bg-white dark:bg-slate-950 relative">
-                  <Button variant="ghost" className="absolute top-2 right-2" onClick={() => setData({...data, highlight: {...data.highlight, cards: data.highlight.cards.filter((_, idx) => idx !== i)}})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
+                  <Button variant="ghost" className="absolute top-2 right-2" onClick={() => setData({...data, highlight: {...data.highlight, cards: data.highlight.cards.filter((_: any, idx: number) => idx !== i)}})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
                   <Textarea className="flex-1" value={card.text} onChange={(e) => { const n = [...data.highlight.cards]; n[i].text = e.target.value; setData({...data, highlight: {...data.highlight, cards: n}})}} placeholder="Card Text" />
                   <div className="w-full sm:w-32"><ImageUpload value={card.img} onChange={(url) => { const n = [...data.highlight.cards]; n[i].img = url; setData({...data, highlight: {...data.highlight, cards: n}})}} /></div>
                 </div>
@@ -179,7 +179,7 @@ export default function CompleteHomepageManagement() {
           <div className="space-y-4 border p-4 rounded bg-slate-50 dark:bg-slate-900/50">
              {data.testimonials.map((test: any, i: number) => (
                 <div key={i} className="flex flex-col gap-4 border p-4 rounded bg-white dark:bg-slate-950 relative">
-                  <Button variant="ghost" className="absolute top-2 right-2" onClick={() => setData({...data, testimonials: data.testimonials.filter((_, idx) => idx !== i)})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
+                  <Button variant="ghost" className="absolute top-2 right-2" onClick={() => setData({...data, testimonials: data.testimonials.filter((_: any, idx: number) => idx !== i)})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
                   
                   <div className="grid grid-cols-2 gap-4 max-w-[85%]">
                     <div><Label>Author</Label><Input value={test.author} onChange={(e) => { const n = [...data.testimonials]; n[i].author = e.target.value; setData({...data, testimonials: n})}} /></div>

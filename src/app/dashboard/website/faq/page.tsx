@@ -70,7 +70,7 @@ export default function FaqManagement() {
         <CardContent className="space-y-4">
           {data.faqs.map((faq: any, i: number) => (
             <div key={i} className="flex flex-col gap-4 border p-4 rounded bg-white dark:bg-slate-950 relative">
-              <Button variant="ghost" className="absolute top-2 right-2" onClick={() => setData({...data, faqs: data.faqs.filter((_, idx) => idx !== i)})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
+              <Button variant="ghost" className="absolute top-2 right-2" onClick={() => setData({...data, faqs: data.faqs.filter((_: any, idx: number) => idx !== i)})}><Trash2 className="text-red-500 w-4 h-4" /></Button>
               
               <div className="flex flex-col md:flex-row gap-4 md:items-center pr-10">
                 <div className="flex-1 space-y-2">

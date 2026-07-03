@@ -269,7 +269,7 @@ export function OrderDetailsDrawer({
                   Product Details
                 </h3>
                 <div className="space-y-4">
-                  {order.products.map((product, index) => (
+                  {order.products.map((product: any, index) => (
                     <div key={product.id || index} className="flex justify-between items-start text-sm">
                       <div className="space-y-1">
                         <p className="font-medium">{product.name || 'Unknown Product'}</p>

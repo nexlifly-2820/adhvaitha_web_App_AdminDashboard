@@ -29,7 +29,7 @@ export async function GET() {
     const productSales: Record<string, number> = {};
 
     ordersSnapshot.forEach((doc) => {
-      const order = { id: doc.id, ...doc.data() };
+      const order: any = { id: doc.id, ...doc.data() };
       allOrders.push(order);
       
       const total = Number(order.total) || 0;
