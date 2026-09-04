@@ -29,7 +29,7 @@ export default function CRMPage() {
   const [replyText, setReplyText] = useState('')
   const [isResolving, setIsResolving] = useState(false)
 
-  useEffect(() => {
+
   const fetchInquiries = async () => {
     try {
       const res = await fetch('/dashboard/app/api/inquiries')

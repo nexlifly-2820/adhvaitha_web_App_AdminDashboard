@@ -198,6 +198,7 @@ export default function ContentManager() {
         handleSaveTab('category_page_config', categoryPageConfig)
         break
       case 'deals':
+        let endTimeTimestamp = null;
         if (deals.end_time) {
           endTimeTimestamp = new Date(deals.end_time).toISOString();
         }
