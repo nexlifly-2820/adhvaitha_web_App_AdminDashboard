@@ -3,7 +3,7 @@
  */
 
 // Replace this with the actual BigRock domain (or use an environment variable)
-export const BIGROCK_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://your-actual-bigrock-domain.com/api';
+export const BIGROCK_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://adhvaithafoods.in/api';
 
 /**
  * Generic GET request
