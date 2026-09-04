@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase-app'
+
 import { toast } from 'sonner'
 import { Settings, ShieldAlert, Smartphone, Save, AlertTriangle, Truck } from 'lucide-react'
 
@@ -33,20 +32,21 @@ export default function SystemSettingsPage() {
   const fetchConfig = async () => {
     setIsLoading(true)
     try {
-      const docRef = doc(db, 'app_data', 'config')
-      const docSnap = await getDoc(docRef)
+      const configRes = await fetch('/dashboard/app/api/app-data?docId=config')
+      const configJson = await configRes.json()
       
-      if (docSnap.exists()) {
-        const data = docSnap.data()
+      if (configJson.success && configJson.data) {
+        const data = configJson.data
         setMaintenanceMode(data.maintenance_mode || false)
         setMinAppVersion(data.min_version || '1.0.0')
         setInventoryThreshold(data.inventory_threshold ?? 10)
       }
 
-      const deliveryRef = doc(db, 'app_data', 'delivery_config')
-      const deliverySnap = await getDoc(deliveryRef)
-      if (deliverySnap.exists()) {
-        const deliveryData = deliverySnap.data()
+      const deliveryRes = await fetch('/dashboard/app/api/app-data?docId=delivery_config')
+      const deliveryJson = await deliveryRes.json()
+      
+      if (deliveryJson.success && deliveryJson.data) {
+        const deliveryData = deliveryJson.data
         setBaseFee(deliveryData.base_fee || 40)
         setPackingFee(deliveryData.packing_fee || 0)
         setGstPercentage(deliveryData.gst_percentage || 12)
@@ -71,20 +71,28 @@ export default function SystemSettingsPage() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const docRef = doc(db, 'app_data', 'config')
-      await setDoc(docRef, {
-        maintenance_mode: maintenanceMode,
-        min_version: minAppVersion,
-        inventory_threshold: Number(inventoryThreshold),
-      }, { merge: true })
+      await fetch('/dashboard/app/api/app-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          docId: 'config',
+          maintenance_mode: maintenanceMode,
+          min_version: minAppVersion,
+          inventory_threshold: Number(inventoryThreshold),
+        })
+      })
 
-      const deliveryRef = doc(db, 'app_data', 'delivery_config')
-      await setDoc(deliveryRef, {
-        base_fee: Number(baseFee),
-        packing_fee: Number(packingFee),
-        gst_percentage: Number(gstPercentage),
-        free_threshold: enableFreeDelivery ? Number(freeThreshold) : 99999
-      }, { merge: true })
+      await fetch('/dashboard/app/api/app-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          docId: 'delivery_config',
+          base_fee: Number(baseFee),
+          packing_fee: Number(packingFee),
+          gst_percentage: Number(gstPercentage),
+          free_threshold: enableFreeDelivery ? Number(freeThreshold) : 99999
+        })
+      })
 
       toast.success('System settings saved successfully!')
     } catch (error) {

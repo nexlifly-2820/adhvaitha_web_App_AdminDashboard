@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase-app'
+
 import { toast } from 'sonner'
 import { Search, MessageSquare, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -31,32 +30,29 @@ export default function CRMPage() {
   const [isResolving, setIsResolving] = useState(false)
 
   useEffect(() => {
-    // Listen to "inquiries" collection
-    const inquiriesRef = collection(db, 'inquiries')
-    const unsubscribe = onSnapshot(inquiriesRef, (snapshot) => {
-      const data: Inquiry[] = []
-      snapshot.forEach(doc => {
-        data.push({ id: doc.id, ...doc.data() } as Inquiry)
-      })
-      
-      // Sort by newest first
-      data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      
-      setInquiries(data)
-      setIsLoading(false)
-      
-      // Update selected inquiry if it was changed
-      if (selectedInquiry) {
-        const updated = data.find(i => i.id === selectedInquiry.id)
-        if (updated) setSelectedInquiry(updated)
+  const fetchInquiries = async () => {
+    try {
+      const res = await fetch('/dashboard/app/api/inquiries')
+      const result = await res.json()
+      if (result.success && result.data) {
+        const data = result.data as Inquiry[]
+        data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        setInquiries(data)
+        if (selectedInquiry) {
+          const updated = data.find(i => i.id === selectedInquiry.id)
+          if (updated) setSelectedInquiry(updated)
+        }
       }
-    }, (error) => {
+    } catch (error) {
       console.error('Error fetching inquiries:', error)
       toast.error('Failed to load CRM data')
+    } finally {
       setIsLoading(false)
-    })
+    }
+  }
 
-    return () => unsubscribe()
+  useEffect(() => {
+    fetchInquiries()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleResolve = async () => {
@@ -64,14 +60,23 @@ export default function CRMPage() {
     
     setIsResolving(true)
     try {
-      const docRef = doc(db, 'inquiries', selectedInquiry.id)
-      await updateDoc(docRef, {
-        status: 'resolved',
-        adminReply: replyText || 'Resolved without written reply.',
-        resolvedAt: new Date().toISOString()
+      const res = await fetch('/dashboard/app/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedInquiry.id,
+          status: 'resolved',
+          adminReply: replyText || 'Resolved without written reply.'
+        })
       })
-      toast.success('Inquiry marked as resolved!')
-      setReplyText('')
+      
+      if (res.ok) {
+        toast.success('Inquiry marked as resolved!')
+        setReplyText('')
+        fetchInquiries()
+      } else {
+        toast.error('Failed to resolve inquiry')
+      }
     } catch (error) {
       console.error('Error resolving inquiry:', error)
       toast.error('Failed to resolve inquiry')

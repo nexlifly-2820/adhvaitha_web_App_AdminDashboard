@@ -5,9 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle } from 'lucide-react'
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { db, storage } from '@/lib/firebase-app'
+import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageUpload } from '@/components/ImageUpload'
@@ -106,8 +105,9 @@ export default function ContentManager() {
     setIsLoading(true)
     try {
       const getDocData = async (docId: string) => {
-        const snap = await getDoc(doc(db, 'app_data', docId))
-        return snap.exists() ? snap.data() : null
+        const res = await fetch(`/dashboard/app/api/app-data?docId=${docId}`)
+        const json = await res.json()
+        return (json.success && json.data) ? json.data : null
       }
 
       const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, productsRes] = await Promise.all([
@@ -168,7 +168,11 @@ export default function ContentManager() {
   const handleSaveTab = async (docId: string, data: any) => {
     setIsSaving(true)
     try {
-      await setDoc(doc(db, 'app_data', docId), data)
+      await fetch('/dashboard/app/api/app-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ docId, ...data })
+      })
       toast.success(`${docId} updated successfully!`)
     } catch (error) {
       console.error('Error saving content:', error)
@@ -194,9 +198,8 @@ export default function ContentManager() {
         handleSaveTab('category_page_config', categoryPageConfig)
         break
       case 'deals':
-        let endTimeTimestamp = null;
         if (deals.end_time) {
-          endTimeTimestamp = Timestamp.fromDate(new Date(deals.end_time));
+          endTimeTimestamp = new Date(deals.end_time).toISOString();
         }
         handleSaveTab('deals', { 
           product_names: deals.product_names,
@@ -249,18 +252,20 @@ export default function ContentManager() {
       
       const defaultProduct = activeProducts.length > 0 ? activeProducts[0].name : 'Bellam Avakaya'
 
+      const postConfig = (docId: string, data: any) => fetch('/dashboard/app/api/app-data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ docId, ...data }) })
+
       await Promise.all([
-        setDoc(doc(db, 'app_data', 'banners'), {
+        postConfig('banners', {
           main_banners: [{ title: 'Handmade Pickles', sub: 'Since 1982', img: img1 }],
           ad_banners: [{ tag: 'FEATURED', title: 'Summer Sale', sub: 'Up to 20% off', img: img2 }]
         }),
-        setDoc(doc(db, 'app_data', 'stories'), {
+        postConfig('stories', {
           list: [
             { label: 'Our Origin', icon: 'auto_stories', tag: 'ORIGIN' },
             { label: 'Packaging', icon: 'inventory_2', tag: 'PACKAGING' }
           ]
         }),
-        setDoc(doc(db, 'app_data', 'bento_selection'), {
+        postConfig('bento_selection', {
           section_title: "Today's Selection",
           best_seller_product: defaultProduct,
           card1_label: "Best Seller",
@@ -271,25 +276,25 @@ export default function ContentManager() {
           card3_sub: "Snacks",
           card3_icon: "restaurant_menu_rounded"
         }),
-        setDoc(doc(db, 'app_data', 'categories'), {
+        postConfig('categories', {
           list: [
             { label: 'Pickles', img: img1 },
             { label: 'Sweets', img: img2 },
             { label: 'Spices', img: img3 }
           ]
         }),
-        setDoc(doc(db, 'app_data', 'deals'), {
+        postConfig('deals', {
           product_names: [defaultProduct],
-          end_time: Timestamp.fromDate(new Date(Date.now() + 86400000)),
+          end_time: new Date(Date.now() + 86400000).toISOString(),
           title: 'DEALS OF THE DAY'
         }),
-        setDoc(doc(db, 'app_data', 'coupons'), {
+        postConfig('coupons', {
           active_list: [{ code: 'ROYAL10', title: '10% OFF', sub: 'On your first order' }]
         }),
-        setDoc(doc(db, 'app_data', 'packaging'), {
+        postConfig('packaging', {
           list: [{ title: 'Premium Glass Jars', desc: 'Sealed for freshness', img: img4 }]
         }),
-        setDoc(doc(db, 'app_data', 'onboarding'), {
+        postConfig('onboarding', {
           steps: [
             { title: 'Welcome to Adhvaitha', subtitle: 'Authentic Taste', desc: 'Discover the traditional flavors of our handmade delicacies.', img: img1 }
           ],
@@ -298,7 +303,7 @@ export default function ContentManager() {
             { title: 'Sweet', sub: 'Pure jaggery', icon: 'eco', color: '#8b4513' }
           ]
         }),
-        setDoc(doc(db, 'app_data', 'pairings'), {
+        postConfig('pairings', {
           list: [
             { title: 'THE COASTAL CLASSIC', pairing: 'Rice + Ghee + Avakaya', desc: 'A timeless combination that brings out the best of Andhra flavors.', product_name: defaultProduct, image: img1 }
           ]

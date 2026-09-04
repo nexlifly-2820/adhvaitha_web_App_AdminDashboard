@@ -1,19 +1,20 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { appOrdersCollection, db } from '@/lib/firebase-app';
-
-import { createShiprocketOrder } from '@/lib/shiprocket';
+import { fetchApi, postApi } from '@/lib/api-client';
+import { createShiprocketOrder } from '@/lib/shiprocket'; // Assuming this still works with standard JSON
 
 // GET: Fetch all orders
 export async function GET() {
   try {
-    const querySnapshot = await getDocs(appOrdersCollection);
-    const data: Record<string, any> = {};
+    const ordersArray = await fetchApi('/orders.php');
     
-    querySnapshot.forEach((doc) => {
-      data[doc.id] = { id: doc.id, ...doc.data() };
-    });
+    // The frontend expects data as a record { documentId: { ...orderData } }
+    const data: Record<string, any> = {};
+    if (Array.isArray(ordersArray)) {
+      ordersArray.forEach((order: any) => {
+        data[order.order_id] = order;
+      });
+    }
 
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: any) {
@@ -28,41 +29,32 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { documentId, ...orderData } = body;
 
+    // We can handle both create and update via the orders.php POST endpoint
+    // BigRock orders.php expects standard fields
     if (documentId) {
-      // Update existing order (e.g., updating tracking info, status, or heritage fields)
-      const docRef = doc(appOrdersCollection, documentId);
-      await updateDoc(docRef, {
-        ...orderData,
-        updatedAt: new Date().toISOString()
-      });
-      return NextResponse.json({ success: true, message: 'Order updated successfully' }, { status: 200 });
+       // Updating existing order
+       // The PHP script handles update natively via INSERT ... ON DUPLICATE KEY UPDATE, 
+       // but we need to ensure action parameter is passed if required, or simply passing the order_id updates it.
+       const updatePayload = {
+         ...orderData,
+         order_id: documentId,
+         user_id: orderData.userId || orderData.user_id,
+         total_amount: orderData.total || orderData.total_amount,
+         shipping_address: orderData.shippingAddress || orderData.shipping_address
+       };
+       await postApi('/orders.php', updatePayload);
+       return NextResponse.json({ success: true, message: 'Order updated successfully' }, { status: 200 });
     } else {
-      if (!orderData.userId || !orderData.items || !orderData.total) {
-        return NextResponse.json(
-          { success: false, error: 'Order must contain userId, items, and total' },
-          { status: 400 }
-        );
-      }
-      
-      // Create new order (document ID is orderId, e.g. ADH-1234)
-      const orderId = orderData.orderId || `ADH-${Date.now()}`;
-      const orderRef = doc(appOrdersCollection, orderId);
-      
-      const newData = {
-        orderId: orderId,
-        userId: orderData.userId,
-        status: orderData.status || 'Placed',
-        total: orderData.total,
-        shippingAddress: orderData.shippingAddress || '',
-        trackingId: orderData.trackingId || '',
-        courierName: orderData.courierName || '',
-        items: orderData.items || [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      await setDoc(orderRef, newData);
-      return NextResponse.json({ success: true, id: orderId, message: 'Order created successfully' }, { status: 201 });
+       // Creating new order
+       const orderPayload = {
+         ...orderData,
+         order_id: orderData.orderId || `ADH-${Date.now()}`,
+         user_id: orderData.userId,
+         total_amount: orderData.total,
+         shipping_address: orderData.shippingAddress
+       };
+       await postApi('/orders.php', orderPayload);
+       return NextResponse.json({ success: true, id: orderPayload.order_id, message: 'Order created successfully' }, { status: 201 });
     }
   } catch (error: any) {
     console.error('Error saving order:', error);

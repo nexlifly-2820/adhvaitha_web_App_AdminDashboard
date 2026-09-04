@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { doc, getDoc, setDoc } from "firebase/firestore"
-import { db } from "@/lib/firebase-web"
+
 import { Loader2 } from "lucide-react"
 
 export default function RecipesPageCMS() {
@@ -16,9 +15,10 @@ export default function RecipesPageCMS() {
 
   useEffect(() => {
     async function fetchData() {
-      const docSnap = await getDoc(doc(db, 'recipes-page_web', 'main'));
-      if (docSnap.exists()) {
-        setData(docSnap.data());
+      const res = await fetch('/dashboard/app/api/web-data?docId=recipes-page_web');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setData(json.data.data ? json.data.data : json.data);
       } else {
         // EXACT DEFAULT DATA FROM YOUR CURRENT WEBSITE
         setData({
@@ -44,7 +44,11 @@ export default function RecipesPageCMS() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await setDoc(doc(db, 'recipes-page_web', 'main'), data);
+      await fetch('/dashboard/app/api/web-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ docId: 'recipes-page_web', ...data })
+      });
       toast.success("Recipes Page updated live!");
     } catch (error) { toast.error("Failed to save."); } 
     finally { setIsSaving(false); }

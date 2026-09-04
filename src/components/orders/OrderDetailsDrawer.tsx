@@ -12,8 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { CircleCheck, CircleDashed, CheckCircle2, Clock, Truck, XCircle, Loader2 } from "lucide-react";
-import { doc, updateDoc } from "firebase/firestore";
-import { appOrdersCollection } from "@/lib/firebase-app";
+
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,13 +52,18 @@ export function OrderDetailsDrawer({
     if (!order.id) return;
     setIsUpdating(true);
     try {
-      const orderRef = doc(appOrdersCollection, order.id);
-      await updateDoc(orderRef, {
-        status: newStatus,
-        trackingId: trackingId,
-        courierName: courierName,
-        updatedAt: new Date().toISOString()
+      const response = await fetch('/dashboard/app/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentId: order.id,
+          status: newStatus,
+          trackingId: trackingId,
+          courierName: courierName,
+          updatedAt: new Date().toISOString()
+        })
       });
+      if (!response.ok) throw new Error("Failed to update order");
       toast.success("Order updated successfully!");
       onClose(); // Close the drawer on success
     } catch (error) {

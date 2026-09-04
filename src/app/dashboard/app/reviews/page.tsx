@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore'
-import { db } from '@/lib/firebase-app'
+
 import { toast } from 'sonner'
 import { MessageSquare, Star, CheckCircle, XCircle, Clock } from 'lucide-react'
 
@@ -31,27 +30,19 @@ export default function ReviewsManagement() {
   const fetchReviews = async () => {
     setIsLoading(true)
     try {
-      const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'))
-      const snapshot = await getDocs(q)
-      const fetchedReviews: Review[] = []
-      snapshot.forEach((doc) => {
-        fetchedReviews.push({ id: doc.id, ...doc.data() } as Review)
-      })
-      setReviews(fetchedReviews)
-    } catch (error: any) {
-      // If index doesn't exist, it might throw an error. Fallback to unordered query.
-      console.warn('Query failed, falling back to unordered fetch:', error)
-      try {
-        const fallbackSnapshot = await getDocs(collection(db, 'reviews'))
-        const fetchedReviews: Review[] = []
-        fallbackSnapshot.forEach((doc) => {
-          fetchedReviews.push({ id: doc.id, ...doc.data() } as Review)
-        })
+      const res = await fetch('/dashboard/app/api/reviews')
+      const result = await res.json()
+      if (result.success && result.data) {
+        let fetchedReviews = result.data as Review[]
+        // Sort newest first
         fetchedReviews.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
         setReviews(fetchedReviews)
-      } catch (err) {
+      } else {
         toast.error('Failed to load reviews')
       }
+    } catch (error: any) {
+      console.error('Error fetching reviews:', error)
+      toast.error('Failed to load reviews')
     } finally {
       setIsLoading(false)
     }
@@ -59,10 +50,17 @@ export default function ReviewsManagement() {
 
   const approveReview = async (reviewId: string) => {
     try {
-      const reviewRef = doc(db, 'reviews', reviewId)
-      await updateDoc(reviewRef, { status: 'approved' })
-      setReviews(reviews.map(r => r.id === reviewId ? { ...r, status: 'approved' } : r))
-      toast.success('Review approved!')
+      const res = await fetch('/dashboard/app/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId, status: 'approved' })
+      })
+      if (res.ok) {
+        setReviews(reviews.map(r => r.id === reviewId ? { ...r, status: 'approved' } : r))
+        toast.success('Review approved!')
+      } else {
+        toast.error('Failed to approve review')
+      }
     } catch (error) {
       console.error('Error approving review:', error)
       toast.error('Failed to approve review')
@@ -71,10 +69,17 @@ export default function ReviewsManagement() {
 
   const rejectReview = async (reviewId: string) => {
     try {
-      const reviewRef = doc(db, 'reviews', reviewId)
-      await updateDoc(reviewRef, { status: 'rejected' })
-      setReviews(reviews.map(r => r.id === reviewId ? { ...r, status: 'rejected' } : r))
-      toast.success('Review rejected!')
+      const res = await fetch('/dashboard/app/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId, status: 'rejected' })
+      })
+      if (res.ok) {
+        setReviews(reviews.map(r => r.id === reviewId ? { ...r, status: 'rejected' } : r))
+        toast.success('Review rejected!')
+      } else {
+        toast.error('Failed to reject review')
+      }
     } catch (error) {
       console.error('Error rejecting review:', error)
       toast.error('Failed to reject review')

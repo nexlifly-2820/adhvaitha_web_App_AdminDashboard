@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { db } from '@/lib/firebase-app'
-import { doc, getDoc } from 'firebase/firestore'
+
 import { ImageUpload } from '@/components/ImageUpload'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, MoreHorizontal, Image as ImageIcon, X, Upload, Trash2 } from 'lucide-react'
@@ -77,11 +76,11 @@ export default function ProductsPage() {
         setProducts(Object.values(result.data))
       }
       
-      const catDoc = await getDoc(doc(db, 'app_data', 'categories'))
-      if (catDoc.exists()) {
-        const catData = catDoc.data()
-        if (catData.list && Array.isArray(catData.list)) {
-          setDynamicCategories(catData.list)
+      const catRes = await fetch('/dashboard/app/api/app-data?docId=categories')
+      const catResult = await catRes.json()
+      if (catResult.success && catResult.data) {
+        if (catResult.data.list && Array.isArray(catResult.data.list)) {
+          setDynamicCategories(catResult.data.list)
         }
       }
     } catch (err) {
