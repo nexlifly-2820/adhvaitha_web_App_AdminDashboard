@@ -30,8 +30,8 @@ $otps[$email] = [
 file_put_contents($file, json_encode($otps));
 
 // 3. SMTP CONFIGURATION
-$smtpHost = "mail.adhvaithafoods.in";
-$smtpPort = 465;
+$smtpHost = "localhost";
+$smtpPort = 25; // Use port 25 for local non-SSL, or 465 for SSL (localhost might not have valid SSL cert)
 $smtpUser = "noreply@adhvaithafoods.in";
 $smtpPass = "adhvaithafoods@2026";
 
@@ -55,7 +55,8 @@ $body = "
 
 // Pure PHP Socket SMTP Sender Function
 function sendSmtpEmail($to, $subject, $body, $host, $port, $user, $pass) {
-    $socket = @fsockopen("ssl://" . $host, $port, $errno, $errstr, 10);
+    $protocol = ($port == 465) ? "ssl://" : "";
+    $socket = @fsockopen($protocol . $host, $port, $errno, $errstr, 10);
     if (!$socket) return false;
 
     $read = function() use ($socket) {
