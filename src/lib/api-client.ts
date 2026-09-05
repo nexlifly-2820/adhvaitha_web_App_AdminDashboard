@@ -24,7 +24,16 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
 
   // Some endpoints might return empty body on success (e.g. 200 OK without JSON)
   const text = await response.text();
-  return text ? JSON.parse(text) : null;
+  const parsed = text ? JSON.parse(text) : null;
+  
+  if (parsed && typeof parsed === 'object' && 'success' in parsed && 'data' in parsed) {
+    if (!parsed.success) {
+      throw new Error(parsed.error || 'Backend API returned an error');
+    }
+    return parsed.data;
+  }
+  
+  return parsed;
 }
 
 /**
