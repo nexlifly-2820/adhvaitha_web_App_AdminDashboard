@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { Loader2, Phone, Mail, MapPin, Instagram, Facebook, Link as LinkIcon } from "lucide-react"
+import { Loader2, Phone, Mail, MapPin, Link as LinkIcon } from "lucide-react"
 
 export default function ContactManagement() {
   const [data, setData] = useState<any>(null);
@@ -140,7 +140,7 @@ export default function ContactManagement() {
           </CardHeader>
           <CardContent className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-pink-600"><Instagram className="w-4 h-4" /> Instagram URL</Label>
+              <Label className="flex items-center gap-2 text-pink-600"><LinkIcon className="w-4 h-4" /> Instagram URL</Label>
               <Input 
                 value={data.socials?.instagram || ''} 
                 onChange={(e) => setData({...data, socials: {...data.socials, instagram: e.target.value}})} 
@@ -148,7 +148,7 @@ export default function ContactManagement() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-blue-600"><Facebook className="w-4 h-4" /> Facebook URL</Label>
+              <Label className="flex items-center gap-2 text-blue-600"><LinkIcon className="w-4 h-4" /> Facebook URL</Label>
               <Input 
                 value={data.socials?.facebook || ''} 
                 onChange={(e) => setData({...data, socials: {...data.socials, facebook: e.target.value}})} 
