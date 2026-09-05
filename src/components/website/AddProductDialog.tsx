@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,8 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase-web";
+import { BIGROCK_API_URL } from "@/lib/api-client";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import {
@@ -26,7 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X } from "lucide-react";
-import { useEffect } from "react";
+
+// ... existing code ...
 
 const CATEGORIES = [
   "Prepared foods",
@@ -141,12 +141,21 @@ export function AddProductDialog({ onProductAdded, initialData, open, setOpen }:
       const documentId = initialData?.id || crypto.randomUUID();
       const imageUrls: string[] = [...existingImages];
 
-      // 1. Upload Images
+      // 1. Upload Images to BigRock
       for (const file of files) {
-        const storageRef = ref(storage, `website/products/${documentId}/${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        imageUrls.push(downloadURL);
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const uploadRes = await fetch(`${BIGROCK_API_URL}/upload.php`, {
+          method: 'POST',
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok || uploadData.error) {
+          throw new Error(uploadData.error || 'Failed to upload image.');
+        }
+        imageUrls.push(uploadData.url);
       }
 
       // 2. Call API Route

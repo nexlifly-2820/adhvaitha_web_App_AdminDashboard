@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getDocs } from 'firebase/firestore';
+import { fetchApi } from '@/lib/api-client';
 
 export const dynamic = 'force-dynamic';
-import { webRecipesCollection } from '@/lib/firebase-web';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,14 +16,10 @@ export async function OPTIONS() {
 // GET: Fetch all website recipes
 export async function GET() {
   try {
-    const querySnapshot = await getDocs(webRecipesCollection);
-    const data: any[] = [];
+    const rawData = await fetchApi('/recipes.php');
     
-    querySnapshot.forEach((doc) => {
-      data.push({ id: doc.id, ...doc.data() });
-    });
-
     // Sort by creation date descending
+    const data = Array.isArray(rawData) ? rawData : [];
     data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
     return NextResponse.json({ success: true, data }, { status: 200, headers: corsHeaders });

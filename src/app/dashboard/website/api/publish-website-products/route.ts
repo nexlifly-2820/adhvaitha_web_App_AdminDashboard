@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { doc, setDoc } from 'firebase/firestore';
-import { webProductsCollection } from '@/lib/firebase-web';
+import { postApi } from '@/lib/api-client';
 
 // POST: Create or update a website product
 export async function POST(request: Request) {
@@ -34,12 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'At least one image is required.' }, { status: 400 });
     }
 
-    const documentId = body.id;
-    if (!documentId) {
-      return NextResponse.json({ success: false, error: 'Product ID is required.' }, { status: 400 });
-    }
-    
-    const productDocRef = doc(webProductsCollection, documentId);
+    const documentId = body.id || `webprod_${Date.now()}`;
     
     const newData: any = {
       id: documentId,
@@ -49,14 +43,15 @@ export async function POST(request: Request) {
       minQuantity: { value: minInput, unit: minUnit },
       maxQuantity: { value: maxInput, unit: maxUnit },
       images: images || [],
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      isActive: body.isActive !== false
     };
 
     if (body.isNew) {
       newData.createdAt = new Date().toISOString();
     }
 
-    await setDoc(productDocRef, newData, { merge: true });
+    await postApi('/web_products.php', newData);
     
     return NextResponse.json({ success: true, id: documentId, message: body.isNew ? 'Product published successfully' : 'Product updated successfully' }, { status: 201 });
   } catch (error: any) {

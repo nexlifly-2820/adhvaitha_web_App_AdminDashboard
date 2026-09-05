@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { doc, setDoc } from 'firebase/firestore';
-import { webRecipesCollection } from '@/lib/firebase-web';
+import { postApi } from '@/lib/api-client';
 
 // POST: Create or update a website recipe
 export async function POST(request: Request) {
@@ -41,12 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Process difficulty is required.' }, { status: 400 });
     }
 
-    const documentId = body.id;
-    if (!documentId) {
-      return NextResponse.json({ success: false, error: 'Recipe ID is required.' }, { status: 400 });
-    }
-    
-    const recipeDocRef = doc(webRecipesCollection, documentId);
+    const documentId = body.id || `rec_${Date.now()}`;
     
     const newData: any = {
       id: documentId,
@@ -65,7 +59,7 @@ export async function POST(request: Request) {
       newData.createdAt = new Date().toISOString();
     }
 
-    await setDoc(recipeDocRef, newData, { merge: true });
+    await postApi('/recipes.php', newData);
     
     return NextResponse.json({ success: true, id: documentId, message: body.isNew ? 'Recipe published successfully' : 'Recipe updated successfully' }, { status: 201 });
   } catch (error: any) {

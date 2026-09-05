@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { webProductsCollection } from '@/lib/firebase-web';
+import { fetchApi } from '@/lib/api-client';
 
 // DELETE: Remove a website product
 export async function DELETE(request: Request) {
@@ -12,8 +11,9 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: 'Product ID is required' }, { status: 400 });
     }
 
-    const docRef = doc(webProductsCollection, id);
-    await deleteDoc(docRef);
+    await fetchApi(`/web_products.php?id=${id}`, {
+      method: 'DELETE'
+    });
 
     return NextResponse.json({ success: true, message: 'Product deleted successfully' }, { status: 200 });
   } catch (error: any) {

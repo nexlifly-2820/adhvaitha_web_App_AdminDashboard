@@ -2,10 +2,9 @@
 
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
 import { UploadCloud, Loader2, Image as ImageIcon } from 'lucide-react'
+import { BIGROCK_API_URL } from '@/lib/api-client'
 
 interface ImageUploadProps {
   value: string;
@@ -31,18 +30,25 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
 
     setIsUploading(true)
     try {
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
-      const storageRef = ref(storage, `${folder}/${fileName}`)
-      
-      const metadata = { contentType: file.type }
-      const snapshot = await uploadBytes(storageRef, file, metadata)
-      const downloadURL = await getDownloadURL(snapshot.ref)
-      
-      onChange(downloadURL)
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${BIGROCK_API_URL}/upload.php`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Failed to upload image.');
+      }
+
+      onChange(data.url)
       toast.success('Image uploaded successfully')
     } catch (error: any) {
       console.error('Upload error:', error)
-      toast.error(error.message || 'Failed to upload image. Please check your Firebase Storage Rules.')
+      toast.error(error.message || 'Failed to upload image.')
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {

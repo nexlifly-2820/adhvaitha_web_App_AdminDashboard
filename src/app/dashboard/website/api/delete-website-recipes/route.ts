@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { webRecipesCollection } from '@/lib/firebase-web';
+import { fetchApi } from '@/lib/api-client';
 
 // DELETE: Remove a website recipe
 export async function DELETE(request: Request) {
@@ -12,8 +11,9 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: 'Recipe ID is required' }, { status: 400 });
     }
 
-    const docRef = doc(webRecipesCollection, id);
-    await deleteDoc(docRef);
+    await fetchApi(`/recipes.php?id=${id}`, {
+      method: 'DELETE'
+    });
 
     return NextResponse.json({ success: true, message: 'Recipe deleted successfully' }, { status: 200 });
   } catch (error: any) {
