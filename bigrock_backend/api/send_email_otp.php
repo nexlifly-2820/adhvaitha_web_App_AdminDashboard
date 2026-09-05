@@ -17,22 +17,27 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-// Generate 6-digit OTP
-$otp = rand(100000, 999999);
+// 1. Generate 6-digit OTP
+$otp = (string)rand(100000, 999999);
 
-// Save OTP to JSON file for verification
+// 2. Save OTP locally for verification
 $file = __DIR__ . '/otps.json';
 $otps = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
 $otps[$email] = [
-    'otp' => (string)$otp,
+    'otp' => $otp,
     'expires' => time() + 600 // 10 minutes
 ];
 file_put_contents($file, json_encode($otps));
 
-// Mail details
-$to = $email;
+// 3. SMTP CONFIGURATION
+$smtpHost = "mail.adhvaithafoods.in";
+$smtpPort = 465;
+$smtpUser = "noreply@adhvaithafoods.in";
+$smtpPass = "adhvaithafoods@2026";
+
+// 4. HTML Email Body
 $subject = "Adhvaitha Foods — Your Login OTP is $otp";
-$message = "
+$body = "
 <!DOCTYPE html>
 <html>
 <body style='font-family: Arial, sans-serif; background-color: #FFF8E8; padding: 20px;'>
@@ -48,19 +53,45 @@ $message = "
 </html>
 ";
 
-$headers = array(
-    'MIME-Version: 1.0',
-    'Content-type: text/html; charset=UTF-8',
-    'From: Adhvaitha Foods <noreply@adhvaithafoods.in>',
-    'Reply-To: noreply@adhvaithafoods.in',
-    'X-Mailer: PHP/' . phpversion()
-);
+// Pure PHP Socket SMTP Sender Function
+function sendSmtpEmail($to, $subject, $body, $host, $port, $user, $pass) {
+    $socket = @fsockopen("ssl://" . $host, $port, $errno, $errstr, 10);
+    if (!$socket) return false;
 
-$sent = mail($to, $subject, $message, implode("\r\n", $headers));
+    $read = function() use ($socket) {
+        $res = "";
+        while ($str = fgets($socket, 515)) {
+            $res .= $str;
+            if (substr($str, 3, 1) == " ") break;
+        }
+        return $res;
+    };
 
-// Response
+    $read();
+    fputs($socket, "EHLO " . $host . "\r\n"); $read();
+    fputs($socket, "AUTH LOGIN\r\n"); $read();
+    fputs($socket, base64_encode($user) . "\r\n"); $read();
+    fputs($socket, base64_encode($pass) . "\r\n"); $read();
+    fputs($socket, "MAIL FROM: <$user>\r\n"); $read();
+    fputs($socket, "RCPT TO: <$to>\r\n"); $read();
+    fputs($socket, "DATA\r\n"); $read();
+
+    $headers  = "From: Adhvaitha Foods <$user>\r\n";
+    $headers .= "To: $to\r\n";
+    $headers .= "Subject: $subject\r\n";
+    $headers .= "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+
+    fputs($socket, $headers . $body . "\r\n.\r\n"); $read();
+    fputs($socket, "QUIT\r\n"); fclose($socket);
+    return true;
+}
+
+// Attempt SMTP send
+$sent = sendSmtpEmail($email, $subject, $body, $smtpHost, $smtpPort, $smtpUser, $smtpPass);
+
 echo json_encode([
     'success' => true,
-    'message' => "OTP sent to $email",
+    'message' => $sent ? "OTP sent to $email" : "OTP generated",
     'debug_otp' => $otp
 ]);
