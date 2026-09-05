@@ -3,7 +3,7 @@
  */
 
 // Temporarily hardcoded to HTTP to bypass the broken SSL certificate on BigRock
-export const BIGROCK_API_URL = 'http://api.adhvaithafoods.in';
+export const BIGROCK_API_URL = 'https://api.adhvaithafoods.in';
 
 /**
  * Generic GET request
