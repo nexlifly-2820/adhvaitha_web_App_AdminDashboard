@@ -18,11 +18,24 @@ export async function GET() {
   try {
     const rawData = await fetchApi('/recipes.php');
     
-    // Sort by creation date descending
     const data = Array.isArray(rawData) ? rawData : [];
-    data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    
+    // Normalize data for legacy rows that don't have json_data
+    const normalizedData = data.map((item: any) => ({
+      ...item,
+      recipeName: item.recipeName || item.title || item.name || '',
+      recipeDescription: item.recipeDescription || item.description || item.content || '',
+      images: (item.images && item.images.length > 0) ? item.images : (item.image_url ? [item.image_url] : []),
+      makingTime: item.makingTime || { value: 'N/A', unit: '' },
+      difficulty: item.difficulty || 'medium',
+      ingredients: item.ingredients || [],
+      makingProcess: item.makingProcess || item.content || '',
+    }));
 
-    return NextResponse.json({ success: true, data }, { status: 200, headers: corsHeaders });
+    // Sort by creation date descending
+    normalizedData.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+    return NextResponse.json({ success: true, data: normalizedData }, { status: 200, headers: corsHeaders });
   } catch (error: any) {
     console.error('Error fetching website recipes:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
