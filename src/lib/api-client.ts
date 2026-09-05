@@ -2,8 +2,8 @@
  * Centralized API Client for BigRock Backend
  */
 
-// Replace this with the actual BigRock domain (or use an environment variable)
-export const BIGROCK_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.adhvaithafoods.in';
+// Temporarily hardcoded to HTTP to bypass the broken SSL certificate on BigRock
+export const BIGROCK_API_URL = 'http://api.adhvaithafoods.in';
 
 /**
  * Generic GET request
