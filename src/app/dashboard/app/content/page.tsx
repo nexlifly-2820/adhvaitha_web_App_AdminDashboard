@@ -117,14 +117,14 @@ export default function ContentManager() {
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
-      if (bannersDoc) {
+      if (bannersDoc && Object.keys(bannersDoc).length > 0) {
         setMainBanners(bannersDoc.main_banners || [])
         setAdBanners(bannersDoc.ad_banners || [])
       }
-      if (storiesDoc) setStories(storiesDoc.list || [])
-      if (bentoDoc) setBento(bentoDoc as BentoSelection)
-      if (catDoc) setCategories(catDoc.list || [])
-      if (dealsDoc) {
+      if (storiesDoc && Object.keys(storiesDoc).length > 0) setStories(storiesDoc.list || [])
+      if (bentoDoc && Object.keys(bentoDoc).length > 0) setBento(bentoDoc as BentoSelection)
+      if (catDoc && Object.keys(catDoc).length > 0) setCategories(catDoc.list || [])
+      if (dealsDoc && Object.keys(dealsDoc).length > 0) {
         let end_time_str = '';
         if (dealsDoc.end_time && dealsDoc.end_time.toDate) {
           const d = dealsDoc.end_time.toDate();
@@ -138,19 +138,19 @@ export default function ContentManager() {
           title: dealsDoc.title || 'DEALS OF THE DAY'
         })
       }
-      if (couponsDoc) setCoupons(couponsDoc.active_list || [])
-      if (pkgDoc) setPackaging(pkgDoc.list || [])
-      if (onboardDoc) {
+      if (couponsDoc && Object.keys(couponsDoc).length > 0) setCoupons(couponsDoc.active_list || [])
+      if (pkgDoc && Object.keys(pkgDoc).length > 0) setPackaging(pkgDoc.list || [])
+      if (onboardDoc && Object.keys(onboardDoc).length > 0) {
         setOnboardingSteps(onboardDoc.steps || [])
         setTasteOptions(onboardDoc.taste_options || [])
       }
-      if (pairingsDoc) setPairings(pairingsDoc.list || [])
-      if (kitchenStoryDoc) setKitchenStory(kitchenStoryDoc as KitchenStory)
+      if (pairingsDoc && Object.keys(pairingsDoc).length > 0) setPairings(pairingsDoc.list || [])
+      if (kitchenStoryDoc && Object.keys(kitchenStoryDoc).length > 0) setKitchenStory(kitchenStoryDoc as KitchenStory)
       if (searchConfigDoc && searchConfigDoc.trending_keywords) setTrendingKeywords(searchConfigDoc.trending_keywords)
-      if (catPageConfigDoc) setCategoryPageConfig(catPageConfigDoc as CategoryPageConfig)
-      if (deliveryConfigDoc) setDeliveryConfig(deliveryConfigDoc as DeliveryConfig)
-      if (cartConfigDoc) setCartConfig(cartConfigDoc as CartConfig)
-      if (billingConfigDoc) setBillingConfig(billingConfigDoc as BillingConfig)
+      if (catPageConfigDoc && Object.keys(catPageConfigDoc).length > 0) setCategoryPageConfig(catPageConfigDoc as CategoryPageConfig)
+      if (deliveryConfigDoc && Object.keys(deliveryConfigDoc).length > 0) setDeliveryConfig(deliveryConfigDoc as DeliveryConfig)
+      if (cartConfigDoc && Object.keys(cartConfigDoc).length > 0) setCartConfig(cartConfigDoc as CartConfig)
+      if (billingConfigDoc && Object.keys(billingConfigDoc).length > 0) setBillingConfig(billingConfigDoc as BillingConfig)
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
