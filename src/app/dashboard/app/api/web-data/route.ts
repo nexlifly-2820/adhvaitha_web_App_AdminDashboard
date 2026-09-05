@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const { docId, ...data } = body;
     if (!docId) return NextResponse.json({ success: false, error: 'docId is required' }, { status: 400 });
 
-    const result = await fetchApi('/web_settings.php', {
+    const result = await fetchApi(`/web_settings.php?doc_id=${docId}`, {
       method: 'POST',
       body: JSON.stringify({ doc_id: docId, data })
     });
