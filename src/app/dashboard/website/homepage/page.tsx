@@ -18,8 +18,11 @@ export default function CompleteHomepageManagement() {
     async function fetchData() {
       const res = await fetch('/dashboard/app/api/web-data?docId=homepage_web');
       const json = await res.json();
-      if (json.success && json.data) {
-        setData(json.data.data ? json.data.data : json.data);
+      
+      const actualData = (json.success && json.data) ? (json.data.data ? json.data.data : json.data) : null;
+      
+      if (actualData && Object.keys(actualData).length > 0) {
+        setData(actualData);
       } else {
         // EXACT DEFAULT DATA FROM YOUR CURRENT WEBSITE
         setData({
