@@ -29,15 +29,9 @@ $otps[$email] = [
 ];
 file_put_contents($file, json_encode($otps));
 
-// 3. SMTP CONFIGURATION
-$smtpHost = "localhost";
-$smtpPort = 25; // Use port 25 for local non-SSL, or 465 for SSL (localhost might not have valid SSL cert)
-$smtpUser = "noreply@adhvaithafoods.in";
-$smtpPass = "adhvaithafoods@2026";
-
-// 4. HTML Email Body
+// 3. Email Subject and HTML Body
 $subject = "Adhvaitha Foods — Your Login OTP is $otp";
-$body = "
+$message = "
 <!DOCTYPE html>
 <html>
 <body style='font-family: Arial, sans-serif; background-color: #FFF8E8; padding: 20px;'>
@@ -53,43 +47,14 @@ $body = "
 </html>
 ";
 
-// Pure PHP Socket SMTP Sender Function
-function sendSmtpEmail($to, $subject, $body, $host, $port, $user, $pass) {
-    $protocol = ($port == 465) ? "ssl://" : "";
-    $socket = @fsockopen($protocol . $host, $port, $errno, $errstr, 10);
-    if (!$socket) return false;
+// 4. Standard cPanel Mail Headers
+$headers  = "MIME-Version: 1.0\r\n";
+$headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+$headers .= "From: Adhvaitha Foods <noreply@adhvaithafoods.in>\r\n";
+$headers .= "Reply-To: noreply@adhvaithafoods.in\r\n";
 
-    $read = function() use ($socket) {
-        $res = "";
-        while ($str = fgets($socket, 515)) {
-            $res .= $str;
-            if (substr($str, 3, 1) == " ") break;
-        }
-        return $res;
-    };
-
-    $read();
-    fputs($socket, "EHLO " . $host . "\r\n"); $read();
-    fputs($socket, "AUTH LOGIN\r\n"); $read();
-    fputs($socket, base64_encode($user) . "\r\n"); $read();
-    fputs($socket, base64_encode($pass) . "\r\n"); $read();
-    fputs($socket, "MAIL FROM: <$user>\r\n"); $read();
-    fputs($socket, "RCPT TO: <$to>\r\n"); $read();
-    fputs($socket, "DATA\r\n"); $read();
-
-    $headers  = "From: Adhvaitha Foods <$user>\r\n";
-    $headers .= "To: $to\r\n";
-    $headers .= "Subject: $subject\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
-
-    fputs($socket, $headers . $body . "\r\n.\r\n"); $read();
-    fputs($socket, "QUIT\r\n"); fclose($socket);
-    return true;
-}
-
-// Attempt SMTP send
-$sent = sendSmtpEmail($email, $subject, $body, $smtpHost, $smtpPort, $smtpUser, $smtpPass);
+// Send email using cPanel mailer with envelope sender
+$sent = @mail($email, $subject, $message, $headers, "-fnoreply@adhvaithafoods.in");
 
 echo json_encode([
     'success' => true,
