@@ -1,16 +1,11 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { exit(0); }
-
-// Disable error display in output to ensure clean JSON
 error_reporting(0);
 
 $data = json_decode(file_get_contents('php://input'), true);
-$email = $data['email'] ?? '';
+$email = trim($data['email'] ?? '');
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
@@ -20,18 +15,18 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 // 1. Generate 6-digit OTP
 $otp = (string)rand(100000, 999999);
 
-// 2. Save OTP locally for verification
+// 2. Save OTP for verification
 $file = __DIR__ . '/otps.json';
 $otps = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
 $otps[$email] = [
     'otp' => $otp,
-    'expires' => time() + 600 // 10 minutes
+    'expires' => time() + 600
 ];
 file_put_contents($file, json_encode($otps));
 
 // 3. Email Subject and HTML Body
 $subject = "Adhvaitha Foods — Your Login OTP is $otp";
-$message = "
+$body = "
 <!DOCTYPE html>
 <html>
 <body style='font-family: Arial, sans-serif; background-color: #FFF8E8; padding: 20px;'>
@@ -47,14 +42,14 @@ $message = "
 </html>
 ";
 
-// 4. Standard cPanel Mail Headers
+// 4. Send Email via BigRock Local Mail Agent
 $headers  = "MIME-Version: 1.0\r\n";
 $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 $headers .= "From: Adhvaitha Foods <noreply@adhvaithafoods.in>\r\n";
 $headers .= "Reply-To: noreply@adhvaithafoods.in\r\n";
+$headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
 
-// Send email using cPanel mailer with envelope sender
-$sent = @mail($email, $subject, $message, $headers, "-fnoreply@adhvaithafoods.in");
+$sent = mail($email, $subject, $body, $headers, "-fnoreply@adhvaithafoods.in");
 
 echo json_encode([
     'success' => true,
