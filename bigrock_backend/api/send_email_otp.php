@@ -42,14 +42,14 @@ $body = "
 </html>
 ";
 
-// 4. Send Email via BigRock Local Mail Agent
+// 4. Standard cPanel Mail Headers
 $headers  = "MIME-Version: 1.0\r\n";
 $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-$headers .= "From: Adhvaitha Foods <noreply@adhvaithafoods.in>\r\n";
-$headers .= "Reply-To: noreply@adhvaithafoods.in\r\n";
+$headers .= "From: Adhvaitha Foods <noreply@api.adhvaithafoods.in>\r\n";
+$headers .= "Reply-To: noreply@api.adhvaithafoods.in\r\n";
 $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
 
-$sent = mail($email, $subject, $body, $headers, "-fnoreply@adhvaithafoods.in");
+$sent = mail($email, $subject, $body, $headers, "-fnoreply@api.adhvaithafoods.in");
 
 echo json_encode([
     'success' => true,
