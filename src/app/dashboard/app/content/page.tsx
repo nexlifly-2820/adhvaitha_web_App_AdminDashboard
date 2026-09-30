@@ -281,7 +281,11 @@ export default function ContentManager() {
 
       await Promise.all([
         postConfig('banners', {
-          main_banners: [{ title: 'Handmade Pickles', sub: 'Since 1982', img: img1 }],
+          main_banners: [
+            { title: 'AUTHENTIC ANDHRA', category: 'Pickles', image: img1 },
+            { title: 'TRADITIONAL SNACKS', category: 'Snacks', image: img2 },
+            { title: 'PURE SPICES', category: 'Spices', image: img3 }
+          ],
           ad_banners: [{ tag: 'FEATURED', title: 'Summer Sale', sub: 'Up to 20% off', img: img2 }]
         }),
         postConfig('stories', {
