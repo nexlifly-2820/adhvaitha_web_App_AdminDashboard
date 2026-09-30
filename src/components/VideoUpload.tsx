@@ -45,29 +45,16 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
         const end = Math.min(start + CHUNK_SIZE, file.size);
         const chunk = file.slice(start, end);
         
-        // Convert chunk Blob to Base64 efficiently using FileReader
-        const base64Chunk = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (typeof reader.result === 'string') {
-              resolve(reader.result.split(',')[1]);
-            } else {
-              reject(new Error("Failed to read chunk"));
-            }
-          };
-          reader.onerror = error => reject(error);
-          reader.readAsDataURL(chunk);
-        });
+        // Use FormData to avoid ModSecurity JSON XSS blocks
+        const formData = new FormData();
+        formData.append('fileName', fileName);
+        formData.append('chunkIndex', i.toString());
+        formData.append('totalChunks', totalChunks.toString());
+        formData.append('chunkData', chunk); // Append Blob directly
 
         const response = await fetch('/dashboard/app/api/upload_chunk', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileName,
-            chunkIndex: i,
-            totalChunks,
-            chunkData: base64Chunk
-          })
+          body: formData
         });
 
         let data;

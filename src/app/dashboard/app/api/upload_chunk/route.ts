@@ -4,19 +4,24 @@ import { BIGROCK_API_URL } from '@/lib/api-client';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const formData = await request.formData();
     
-    // Forward the JSON body to BigRock chunked upload endpoint
+    // Forward the formData body to BigRock chunked upload endpoint
     const response = await fetch(`${BIGROCK_API_URL}/upload_chunk.php`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       },
-      body: JSON.stringify(body),
+      body: formData,
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      const text = await response.text();
+      throw new Error(`Server returned invalid JSON. WAF block? Output: ${text.substring(0, 80)}`);
+    }
 
     if (!response.ok || data.error) {
       return NextResponse.json(
