@@ -48,6 +48,23 @@ export default function ContentManager() {
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('banners')
 
+  // Load saved tab on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTab = localStorage.getItem('contentActiveTab');
+      if (savedTab) {
+        setActiveTab(savedTab);
+      }
+    }
+  }, []);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('contentActiveTab', value);
+    }
+  };
+
   // Data States
   const [mainBanners, setMainBanners] = useState<MainBanner[]>([])
   const [adBanners, setAdBanners] = useState<AdBanner[]>([])
@@ -419,7 +436,7 @@ export default function ContentManager() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex gap-6 flex-col lg:flex-row items-start lg:h-[calc(100vh-180px)]">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full flex gap-6 flex-col lg:flex-row items-start lg:h-[calc(100vh-180px)]">
         <TabsList className="flex flex-col justify-start bg-slate-100 dark:bg-slate-900 w-full lg:w-56 items-stretch p-2 gap-2 shrink-0 lg:h-full overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl custom-scrollbar">
           <TabsTrigger value="banners" className="justify-start data-[state=active]:bg-white">Banners</TabsTrigger>
           <TabsTrigger value="stories" className="justify-start data-[state=active]:bg-white">Stories</TabsTrigger>
