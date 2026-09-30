@@ -42,11 +42,19 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
         const end = Math.min(start + CHUNK_SIZE, file.size);
         const chunk = file.slice(start, end);
         
-        // Convert chunk Blob to Base64
-        const buffer = await chunk.arrayBuffer();
-        const base64Chunk = btoa(
-          new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
+        // Convert chunk Blob to Base64 efficiently using FileReader
+        const base64Chunk = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === 'string') {
+              resolve(reader.result.split(',')[1]);
+            } else {
+              reject(new Error("Failed to read chunk"));
+            }
+          };
+          reader.onerror = error => reject(error);
+          reader.readAsDataURL(chunk);
+        });
 
         const response = await fetch('/dashboard/app/api/upload_chunk', {
           method: 'POST',
