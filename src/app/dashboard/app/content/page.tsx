@@ -10,6 +10,7 @@ import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageUpload } from '@/components/ImageUpload'
+import { VideoUpload } from '@/components/VideoUpload'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; sub: string; img: string }
@@ -459,12 +460,11 @@ export default function ContentManager() {
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Video URL / Asset Path</label>
-                  <Input 
-                    placeholder="e.g. assets/images/ambhujakshi-all.mp4 or https://..." 
+                  <VideoUpload 
                     value={homeVideo.video_url} 
-                    onChange={e => setHomeVideo(prev => ({ ...prev, video_url: e.target.value }))} 
+                    onChange={url => setHomeVideo(prev => ({ ...prev, video_url: url }))} 
                   />
-                  <p className="text-xs text-slate-500">Provide a network CDN URL or a local Flutter asset path fallback.</p>
+                  <p className="text-xs text-slate-500">Provide a network CDN URL or upload a video file.</p>
                 </div>
 
                 <div className="space-y-2">
