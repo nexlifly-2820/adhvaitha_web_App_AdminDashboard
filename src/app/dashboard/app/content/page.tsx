@@ -13,7 +13,7 @@ import { ImageUpload } from '@/components/ImageUpload'
 import { VideoUpload } from '@/components/VideoUpload'
 
 // Schemas based on Data Guide
-interface MainBanner { title: string; sub: string; img: string }
+interface MainBanner { title: string; category: string; image: string }
 interface AdBanner { tag: string; title: string; sub: string; img: string }
 interface Story { label: string; icon: string; tag: string }
 interface BentoSelection { section_title: string; best_seller_product: string; card1_label: string; card2_label: string; card2_sub: string; card2_icon: string; card3_label: string; card3_sub: string; card3_icon: string }
@@ -500,15 +500,15 @@ export default function ContentManager() {
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
                 <div><CardTitle>Main Banners</CardTitle><CardDescription>Hero carousels at the very top</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setMainBanners, { title: '', sub: '', img: '' })}>+ Add Main</Button>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setMainBanners, { title: '', category: '', image: '' })}>+ Add Main</Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {mainBanners.map((banner, idx) => (
                   <div key={idx} className="flex gap-4 items-center p-3 border rounded">
                     <div className="flex-1 space-y-2">
                       <Input placeholder="Title" value={banner.title} onChange={e => updateArray(setMainBanners, idx, 'title', e.target.value)} />
-                      <Input placeholder="Subtitle" value={banner.sub} onChange={e => updateArray(setMainBanners, idx, 'sub', e.target.value)} />
-                      <ImageUpload value={banner.img} onChange={url => updateArray(setMainBanners, idx, 'img', url)} folder="app_content" />
+                      <Input placeholder="Category" value={banner.category} onChange={e => updateArray(setMainBanners, idx, 'category', e.target.value)} />
+                      <ImageUpload value={banner.image} onChange={url => updateArray(setMainBanners, idx, 'image', url)} folder="app_content" />
                     </div>
                     <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setMainBanners, idx)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
