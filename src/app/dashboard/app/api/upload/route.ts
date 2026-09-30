@@ -9,6 +9,9 @@ export async function POST(request: Request) {
     // Forward the form data to BigRock backend
     const response = await fetch(`${BIGROCK_API_URL}/upload.php`, {
       method: 'POST',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
       body: formData,
     });
 
