@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { UploadCloud, Loader2, Video as VideoIcon } from 'lucide-react'
 
+import { storage } from '@/lib/firebase-app'
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+
 interface VideoUploadProps {
   value: string;
   onChange: (url: string) => void;
@@ -13,8 +16,9 @@ interface VideoUploadProps {
   maxSizeMB?: number;
 }
 
-export function VideoUpload({ value, onChange, folder = 'uploads', className = '', maxSizeMB = 25 }: VideoUploadProps) {
+export function VideoUpload({ value, onChange, folder = 'uploads/videos', className = '', maxSizeMB = 50 }: VideoUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [videoError, setVideoError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -29,32 +33,36 @@ export function VideoUpload({ value, onChange, folder = 'uploads', className = '
     }
 
     setIsUploading(true)
+    setUploadProgress(0)
+    
     try {
-      const formData = new FormData();
-      // The PHP backend expects the file to be keyed as 'image'
-      formData.append('image', file);
+      const fileRef = ref(storage, `${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
 
-      const response = await fetch(`/dashboard/app/api/upload`, {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error || 'Failed to upload video.');
-      }
-
-      onChange(data.url)
-      toast.success('Video uploaded successfully')
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(Math.round(progress));
+        }, 
+        (error) => {
+          console.error('Firebase Upload Error:', error);
+          toast.error('Failed to upload video to cloud.');
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }, 
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          onChange(downloadURL);
+          toast.success('Video uploaded perfectly!');
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+      );
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')
-    } finally {
       setIsUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -112,7 +120,7 @@ export function VideoUpload({ value, onChange, folder = 'uploads', className = '
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Uploading...</span>
+              <span>Uploading {uploadProgress}%...</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
