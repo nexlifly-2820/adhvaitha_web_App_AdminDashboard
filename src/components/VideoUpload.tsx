@@ -4,6 +4,8 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { UploadCloud, Loader2, Video as VideoIcon } from 'lucide-react'
+import { storage } from '@/lib/firebase-app'
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 
 interface VideoUploadProps {
   value: string;
@@ -36,53 +38,38 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
     setErrorMessage(null)
     
     try {
-      const CHUNK_SIZE = 256 * 1024; // 256KB chunks to prevent Vercel 10s timeouts
-      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+      const fileRef = ref(storage, `${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
 
-      for (let i = 0; i < totalChunks; i++) {
-        const start = i * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size);
-        const chunk = file.slice(start, end);
-        
-        // Use FormData to avoid ModSecurity JSON XSS blocks
-        const formData = new FormData();
-        formData.append('fileName', fileName);
-        formData.append('chunkIndex', i.toString());
-        formData.append('totalChunks', totalChunks.toString());
-        formData.append('chunkData', chunk); // Append Blob directly
-
-        const response = await fetch('/dashboard/app/api/upload_chunk', {
-          method: 'POST',
-          body: formData
-        });
-
-        let data;
-        try {
-          data = await response.json();
-        } catch (e) {
-          const text = await response.text();
-          throw new Error(`Server returned invalid JSON. Vercel timeout? Output: ${text.substring(0, 80)}`);
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(Math.round(progress));
+        }, 
+        (error) => {
+          console.error('Firebase Upload Error:', error);
+          toast.error('Firebase Security Error. Check your Firebase Rules.');
+          setErrorMessage('Firebase Storage blocked the upload. Please go to Firebase Console -> Storage -> Rules and set "allow read, write: if true;"');
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }, 
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            onChange(downloadURL);
+            toast.success('Video uploaded perfectly to Firebase!');
+          } catch (urlError: any) {
+            setErrorMessage('Failed to get download URL: ' + urlError.message);
+          } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          }
         }
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || `Failed to upload chunk ${i}`);
-        }
-
-        // Update progress
-        setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
-
-        // If last chunk, it returns the final URL
-        if (i === totalChunks - 1 && data.url) {
-          onChange(data.url);
-          toast.success('Video uploaded perfectly!');
-        }
-      }
+      );
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')
       setErrorMessage(error.message || 'Failed to upload video.')
-    } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
