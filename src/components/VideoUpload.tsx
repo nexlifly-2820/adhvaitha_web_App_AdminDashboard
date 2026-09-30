@@ -5,9 +5,6 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { UploadCloud, Loader2, Video as VideoIcon } from 'lucide-react'
 
-import { storage } from '@/lib/firebase-app'
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
-
 interface VideoUploadProps {
   value: string;
   onChange: (url: string) => void;
@@ -36,31 +33,51 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
     setUploadProgress(0)
     
     try {
-      const fileRef = ref(storage, `${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
-      const uploadTask = uploadBytesResumable(fileRef, file);
+      const CHUNK_SIZE = 1024 * 1024; // 1MB chunks to safely bypass Vercel 4.5MB and PHP 2MB limits
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
 
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(Math.round(progress));
-        }, 
-        (error) => {
-          console.error('Firebase Upload Error:', error);
-          toast.error('Failed to upload video to cloud.');
-          setIsUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        }, 
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          onChange(downloadURL);
-          toast.success('Video uploaded perfectly!');
-          setIsUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+        
+        // Convert chunk Blob to Base64
+        const buffer = await chunk.arrayBuffer();
+        const base64Chunk = btoa(
+          new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+
+        const response = await fetch('/dashboard/app/api/upload_chunk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName,
+            chunkIndex: i,
+            totalChunks,
+            chunkData: base64Chunk
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || `Failed to upload chunk ${i}`);
         }
-      );
+
+        // Update progress
+        setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
+
+        // If last chunk, it returns the final URL
+        if (i === totalChunks - 1 && data.url) {
+          onChange(data.url);
+          toast.success('Video uploaded perfectly!');
+        }
+      }
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')
+    } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
