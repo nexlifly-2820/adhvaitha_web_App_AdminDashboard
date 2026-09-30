@@ -33,7 +33,7 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch(`${BIGROCK_API_URL}/upload.php`, {
+      const response = await fetch(`/dashboard/app/api/upload`, {
         method: 'POST',
         body: formData
       });
