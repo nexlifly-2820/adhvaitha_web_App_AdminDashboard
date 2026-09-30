@@ -38,55 +38,63 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
     setErrorMessage(null)
     
     try {
-      const CHUNK_SIZE = 256 * 1024; // 256KB chunks to prevent timeouts
-      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
-      for (let i = 0; i < totalChunks; i++) {
-        const start = i * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size);
-        const chunk = file.slice(start, end);
-        
-        // Use FormData to avoid ModSecurity JSON XSS blocks
-        const formData = new FormData();
-        formData.append('fileName', fileName);
-        formData.append('chunkIndex', i.toString());
-        formData.append('totalChunks', totalChunks.toString());
-        formData.append('chunkData', chunk); // Append Blob directly
-
-        // IMPORTANT: Sending DIRECTLY to BigRock bypassing Vercel!
-        // Using HTTPS. If this fails, SSL is broken on BigRock.
-        const response = await fetch('https://api.adhvaithafoods.in/upload_chunk.php', {
-          method: 'POST',
-          body: formData
-        });
-
-        const responseText = await response.text();
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          throw new Error(`Server returned invalid JSON. WAF block or Broken SSL? Output: ${responseText.substring(0, 150)}`);
-        }
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || `Failed to upload chunk ${i}`);
-        }
-
-        // Update progress
-        setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
-
-        // If last chunk, it returns the final URL
-        if (i === totalChunks - 1 && data.url) {
-          onChange(data.url);
-          toast.success('Video uploaded perfectly!');
-        }
+      if (!cloudName || !uploadPreset) {
+        throw new Error('Cloudinary environment variables are missing. Please configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in Vercel.');
       }
+
+      const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+      // Optional: Store it in a specific folder in Cloudinary
+      formData.append('folder', 'adhvaitha_foods_videos');
+
+      // Use XMLHttpRequest to track upload progress accurately
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', CLOUDINARY_URL, true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(progress);
+        }
+      };
+
+      xhr.onload = () => {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const response = JSON.parse(xhr.responseText);
+          onChange(response.secure_url);
+          toast.success('Video uploaded perfectly to Cloudinary!');
+        } else {
+          let errorMsg = 'Failed to upload video';
+          try {
+            errorMsg = JSON.parse(xhr.responseText).error.message;
+          } catch(e) {}
+          setErrorMessage(`Cloudinary Error: ${errorMsg}`);
+          toast.error('Cloudinary Error');
+        }
+      };
+
+      xhr.onerror = () => {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setErrorMessage('Network error during upload to Cloudinary');
+        toast.error('Upload failed. Network error.');
+      };
+
+      xhr.send(formData);
+
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')
       setErrorMessage(error.message || 'Failed to upload video.')
-    } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
