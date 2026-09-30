@@ -15,12 +15,12 @@ export async function POST(request: Request) {
       body: formData,
     });
 
+    const responseText = await response.text();
     let data;
     try {
-      data = await response.json();
+      data = JSON.parse(responseText);
     } catch (e) {
-      const text = await response.text();
-      throw new Error(`Server returned invalid JSON. WAF block? Output: ${text.substring(0, 80)}`);
+      throw new Error(`Server returned invalid JSON. WAF block? Output: ${responseText.substring(0, 150)}`);
     }
 
     if (!response.ok || data.error) {
