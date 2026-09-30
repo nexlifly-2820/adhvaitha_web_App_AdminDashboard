@@ -38,38 +38,55 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
     setErrorMessage(null)
     
     try {
-      const fileRef = ref(storage, `${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
-      const uploadTask = uploadBytesResumable(fileRef, file);
+      const CHUNK_SIZE = 256 * 1024; // 256KB chunks to prevent timeouts
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
 
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(Math.round(progress));
-        }, 
-        (error) => {
-          console.error('Firebase Upload Error:', error);
-          toast.error('Firebase Error: ' + error.code);
-          setErrorMessage(`Firebase Error: ${error.code} - ${error.message}`);
-          setIsUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        }, 
-        async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            onChange(downloadURL);
-            toast.success('Video uploaded perfectly to Firebase!');
-          } catch (urlError: any) {
-            setErrorMessage('Failed to get download URL: ' + urlError.message);
-          } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-          }
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+        
+        // Use FormData to avoid ModSecurity JSON XSS blocks
+        const formData = new FormData();
+        formData.append('fileName', fileName);
+        formData.append('chunkIndex', i.toString());
+        formData.append('totalChunks', totalChunks.toString());
+        formData.append('chunkData', chunk); // Append Blob directly
+
+        // IMPORTANT: Sending DIRECTLY to BigRock bypassing Vercel!
+        // Using HTTPS. If this fails, SSL is broken on BigRock.
+        const response = await fetch('https://api.adhvaithafoods.in/upload_chunk.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const responseText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          throw new Error(`Server returned invalid JSON. WAF block or Broken SSL? Output: ${responseText.substring(0, 150)}`);
         }
-      );
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || `Failed to upload chunk ${i}`);
+        }
+
+        // Update progress
+        setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
+
+        // If last chunk, it returns the final URL
+        if (i === totalChunks - 1 && data.url) {
+          onChange(data.url);
+          toast.success('Video uploaded perfectly!');
+        }
+      }
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')
       setErrorMessage(error.message || 'Failed to upload video.')
+    } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
