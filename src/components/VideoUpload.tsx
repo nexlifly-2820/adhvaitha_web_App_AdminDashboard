@@ -109,12 +109,22 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
             <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-100">
               <VideoIcon className="h-8 w-8 mb-2 opacity-50" />
               <span className="text-sm font-medium">Video Not Found</span>
-              <span className="text-xs text-center px-4 mt-1">
+              <span className="text-xs text-center px-4 mt-1 mb-3">
                 (If this is an 'assets/...' path, it only exists in the mobile app)
               </span>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="bg-white"
+              >
+                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Upload Video'}
+              </Button>
             </div>
           )}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          <div className={`absolute inset-0 bg-black/50 transition-opacity flex items-center justify-center gap-2 ${videoError ? 'hidden' : 'opacity-0 group-hover:opacity-100'}`}>
             <Button 
               type="button" 
               variant="secondary" 
