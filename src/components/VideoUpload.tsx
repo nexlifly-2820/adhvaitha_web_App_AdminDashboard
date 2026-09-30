@@ -17,6 +17,7 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [videoError, setVideoError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,14 +27,16 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
     // Validate size
     if (file.size > maxSizeMB * 1024 * 1024) {
       toast.error(`Video must be less than ${maxSizeMB}MB`)
+      setErrorMessage(`Video must be less than ${maxSizeMB}MB`)
       return
     }
 
     setIsUploading(true)
     setUploadProgress(0)
+    setErrorMessage(null)
     
     try {
-      const CHUNK_SIZE = 1024 * 1024; // 1MB chunks to safely bypass Vercel 4.5MB and PHP 2MB limits
+      const CHUNK_SIZE = 256 * 1024; // 256KB chunks to prevent Vercel 10s timeouts
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
       const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
 
@@ -67,7 +70,13 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
           })
         });
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          const text = await response.text();
+          throw new Error(`Server returned invalid JSON. Vercel timeout? Output: ${text.substring(0, 80)}`);
+        }
 
         if (!response.ok || !data.success) {
           throw new Error(data.error || `Failed to upload chunk ${i}`);
@@ -85,6 +94,7 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')
+      setErrorMessage(error.message || 'Failed to upload video.')
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -176,6 +186,11 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
           className="ml-2 bg-transparent border-b border-slate-200 focus:outline-none focus:border-slate-400 w-full truncate max-w-[200px]"
           placeholder="https://..."
         />
+        {errorMessage && (
+          <div className="text-red-500 mt-2 font-medium break-words">
+            Upload Error: {errorMessage}
+          </div>
+        )}
       </div>
     </div>
   )
