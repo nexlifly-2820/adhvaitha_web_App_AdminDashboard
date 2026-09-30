@@ -48,8 +48,8 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
         }, 
         (error) => {
           console.error('Firebase Upload Error:', error);
-          toast.error('Firebase Security Error. Check your Firebase Rules.');
-          setErrorMessage('Firebase Storage blocked the upload. Please go to Firebase Console -> Storage -> Rules and set "allow read, write: if true;"');
+          toast.error('Firebase Error: ' + error.code);
+          setErrorMessage(`Firebase Error: ${error.code} - ${error.message}`);
           setIsUploading(false);
           if (fileInputRef.current) fileInputRef.current.value = '';
         }, 
