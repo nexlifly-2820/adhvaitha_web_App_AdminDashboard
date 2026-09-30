@@ -21,6 +21,7 @@ interface CategoryPageConfig { hero_title: string; hero_subtitle: string; hero_i
 interface Coupon { code: string; title: string; sub: string }
 interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string; overlay?: string }
+interface HomeVideoConfig { enabled: boolean; video_url: string; title: string }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
 interface Pairing { title: string; pairing: string; desc: string; product_name: string; image: string }
 interface DeliveryConfig { free_threshold: number; base_fee: number; packing_fee: number; gst_percentage: number }
@@ -76,6 +77,7 @@ export default function ContentManager() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [packaging, setPackaging] = useState<Packaging[]>([])
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
+  const [homeVideo, setHomeVideo] = useState<HomeVideoConfig>({ enabled: true, video_url: 'assets/images/ambhujakshi-all.mp4', title: 'AmbhuJakshi Royal Collection' })
   const [tasteOptions, setTasteOptions] = useState<TasteOption[]>([])
   
   const [kitchenStory, setKitchenStory] = useState<KitchenStory>({
@@ -110,10 +112,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -151,6 +153,7 @@ export default function ContentManager() {
       if (deliveryConfigDoc && Object.keys(deliveryConfigDoc).length > 0) setDeliveryConfig(deliveryConfigDoc as DeliveryConfig)
       if (cartConfigDoc && Object.keys(cartConfigDoc).length > 0) setCartConfig(cartConfigDoc as CartConfig)
       if (billingConfigDoc && Object.keys(billingConfigDoc).length > 0) setBillingConfig(billingConfigDoc as BillingConfig)
+      if (homeVideoDoc && Object.keys(homeVideoDoc).length > 0) setHomeVideo(homeVideoDoc as HomeVideoConfig)
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -230,6 +233,9 @@ export default function ContentManager() {
         handleSaveTab('delivery_config', deliveryConfig)
         handleSaveTab('cart_config', cartConfig)
         handleSaveTab('billing_config', billingConfig)
+        break
+      case 'home_video':
+        handleSaveTab('home_video', homeVideo)
         break
     }
   }
@@ -426,9 +432,52 @@ export default function ContentManager() {
           <TabsTrigger value="kitchen_story" className="justify-start data-[state=active]:bg-white">Kitchen Story</TabsTrigger>
           <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
           <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Billing</TabsTrigger>
+          <TabsTrigger value="home_video" className="justify-start data-[state=active]:bg-white">Home Video</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pr-2 pb-20 custom-scrollbar">
+          {/* HOME VIDEO */}
+          <TabsContent value="home_video" className="mt-0 space-y-6">
+            <Card>
+              <CardHeader className="pb-4 border-b mb-4">
+                <CardTitle>Home Screen Video</CardTitle>
+                <CardDescription>Configure the dynamic video that plays below the search bar.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-3">
+                  <input 
+                    type="checkbox" 
+                    id="enable-video" 
+                    className="w-5 h-5 accent-orange-600"
+                    checked={homeVideo.enabled} 
+                    onChange={e => setHomeVideo(prev => ({ ...prev, enabled: e.target.checked }))} 
+                  />
+                  <label htmlFor="enable-video" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Enable Home Screen Video
+                  </label>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Video URL / Asset Path</label>
+                  <Input 
+                    placeholder="e.g. assets/images/ambhujakshi-all.mp4 or https://..." 
+                    value={homeVideo.video_url} 
+                    onChange={e => setHomeVideo(prev => ({ ...prev, video_url: e.target.value }))} 
+                  />
+                  <p className="text-xs text-slate-500">Provide a network CDN URL or a local Flutter asset path fallback.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Video Title / Caption</label>
+                  <Input 
+                    placeholder="e.g. AmbhuJakshi Royal Collection" 
+                    value={homeVideo.title} 
+                    onChange={e => setHomeVideo(prev => ({ ...prev, title: e.target.value }))} 
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
           {/* BANNERS */}
           <TabsContent value="banners" className="mt-0 space-y-6">
             <Card>
