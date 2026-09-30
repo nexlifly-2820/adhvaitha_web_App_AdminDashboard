@@ -30,26 +30,51 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
 
     setIsUploading(true)
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
-      const response = await fetch(`/dashboard/app/api/upload`, {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error || 'Failed to upload image.');
+      if (!cloudName || !uploadPreset) {
+        throw new Error('Cloudinary environment variables are missing. Please configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in Vercel.');
       }
 
-      onChange(data.url)
-      toast.success('Image uploaded successfully')
+      const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+      formData.append('folder', 'adhvaitha_foods_images');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', CLOUDINARY_URL, true);
+
+      xhr.onload = () => {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const response = JSON.parse(xhr.responseText);
+          onChange(response.secure_url);
+          toast.success('Image uploaded perfectly to Cloudinary!');
+        } else {
+          let errorMsg = 'Failed to upload image';
+          try {
+            errorMsg = JSON.parse(xhr.responseText).error.message;
+          } catch(e) {}
+          toast.error(`Cloudinary Error: ${errorMsg}`);
+        }
+      };
+
+      xhr.onerror = () => {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        toast.error('Upload failed. Network error.');
+      };
+
+      xhr.send(formData);
+
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload image.')
-    } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
