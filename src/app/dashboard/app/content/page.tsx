@@ -20,7 +20,7 @@ interface Category { label: string; img: string; tagline?: string; badge?: strin
 interface CategoryPageConfig { hero_title: string; hero_subtitle: string; hero_image: string; hero_tag: string }
 interface Coupon { code: string; title: string; sub: string }
 interface Packaging { title: string; desc: string; img: string }
-interface OnboardingStep { title: string; subtitle: string; desc: string; img: string }
+interface OnboardingStep { title: string; subtitle: string; desc: string; img: string; overlay?: string }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
 interface Pairing { title: string; pairing: string; desc: string; product_name: string; image: string }
 interface DeliveryConfig { free_threshold: number; base_fee: number; packing_fee: number; gst_percentage: number }
@@ -755,7 +755,7 @@ export default function ContentManager() {
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
                 <div><CardTitle>Onboarding Steps</CardTitle><CardDescription>App introduction screens</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setOnboardingSteps, { title: '', subtitle: '', desc: '', img: '' })}>+ Add Step</Button>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setOnboardingSteps, { title: '', subtitle: '', desc: '', img: '', overlay: '' })}>+ Add Step</Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {onboardingSteps.map((step, idx) => (
@@ -766,6 +766,7 @@ export default function ContentManager() {
                         <Input placeholder="Subtitle" value={step.subtitle} onChange={e => updateArray(setOnboardingSteps, idx, 'subtitle', e.target.value)} className="w-1/2" />
                       </div>
                       <Input placeholder="Description" value={step.desc} onChange={e => updateArray(setOnboardingSteps, idx, 'desc', e.target.value)} />
+                      <Input placeholder="Overlay Text (Optional)" value={step.overlay || ''} onChange={e => updateArray(setOnboardingSteps, idx, 'overlay', e.target.value)} />
                       <ImageUpload value={step.img} onChange={url => updateArray(setOnboardingSteps, idx, 'img', url)} folder="app_content" />
                     </div>
                     <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setOnboardingSteps, idx)}><Trash2 className="h-4 w-4" /></Button>
