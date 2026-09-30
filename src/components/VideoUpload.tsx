@@ -15,6 +15,7 @@ interface VideoUploadProps {
 
 export function VideoUpload({ value, onChange, folder = 'uploads', className = '', maxSizeMB = 25 }: VideoUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
+  const [videoError, setVideoError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,16 +72,23 @@ export function VideoUpload({ value, onChange, folder = 'uploads', className = '
         <div className="relative group rounded-md overflow-hidden border border-slate-200 aspect-video bg-slate-50 flex items-center justify-center h-48">
           <video 
             src={value.startsWith('assets/') ? `/${value}` : (value.startsWith('/') ? `https://adhvaithafoods.in${value}` : value)} 
-            className="object-cover w-full h-full" 
+            className={`object-cover w-full h-full ${videoError ? 'hidden' : 'block'}`} 
             autoPlay 
             muted 
             loop 
             playsInline
-            onError={(e) => {
-              // Video failed to load
-              console.error("Failed to load video:", value);
-            }}
+            onError={() => setVideoError(true)}
+            onLoadStart={() => setVideoError(false)}
           />
+          {videoError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-100">
+              <VideoIcon className="h-8 w-8 mb-2 opacity-50" />
+              <span className="text-sm font-medium">Video Not Found</span>
+              <span className="text-xs text-center px-4 mt-1">
+                (If this is an 'assets/...' path, it only exists in the mobile app)
+              </span>
+            </div>
+          )}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <Button 
               type="button" 
