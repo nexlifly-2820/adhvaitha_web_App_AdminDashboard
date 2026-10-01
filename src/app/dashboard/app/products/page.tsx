@@ -44,6 +44,8 @@ export default function ProductsPage() {
   const [stockCount, setStockCount] = useState<number>(100)
   const [rating, setRating] = useState('0')
   const [images, setImages] = useState<string[]>([])
+  const [color, setColor] = useState('0xFF18453B')
+  const [canRequestTempering, setCanRequestTempering] = useState(false)
   
   // Pricing & Inventory
   const [weightPriceEntries, setWeightPriceEntries] = useState([{ weight: '250g', price: '' }])
@@ -113,6 +115,8 @@ export default function ProductsPage() {
     setStockCount(100)
     setRating('0')
     setImages([])
+    setColor('0xFF18453B')
+    setCanRequestTempering(false)
     setWeightPriceEntries([{ weight: '250g', price: '' }])
     
     setOrigin('')
@@ -146,6 +150,8 @@ export default function ProductsPage() {
     setStockCount(product.stockCount !== undefined ? product.stockCount : 100)
     setRating(product.rating ? String(product.rating) : '0')
     setImages(product.image ? [product.image] : [])
+    setColor(product.color || '0xFF18453B')
+    setCanRequestTempering(product.canRequestTempering || false)
     
     if (product.weightPriceMap && Object.keys(product.weightPriceMap).length > 0) {
       const entries = Object.entries(product.weightPriceMap).map(([weight, price]) => ({
@@ -245,6 +251,10 @@ export default function ProductsPage() {
           stockCount: Number(stockCount),
           rating: Number(rating),
           image: images[0] || '', // Only taking first image for now based on schema
+          color: color,
+          canRequestTempering: canRequestTempering,
+          viewCount: 0,
+          purchaseCount: 0,
           weightPriceMap: weightPriceMap,
           
           origin: origin,
@@ -437,6 +447,30 @@ export default function ProductsPage() {
                     <label className="text-sm font-medium">Sub-Category (Filter Tag)</label>
                     <Input value={subCategory} onChange={(e) => setSubCategory(e.target.value)} placeholder="e.g. Classic, Mango Based, Spicy" />
                     <p className="text-xs text-slate-500">Automatically creates filter chips at the top of the category page.</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Theme Color (Hex)</label>
+                      <div className="flex gap-2">
+                        <div className="relative w-10 h-10 overflow-hidden rounded border shrink-0">
+                          <input 
+                            type="color" 
+                            title="Pick a color"
+                            value={color?.startsWith('0xFF') ? '#' + color.slice(4) : (color?.startsWith('#') ? color : '#18453B')} 
+                            onChange={e => setColor('0xFF' + e.target.value.slice(1).toUpperCase())} 
+                            className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer"
+                          />
+                        </div>
+                        <Input placeholder="e.g. 0xFF18453B" value={color} onChange={e => setColor(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="space-y-2 flex flex-col justify-center pt-6">
+                      <label className="flex items-center space-x-2">
+                        <input type="checkbox" checked={canRequestTempering} onChange={e => setCanRequestTempering(e.target.checked)} className="w-4 h-4 accent-orange-600" />
+                        <span className="text-sm font-medium">Allow "Request Tempering" (Tadka)</span>
+                      </label>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
