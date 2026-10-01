@@ -39,6 +39,8 @@ export default function ProductsPage() {
   const [category, setCategory] = useState('Pickles')
   const [subCategory, setSubCategory] = useState('')
   const [isBestSeller, setIsBestSeller] = useState(false)
+  const [isMostLoved, setIsMostLoved] = useState(false)
+  const [isFreshPick, setIsFreshPick] = useState(false)
   const [isOutOfStock, setIsOutOfStock] = useState(false)
   const [isVeg, setIsVeg] = useState(true)
   const [stockCount, setStockCount] = useState<number>(100)
@@ -110,6 +112,8 @@ export default function ProductsPage() {
     setCategory(dynamicCategories.length > 0 ? dynamicCategories[0].label : 'Pickles')
     setSubCategory('')
     setIsBestSeller(false)
+    setIsMostLoved(false)
+    setIsFreshPick(false)
     setIsOutOfStock(false)
     setIsVeg(true)
     setStockCount(100)
@@ -145,6 +149,8 @@ export default function ProductsPage() {
     setCategory(product.category || 'Pickles')
     setSubCategory(product.subCategory || '')
     setIsBestSeller(product.isBestSeller || false)
+    setIsMostLoved(product.isMostLoved || false)
+    setIsFreshPick(product.isFreshPick || false)
     setIsOutOfStock(product.isOutOfStock || false)
     setIsVeg(product.isVeg !== undefined ? product.isVeg : true)
     setStockCount(product.stockCount !== undefined ? product.stockCount : 100)
@@ -246,6 +252,8 @@ export default function ProductsPage() {
           category: category,
           subCategory: subCategory,
           isBestSeller: isBestSeller,
+          isMostLoved: isMostLoved,
+          isFreshPick: isFreshPick,
           isOutOfStock: isOutOfStock,
           isVeg: isVeg,
           stockCount: Number(stockCount),
@@ -484,17 +492,32 @@ export default function ProductsPage() {
                     {errors.productDesc && <p className="text-xs text-red-500">{errors.productDesc}</p>}
                   </div>
 
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="space-y-2 flex flex-col justify-center border rounded-md p-3">
+                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
+                        <input type="checkbox" checked={isBestSeller} onChange={(e) => setIsBestSeller(e.target.checked)} className="rounded border-slate-300" />
+                        <span>Best Seller</span>
+                      </label>
+                    </div>
+                    <div className="space-y-2 flex flex-col justify-center border rounded-md p-3">
+                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
+                        <input type="checkbox" checked={isMostLoved} onChange={(e) => setIsMostLoved(e.target.checked)} className="rounded border-slate-300 text-pink-500 focus:ring-pink-500" />
+                        <span className="text-pink-600">Most Loved Product</span>
+                      </label>
+                    </div>
+                    <div className="space-y-2 flex flex-col justify-center border rounded-md p-3">
+                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
+                        <input type="checkbox" checked={isFreshPick} onChange={(e) => setIsFreshPick(e.target.checked)} className="rounded border-slate-300 text-blue-500 focus:ring-blue-500" />
+                        <span className="text-blue-600">Fresh Pick</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2 flex flex-col justify-center">
                       <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
                         <input type="checkbox" checked={isVeg} onChange={(e) => setIsVeg(e.target.checked)} className="rounded border-slate-300 text-green-600 focus:ring-green-600" />
                         <span className="text-green-600">Pure Veg</span>
-                      </label>
-                    </div>
-                    <div className="space-y-2 flex flex-col justify-center">
-                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
-                        <input type="checkbox" checked={isBestSeller} onChange={(e) => setIsBestSeller(e.target.checked)} className="rounded border-slate-300" />
-                        <span>Best Seller</span>
                       </label>
                     </div>
                     <div className="space-y-2 flex flex-col justify-center">
