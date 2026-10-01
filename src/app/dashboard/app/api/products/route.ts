@@ -5,12 +5,16 @@ import { fetchApi, postApi } from '@/lib/api-client';
 // GET: Fetch all products
 export async function GET() {
   try {
-    const productsArray = await fetchApi('/app_products.php');
+    const responseData = await fetchApi('/app_products.php');
     
     // The frontend expects data as a record { id: { ...productData } }
     const data: Record<string, any> = {};
-    if (Array.isArray(productsArray)) {
-      productsArray.forEach((product: any) => {
+    
+    // Handle both legacy flat array and the new schema { products: [...] }
+    const productsList = Array.isArray(responseData) ? responseData : (responseData.products || []);
+    
+    if (Array.isArray(productsList)) {
+      productsList.forEach((product: any) => {
         data[product.id] = product;
       });
     }
