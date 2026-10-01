@@ -24,7 +24,8 @@ interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string; overlay?: string }
 interface HomeVideoConfig { enabled: boolean; video_url: string; title: string }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
-interface Pairing { title: string; pairing: string; desc: string; product_name: string; image: string }
+interface PairingSibling { isImageOnly: boolean; title: string; sub: string; img: string; prod: string; }
+interface PairingParent { isImageOnly: boolean; title: string; subtitle: string; desc: string; tagline: string; img: string; searchKey: string; subs: PairingSibling[]; }
 interface DeliveryConfig { free_threshold: number; base_fee: number; packing_fee: number; gst_percentage: number }
 interface CartConfig { freshness_tagline: string; dispatch_reassurance: string; upsell_section_title: string }
 interface BillingConfig { delivery_estimate_text: string; support_chat_text: string; savings_highlight_text: string }
@@ -112,7 +113,30 @@ export default function ContentManager() {
   })
   
   // Pairing & Products State
-  const [pairings, setPairings] = useState<Pairing[]>([])
+  const [pairings, setPairings] = useState<PairingParent[]>([])
+
+  const updatePairingSub = (pIdx: number, sIdx: number, field: string, val: any) => {
+    setPairings((prev: any) => {
+      const n = [...prev]
+      n[pIdx].subs[sIdx] = { ...n[pIdx].subs[sIdx], [field]: val }
+      return n
+    })
+  }
+  const addPairingSub = (pIdx: number) => {
+    setPairings((prev: any) => {
+      const n = [...prev]
+      if (!n[pIdx].subs) n[pIdx].subs = []
+      n[pIdx].subs.push({ isImageOnly: true, title: '', sub: '', img: '', prod: '' })
+      return n
+    })
+  }
+  const removePairingSub = (pIdx: number, sIdx: number) => {
+    setPairings((prev: any) => {
+      const n = [...prev]
+      n[pIdx].subs.splice(sIdx, 1)
+      return n
+    })
+  }
   const [productNames, setProductNames] = useState<string[]>([])
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>(['Mango Special', 'New Snacks', 'Spicy Chicken', 'Ladoo', 'Combos'])
   const [allProducts, setAllProducts] = useState<any[]>([])
@@ -882,63 +906,115 @@ export default function ContentManager() {
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
                 <div>
-                  <CardTitle>The Art of Pairing</CardTitle>
-                  <CardDescription>Manage the beautiful pairing cards shown in the app.</CardDescription>
+                  <CardTitle>The Art of Pairing (Curated Combos)</CardTitle>
+                  <CardDescription>Manage parent combo cards and their 2x2 grid sibling cards.</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setPairings, { title: '', pairing: '', desc: '', product_name: '', image: '' })}>
-                  + Add Pairing
+                <Button variant="outline" size="sm" onClick={() => addToArray(setPairings, { isImageOnly: true, title: '', subtitle: '', desc: '', tagline: '', img: '', searchKey: '', subs: [] })}>
+                  + Add Parent Combo
                 </Button>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {pairings.map((pairing, idx) => (
-                  <div key={idx} className="flex flex-col gap-4 p-4 border rounded bg-slate-50 dark:bg-slate-900/50">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-semibold text-slate-700 dark:text-slate-300">Pairing #{idx + 1}</h4>
-                      <Button variant="ghost" className="text-red-500 h-8 w-8 p-0" onClick={() => removeFromArray(setPairings, idx)}>
-                        <Trash2 className="h-4 w-4" />
+              <CardContent className="space-y-8">
+                {pairings.map((parent, pIdx) => (
+                  <div key={pIdx} className="flex flex-col gap-4 p-4 border-2 border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/20 shadow-sm relative">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-bold text-lg text-slate-800 dark:text-slate-200">Combo #{pIdx + 1}: {parent.title || 'Untitled'}</h4>
+                      <Button variant="destructive" size="sm" onClick={() => removeFromArray(setPairings, pIdx)}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete Parent
                       </Button>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-500 uppercase">Top Tag (Title)</label>
-                          <Input placeholder="e.g. THE COASTAL CLASSIC" value={pairing.title} onChange={e => updateArray(setPairings, idx, 'title', e.target.value)} />
+                    {/* PARENT FIELDS */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-white dark:bg-slate-950 p-4 rounded-lg border shadow-sm">
+                      <div className="space-y-4 col-span-1 lg:col-span-2">
+                        <h5 className="font-semibold text-orange-600 mb-2">Parent Details</h5>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Title</label>
+                            <Input placeholder="e.g. THE COASTAL CLASSIC" value={parent.title} onChange={e => updateArray(setPairings, pIdx, 'title', e.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Subtitle</label>
+                            <Input placeholder="e.g. Rice + Ghee + Avakaya" value={parent.subtitle} onChange={e => updateArray(setPairings, pIdx, 'subtitle', e.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Search Key</label>
+                            <Input placeholder="e.g. Avakaya" value={parent.searchKey} onChange={e => updateArray(setPairings, pIdx, 'searchKey', e.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Tagline</label>
+                            <Input placeholder="e.g. Simple Food" value={parent.tagline} onChange={e => updateArray(setPairings, pIdx, 'tagline', e.target.value)} />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-500 uppercase">Main Pairing Text</label>
-                          <Input placeholder="e.g. Rice + Ghee + Avakaya" value={pairing.pairing} onChange={e => updateArray(setPairings, idx, 'pairing', e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 mt-4">
                           <label className="text-xs font-semibold text-slate-500 uppercase">Description</label>
                           <textarea 
-                            value={pairing.desc} 
-                            onChange={e => updateArray(setPairings, idx, 'desc', e.target.value)}
-                            className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950" 
+                            value={parent.desc} 
+                            onChange={e => updateArray(setPairings, pIdx, 'desc', e.target.value)}
+                            className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm shadow-sm focus-visible:outline-none" 
                             placeholder="Describe the pairing..."
                           />
                         </div>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <input type="checkbox" id={`imgOnly-${pIdx}`} checked={parent.isImageOnly} onChange={e => updateArray(setPairings, pIdx, 'isImageOnly', e.target.checked)} className="w-4 h-4 accent-orange-600" />
+                          <label htmlFor={`imgOnly-${pIdx}`} className="text-sm font-medium">Use Image Only (Hide Texts)</label>
+                        </div>
                       </div>
                       
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-500 uppercase">Linked Product</label>
-                          <select 
-                            value={pairing.product_name} 
-                            onChange={e => updateArray(setPairings, idx, 'product_name', e.target.value)}
-                            className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950"
-                          >
-                            <option value="">-- Select a Product --</option>
-                            {productNames.map(name => (
-                              <option key={name} value={name}>{name}</option>
-                            ))}
-                          </select>
-                          <p className="text-[10px] text-slate-400">This ensures the exact spelling matches your database.</p>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-slate-500 uppercase">Background Image</label>
-                          <ImageUpload value={pairing.image} onChange={url => updateArray(setPairings, idx, 'image', url)} folder="app_content" />
-                        </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-500 uppercase">Parent Image</label>
+                        <ImageUpload value={parent.img} onChange={url => updateArray(setPairings, pIdx, 'img', url)} folder="app_content" className="h-full" />
+                      </div>
+                    </div>
+
+                    {/* SIBLINGS SECTION */}
+                    <div className="mt-4 border-t-2 border-slate-200 dark:border-slate-800 pt-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <h5 className="font-semibold text-blue-600">Sibling Cards (Sub-pairings)</h5>
+                        <Button variant="secondary" size="sm" onClick={() => addPairingSub(pIdx)}>
+                          + Add Sibling
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(parent.subs || []).map((sub: any, sIdx: number) => (
+                          <div key={sIdx} className="p-3 bg-white dark:bg-slate-950 border rounded-lg shadow-sm relative">
+                            <Button variant="ghost" className="absolute top-2 right-2 text-red-500 h-6 w-6 p-0" onClick={() => removePairingSub(pIdx, sIdx)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <p className="text-xs font-bold text-slate-400 mb-3">Sibling #{sIdx + 1}</p>
+                            
+                            <div className="space-y-3">
+                              <div className="flex gap-2">
+                                <div className="flex-1 space-y-2">
+                                  <Input placeholder="Title" value={sub.title} onChange={e => updatePairingSub(pIdx, sIdx, 'title', e.target.value)} className="text-sm h-8" />
+                                  <Input placeholder="Sub" value={sub.sub} onChange={e => updatePairingSub(pIdx, sIdx, 'sub', e.target.value)} className="text-sm h-8" />
+                                  <select 
+                                    value={sub.prod} 
+                                    onChange={e => updatePairingSub(pIdx, sIdx, 'prod', e.target.value)}
+                                    className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-2 py-1 text-sm h-8"
+                                  >
+                                    <option value="">-- Linked Product --</option>
+                                    {productNames.map(name => (
+                                      <option key={name} value={name}>{name}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="w-1/3">
+                                  <ImageUpload value={sub.img} onChange={url => updatePairingSub(pIdx, sIdx, 'img', url)} folder="app_content" />
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <input type="checkbox" id={`subImgOnly-${pIdx}-${sIdx}`} checked={sub.isImageOnly} onChange={e => updatePairingSub(pIdx, sIdx, 'isImageOnly', e.target.checked)} className="w-3 h-3 accent-blue-600" />
+                                <label htmlFor={`subImgOnly-${pIdx}-${sIdx}`} className="text-xs text-slate-500">Image Only (Hide texts)</label>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {(parent.subs || []).length === 0 && (
+                          <div className="col-span-2 text-center p-4 border-2 border-dashed rounded-lg text-slate-400 text-sm">
+                            No siblings added. Click "+ Add Sibling" to create the 2x2 grid.
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
