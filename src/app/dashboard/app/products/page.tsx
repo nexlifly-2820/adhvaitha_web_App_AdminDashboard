@@ -77,7 +77,7 @@ export default function ProductsPage() {
   const [recipes, setRecipes] = useState<{title: string, instruction: string}[]>([])
 
   // Ingredients & Pairings
-  const [ingredients, setIngredients] = useState<string[]>([])
+  const [ingredients, setIngredients] = useState<{name: string, image: string}[]>([])
   const [secretIngredient, setSecretIngredient] = useState({ name: '', description: '', image: '' })
   const [pairings, setPairings] = useState<string[]>([])
   const [sommelierPairings, setSommelierPairings] = useState<{title: string, description: string, icon: string}[]>([])
@@ -772,15 +772,22 @@ export default function ProductsPage() {
                 <TabsContent value="pairings" className="space-y-6">
                   {/* Ingredients List */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Ingredients</label>
-                    <p className="text-xs text-slate-500">Add each ingredient and click Enter or + to add more.</p>
+                    <label className="text-sm font-medium">Ingredients (Name & Image Grid)</label>
+                    <p className="text-xs text-slate-500">Add the product ingredients along with their images. They will be displayed in a circular grid on the product page.</p>
                     {ingredients.map((ing, idx) => (
-                      <div key={idx} className="flex gap-2 mb-2">
-                        <Input value={ing} onChange={(e) => { const n = [...ingredients]; n[idx] = e.target.value; setIngredients(n) }} placeholder="e.g. Raw Mangoes" />
-                        <Button variant="ghost" size="icon" onClick={() => setIngredients(ingredients.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
+                      <div key={idx} className="flex flex-col gap-2 mb-4 p-3 border rounded border-slate-200 dark:border-slate-800">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-medium text-slate-500">Ingredient {idx + 1}</label>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIngredients(ingredients.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
+                        </div>
+                        <Input value={ing.name} onChange={(e) => { const n = [...ingredients]; n[idx].name = e.target.value; setIngredients(n) }} placeholder="Ingredient Name (e.g. Raw Mangoes)" />
+                        <div className="mt-2">
+                          <label className="text-xs font-medium text-slate-500 mb-1 block">Ingredient Image</label>
+                          <ImageUpload value={ing.image} onChange={(url) => { const n = [...ingredients]; n[idx].image = url; setIngredients(n) }} folder="products/ingredients" />
+                        </div>
                       </div>
                     ))}
-                    <Button variant="outline" size="sm" onClick={() => setIngredients([...ingredients, ''])}>+ Add Ingredient</Button>
+                    <Button variant="outline" size="sm" onClick={() => setIngredients([...ingredients, {name: '', image: ''}])}>+ Add Ingredient</Button>
                   </div>
 
                   {/* Secret Ingredient */}
