@@ -47,6 +47,7 @@ export default function ProductsPage() {
   const [stockCount, setStockCount] = useState<number>(100)
   const [rating, setRating] = useState('0')
   const [images, setImages] = useState<string[]>([])
+  const [gallery, setGallery] = useState<string[]>([])
   const [color, setColor] = useState('0xFF18453B')
   const [canRequestTempering, setCanRequestTempering] = useState(false)
   
@@ -61,6 +62,7 @@ export default function ProductsPage() {
   const [shelfLife, setShelfLife] = useState('')
   const [trustBadges, setTrustBadges] = useState<string[]>([])
   const [artisanName, setArtisanName] = useState('')
+  const [artisanImage, setArtisanImage] = useState('')
   const [artisanDescription, setArtisanDescription] = useState('')
   const [recipes, setRecipes] = useState<{title: string, instruction: string}[]>([])
 
@@ -142,10 +144,12 @@ export default function ProductsPage() {
     setShelfLife('')
     setTrustBadges([])
     setArtisanName('')
+    setArtisanImage('')
     setArtisanDescription('')
     setRecipes([])
 
     setIngredients([])
+    setGallery([])
     setSecretIngredient({ name: '', description: '', image: '' })
     setPairings([])
     setSommelierPairings([])
@@ -168,6 +172,7 @@ export default function ProductsPage() {
     setStockCount(product.stockCount !== undefined ? product.stockCount : 100)
     setRating(product.rating ? String(product.rating) : '0')
     setImages(product.image ? [product.image] : [])
+    setGallery(product.gallery || [])
     setColor(product.color || '0xFF18453B')
     setCanRequestTempering(product.canRequestTempering || false)
     
@@ -187,6 +192,7 @@ export default function ProductsPage() {
     setShelfLife(product.shelfLife || '')
     setTrustBadges(product.trustBadges || [])
     setArtisanName(product.artisanName || '')
+    setArtisanImage(product.artisanImage || '')
     setArtisanDescription(product.artisanDescription || '')
     setRecipes(product.recipes || [])
 
@@ -284,10 +290,12 @@ export default function ProductsPage() {
           shelfLife: shelfLife,
           trustBadges: trustBadges.filter(b => b.trim() !== ''),
           artisanName: artisanName,
+          artisanImage: artisanImage,
           artisanDescription: artisanDescription,
           recipes: recipes.filter(r => r.title.trim() !== '' && r.instruction.trim() !== ''),
 
           ingredients: ingredients.filter(i => i.trim() !== ''),
+          gallery: gallery.filter(g => g.trim() !== ''),
           secretIngredient: secretIngredient.name ? secretIngredient : null,
           pairings: pairings.filter(p => p.trim() !== ''),
           sommelierPairings: sommelierPairings.filter(s => s.title.trim() !== '')
@@ -565,6 +573,29 @@ export default function ProductsPage() {
                     />
                     {errors.images && <p className="text-xs text-red-500">{errors.images}</p>}
                   </div>
+
+                  <div className="space-y-2 pt-2">
+                    <label className="text-sm font-medium">Gallery Thumbnails (Max 4)</label>
+                    <p className="text-xs text-slate-500">Add up to 4 additional images for the product page.</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[0, 1, 2, 3].map((idx) => (
+                        <ImageUpload 
+                          key={idx}
+                          value={gallery[idx] || ''} 
+                          onChange={(url) => { 
+                            const newGallery = [...gallery];
+                            if (url) {
+                              newGallery[idx] = url;
+                            } else {
+                              newGallery.splice(idx, 1);
+                            }
+                            setGallery(newGallery.filter(Boolean)); 
+                          }} 
+                          folder="products/gallery" 
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </TabsContent>
 
                 {/* TAB 2: INVENTORY & PRICING */}
@@ -633,6 +664,10 @@ export default function ProductsPage() {
                       <div className="space-y-2">
                         <label className="text-xs font-medium text-slate-500">Artisan Name</label>
                         <Input value={artisanName} onChange={(e) => setArtisanName(e.target.value)} placeholder="e.g. Smt. Annapurna" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-slate-500">Artisan Image</label>
+                        <ImageUpload value={artisanImage} onChange={(url) => setArtisanImage(url)} folder="products/artisan" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-medium text-slate-500">Artisan Description</label>
