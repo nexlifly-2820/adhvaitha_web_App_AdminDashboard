@@ -55,6 +55,15 @@ export default function ProductsPage() {
   const [weightPriceEntries, setWeightPriceEntries] = useState([{ weight: '250g', price: '' }])
   
   // Behind the Jar
+  const defaultBehindTheJar = [
+    { title: 'Origin', subtitle: '', description: '' },
+    { title: 'Process', subtitle: '', description: '' },
+    { title: 'Prepared In', subtitle: '', description: '' },
+    { title: 'Storage', subtitle: '', description: '' },
+    { title: 'Shelf Life', subtitle: '', description: '' },
+  ];
+  const [behindTheJar, setBehindTheJar] = useState(defaultBehindTheJar);
+
   const [origin, setOrigin] = useState('')
   const [preparationMethod, setPreparationMethod] = useState('')
   const [storageInstructions, setStorageInstructions] = useState('')
@@ -142,6 +151,7 @@ export default function ProductsPage() {
     setStorageInstructions('')
     setServingSuggestion('')
     setShelfLife('')
+    setBehindTheJar(defaultBehindTheJar)
     setTrustBadges([])
     setArtisanName('')
     setArtisanImage('')
@@ -190,6 +200,13 @@ export default function ProductsPage() {
     setStorageInstructions(product.storageInstructions || '')
     setServingSuggestion(product.servingSuggestion || '')
     setShelfLife(product.shelfLife || '')
+    
+    if (product.behindTheJar && product.behindTheJar.length === 5) {
+      setBehindTheJar(product.behindTheJar)
+    } else {
+      setBehindTheJar(defaultBehindTheJar)
+    }
+    
     setTrustBadges(product.trustBadges || [])
     setArtisanName(product.artisanName || '')
     setArtisanImage(product.artisanImage || '')
@@ -288,6 +305,7 @@ export default function ProductsPage() {
           storageInstructions: storageInstructions,
           servingSuggestion: servingSuggestion,
           shelfLife: shelfLife,
+          behindTheJar: behindTheJar,
           trustBadges: trustBadges.filter(b => b.trim() !== ''),
           artisanName: artisanName,
           artisanImage: artisanImage,
@@ -656,6 +674,36 @@ export default function ProductsPage() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Shelf Life</label>
                     <Input value={shelfLife} onChange={(e) => setShelfLife(e.target.value)} placeholder="e.g. 6 Months" />
+                  </div>
+
+                  <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Timeline Events (Behind The Jar)</h4>
+                    <p className="text-xs text-slate-500">Customize the 5 points in the heritage timeline. Leave blank to use app defaults.</p>
+                    <div className="space-y-4">
+                      {behindTheJar.map((item, idx) => (
+                        <div key={idx} className="p-3 border rounded-md space-y-2">
+                          <label className="text-sm font-medium">{item.title}</label>
+                          <Input 
+                            placeholder={`${item.title} Subtitle (e.g. Bhimavaram, AP)`} 
+                            value={item.subtitle} 
+                            onChange={(e) => {
+                              const newArr = [...behindTheJar];
+                              newArr[idx].subtitle = e.target.value;
+                              setBehindTheJar(newArr);
+                            }} 
+                          />
+                          <Input 
+                            placeholder={`${item.title} Description`} 
+                            value={item.description} 
+                            onChange={(e) => {
+                              const newArr = [...behindTheJar];
+                              newArr[idx].description = e.target.value;
+                              setBehindTheJar(newArr);
+                            }} 
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
