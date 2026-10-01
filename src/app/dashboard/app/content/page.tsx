@@ -24,6 +24,7 @@ interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string; overlay?: string }
 interface HomeVideoConfig { enabled: boolean; video_url: string; title: string }
 interface SplashVideoConfig { enabled: boolean; video_url: string; title: string }
+interface SnackStory { product_name: string; storyImage: string; description: string; trustBadges: string[] }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
 interface PairingSibling { isImageOnly: boolean; title: string; sub: string; img: string; prod: string; }
 interface PairingParent { isImageOnly: boolean; title: string; subtitle: string; desc: string; tagline: string; img: string; searchKey: string; subs: PairingSibling[]; }
@@ -99,6 +100,7 @@ export default function ContentManager() {
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
   const [homeVideo, setHomeVideo] = useState<HomeVideoConfig>({ enabled: true, video_url: 'assets/images/ambhujakshi-all.mp4', title: 'AmbhuJakshi Royal Collection' })
   const [splashVideo, setSplashVideo] = useState<SplashVideoConfig>({ enabled: true, video_url: '', title: '' })
+  const [snackStories, setSnackStories] = useState<SnackStory[]>([])
   const [tasteOptions, setTasteOptions] = useState<TasteOption[]>([])
   
   const [kitchenStory, setKitchenStory] = useState<KitchenStory>({
@@ -156,10 +158,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -199,6 +201,7 @@ export default function ContentManager() {
       if (billingConfigDoc && Object.keys(billingConfigDoc).length > 0) setBillingConfig(billingConfigDoc as BillingConfig)
       if (homeVideoDoc && Object.keys(homeVideoDoc).length > 0) setHomeVideo(homeVideoDoc as HomeVideoConfig)
       if (splashVideoDoc && Object.keys(splashVideoDoc).length > 0) setSplashVideo(splashVideoDoc as SplashVideoConfig)
+      if (snackStoryDoc && Object.keys(snackStoryDoc).length > 0) setSnackStories(snackStoryDoc.list || [])
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -284,6 +287,9 @@ export default function ContentManager() {
         break
       case 'splash_video':
         handleSaveTab('splash_video', splashVideo)
+        break
+      case 'snacks_story':
+        handleSaveTab('snacks_with_story', { list: snackStories })
         break
     }
   }
@@ -486,6 +492,7 @@ export default function ContentManager() {
           <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Billing</TabsTrigger>
           <TabsTrigger value="home_video" className="justify-start data-[state=active]:bg-white">Home Video</TabsTrigger>
           <TabsTrigger value="splash_video" className="justify-start data-[state=active]:bg-white">Splash Video</TabsTrigger>
+          <TabsTrigger value="snacks_story" className="justify-start data-[state=active]:bg-white">Snacks with a Story</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pr-2 pb-20 custom-scrollbar">
@@ -569,6 +576,99 @@ export default function ContentManager() {
                     onChange={e => setSplashVideo(prev => ({ ...prev, title: e.target.value }))} 
                   />
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* SNACKS WITH A STORY */}
+          <TabsContent value="snacks_story" className="mt-0">
+            <Card>
+              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                <div>
+                  <CardTitle>Snacks with a Story</CardTitle>
+                  <CardDescription>Configure the story banners and heritage text for featured snacks.</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setSnackStories, { product_name: '', storyImage: '', description: '', trustBadges: [] })}>
+                  + Add Snack Story
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {snackStories.map((story, idx) => (
+                  <div key={idx} className="p-4 border border-slate-200 rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-4 relative">
+                    <button onClick={() => removeFromArray(setSnackStories, idx)} className="absolute top-4 right-4 text-red-500">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Select Product</label>
+                        <select 
+                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={story.product_name} 
+                          onChange={e => updateArray(setSnackStories, idx, 'product_name', e.target.value)}
+                        >
+                          <option value="">-- Select Snack --</option>
+                          {productNames.map(name => <option key={name} value={name}>{name}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Story Image</label>
+                        <ImageUpload 
+                          value={story.storyImage} 
+                          onChange={url => updateArray(setSnackStories, idx, 'storyImage', url)} 
+                          folder="app_content"
+                        />
+                      </div>
+                      <div className="md:col-span-2 space-y-2">
+                        <label className="text-sm font-medium">Heritage Description</label>
+                        <textarea 
+                          className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={story.description} 
+                          onChange={e => updateArray(setSnackStories, idx, 'description', e.target.value)}
+                        />
+                      </div>
+                      <div className="md:col-span-2 space-y-2">
+                        <label className="text-sm font-medium block">Trust Badges (e.g. Rice Flour, Homemade)</label>
+                        <div className="flex gap-2 flex-wrap mb-2">
+                          {(story.trustBadges || []).map((badge, bIdx) => (
+                            <div key={bIdx} className="flex items-center gap-1 bg-white dark:bg-slate-950 border px-2 py-1 rounded">
+                              <span className="text-sm">{badge}</span>
+                              <button 
+                                onClick={() => {
+                                  const n = [...snackStories];
+                                  n[idx].trustBadges = n[idx].trustBadges.filter((_, i) => i !== bIdx);
+                                  setSnackStories(n);
+                                }}
+                                className="text-slate-400 hover:text-red-500 ml-1"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <Input 
+                            placeholder="Add new badge... (e.g. Mild Spicy)" 
+                            className="max-w-xs"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const val = (e.target as HTMLInputElement).value.trim();
+                                if (val) {
+                                  const n = [...snackStories];
+                                  if (!n[idx].trustBadges) n[idx].trustBadges = [];
+                                  n[idx].trustBadges.push(val);
+                                  setSnackStories(n);
+                                  (e.target as HTMLInputElement).value = '';
+                                }
+                              }
+                            }}
+                          />
+                          <p className="text-xs text-slate-500 py-2">Press Enter to add</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </TabsContent>
