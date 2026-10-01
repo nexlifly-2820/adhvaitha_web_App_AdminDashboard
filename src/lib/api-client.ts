@@ -10,6 +10,7 @@ export const BIGROCK_API_URL = 'http://api.adhvaithafoods.in';
  */
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const response = await fetch(`${BIGROCK_API_URL}${endpoint}`, {
+    cache: 'no-store',
     ...options,
     headers: {
       'Content-Type': 'application/json',
