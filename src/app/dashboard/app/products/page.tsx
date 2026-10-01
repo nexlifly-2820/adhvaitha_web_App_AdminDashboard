@@ -47,6 +47,7 @@ export default function ProductsPage() {
   const [stockCount, setStockCount] = useState<number>(100)
   const [rating, setRating] = useState('0')
   const [images, setImages] = useState<string[]>([])
+  const [storyImage, setStoryImage] = useState<string>('')
   const [gallery, setGallery] = useState<string[]>([])
   const [color, setColor] = useState('0xFF18453B')
   const [canRequestTempering, setCanRequestTempering] = useState(false)
@@ -142,6 +143,7 @@ export default function ProductsPage() {
     setStockCount(100)
     setRating('0')
     setImages([])
+    setStoryImage('')
     setColor('0xFF18453B')
     setCanRequestTempering(false)
     setWeightPriceEntries([{ weight: '250g', price: '' }])
@@ -182,6 +184,7 @@ export default function ProductsPage() {
     setStockCount(product.stockCount !== undefined ? product.stockCount : 100)
     setRating(product.rating ? String(product.rating) : '0')
     setImages(product.image ? [product.image] : [])
+    setStoryImage(product.storyImage || '')
     setGallery(product.gallery || [])
     setColor(product.color || '0xFF18453B')
     setCanRequestTempering(product.canRequestTempering || false)
@@ -294,6 +297,7 @@ export default function ProductsPage() {
           stockCount: Number(stockCount),
           rating: Number(rating),
           image: images[0] || '', // Only taking first image for now based on schema
+          storyImage: storyImage,
           color: color,
           canRequestTempering: canRequestTempering,
           viewCount: 0,
@@ -590,6 +594,16 @@ export default function ProductsPage() {
                       folder="products" 
                     />
                     {errors.images && <p className="text-xs text-red-500">{errors.images}</p>}
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <label className="text-sm font-medium">Snack Story Artwork Image (Optional)</label>
+                    <p className="text-xs text-slate-500">Wavy artwork displayed directly above the snack product card.</p>
+                    <ImageUpload 
+                      value={storyImage} 
+                      onChange={(url) => setStoryImage(url)} 
+                      folder="products/story" 
+                    />
                   </div>
 
                   <div className="space-y-2 pt-2">
