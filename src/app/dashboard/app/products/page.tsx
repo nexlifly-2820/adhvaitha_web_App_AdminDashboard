@@ -316,7 +316,7 @@ export default function ProductsPage() {
           artisanDescription: artisanDescription,
           recipes: recipes.filter(r => r.title.trim() !== '' && r.instruction.trim() !== ''),
 
-          ingredients: ingredients.filter(i => i.trim() !== ''),
+          ingredients: ingredients.filter(i => i.name && i.name.trim() !== ''),
           gallery: gallery.filter(g => g.trim() !== ''),
           secretIngredient: secretIngredient.name ? secretIngredient : null,
           pairings: pairings.filter(p => p.trim() !== ''),
