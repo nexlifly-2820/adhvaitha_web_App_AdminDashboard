@@ -74,7 +74,7 @@ export default function ProductsPage() {
   const [artisanName, setArtisanName] = useState('')
   const [artisanImage, setArtisanImage] = useState('')
   const [artisanDescription, setArtisanDescription] = useState('')
-  const [recipes, setRecipes] = useState<{title: string, instruction: string}[]>([])
+  const [recipes, setRecipes] = useState<{image?: string, title: string, instruction: string}[]>([])
 
   // Ingredients & Pairings
   const [ingredients, setIngredients] = useState<{name: string, image: string}[]>([])
@@ -759,11 +759,15 @@ export default function ProductsPage() {
                           <label className="text-xs font-medium text-slate-500">Recipe {idx + 1}</label>
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setRecipes(recipes.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
                         </div>
-                        <Input value={recipe.title} onChange={(e) => { const n = [...recipes]; n[idx].title = e.target.value; setRecipes(n) }} placeholder="Recipe Title (e.g. Spicy Marinade)" />
-                        <Input value={recipe.instruction} onChange={(e) => { const n = [...recipes]; n[idx].instruction = e.target.value; setRecipes(n) }} placeholder="Instruction (e.g. Use 2 spoons with prawns...)" />
+                        <Input value={recipe.title} onChange={(e) => { const n = [...recipes]; n[idx].title = e.target.value; setRecipes(n) }} placeholder="Recipe Title (e.g. Avakaya with Hot Rice)" />
+                        <Input value={recipe.instruction} onChange={(e) => { const n = [...recipes]; n[idx].instruction = e.target.value; setRecipes(n) }} placeholder="Subtitle/Instruction (e.g. A timeless classic.)" />
+                        <div className="mt-2">
+                          <label className="text-xs font-medium text-slate-500 mb-1 block">Recipe Image</label>
+                          <ImageUpload value={recipe.image || ''} onChange={(url) => { const n = [...recipes]; n[idx].image = url; setRecipes(n) }} folder="products/recipes" />
+                        </div>
                       </div>
                     ))}
-                    <Button variant="outline" size="sm" onClick={() => setRecipes([...recipes, {title: '', instruction: ''}])}>+ Add Recipe</Button>
+                    <Button variant="outline" size="sm" onClick={() => setRecipes([...recipes, {image: '', title: '', instruction: ''}])}>+ Add Recipe</Button>
                   </div>
 
                 </TabsContent>
