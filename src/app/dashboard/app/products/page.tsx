@@ -29,6 +29,7 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterFlag, setFilterFlag] = useState<string>('All')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [dynamicCategories, setDynamicCategories] = useState<{label: string}[]>([])
@@ -97,6 +98,17 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts()
   }, [])
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = (p.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || (p.category?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    
+    let matchesFlag = true;
+    if (filterFlag === 'Best Seller') matchesFlag = p.isBestSeller;
+    if (filterFlag === 'Most Loved') matchesFlag = p.isMostLoved;
+    if (filterFlag === 'Fresh Pick') matchesFlag = p.isFreshPick;
+    
+    return matchesSearch && matchesFlag;
+  });
 
   useEffect(() => {
     if (dynamicCategories.length > 0 && !editingProductId) {
@@ -314,7 +326,7 @@ export default function ProductsPage() {
           <CardDescription>
             View and manage your pickles, powders, and homemade specials.
           </CardDescription>
-          <div className="flex items-center py-4">
+          <div className="flex flex-wrap items-center gap-4 py-4">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
               <Input
@@ -325,6 +337,16 @@ export default function ProductsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <select
+              value={filterFlag}
+              onChange={(e) => setFilterFlag(e.target.value)}
+              className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus:ring-slate-300"
+            >
+              <option value="All">All Products</option>
+              <option value="Best Seller">Best Sellers</option>
+              <option value="Most Loved">Most Loved</option>
+              <option value="Fresh Pick">Fresh Picks</option>
+            </select>
           </div>
         </CardHeader>
         <CardContent>
@@ -346,12 +368,12 @@ export default function ProductsPage() {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-slate-500">Loading products...</TableCell>
                   </TableRow>
-                ) : products.length === 0 ? (
+                ) : filteredProducts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-slate-500">No products found. Add one above!</TableCell>
+                    <TableCell colSpan={7} className="text-center py-8 text-slate-500">No products found for this filter.</TableCell>
                   </TableRow>
                 ) : (
-                  products.map((product) => (
+                  filteredProducts.map((product) => (
                     <TableRow key={product.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                       <TableCell>
                         <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -364,7 +386,9 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell className="font-medium">
                       {product.name}
-                      {product.isBestSeller && <Badge variant="secondary" className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Best Seller</Badge>}
+                      {product.isBestSeller && <Badge variant="secondary" className="ml-2 mt-1 bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Best Seller</Badge>}
+                      {product.isMostLoved && <Badge variant="secondary" className="ml-2 mt-1 bg-pink-100 text-pink-800 hover:bg-pink-100">Most Loved</Badge>}
+                      {product.isFreshPick && <Badge variant="secondary" className="ml-2 mt-1 bg-blue-100 text-blue-800 hover:bg-blue-100">Fresh Pick</Badge>}
                     </TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell>
