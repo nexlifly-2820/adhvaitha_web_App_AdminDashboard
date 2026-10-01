@@ -23,6 +23,7 @@ interface Coupon { code: string; title: string; sub: string }
 interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string; overlay?: string }
 interface HomeVideoConfig { enabled: boolean; video_url: string; title: string }
+interface SplashVideoConfig { enabled: boolean; video_url: string; title: string }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
 interface PairingSibling { isImageOnly: boolean; title: string; sub: string; img: string; prod: string; }
 interface PairingParent { isImageOnly: boolean; title: string; subtitle: string; desc: string; tagline: string; img: string; searchKey: string; subs: PairingSibling[]; }
@@ -97,6 +98,7 @@ export default function ContentManager() {
   const [packaging, setPackaging] = useState<Packaging[]>([])
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
   const [homeVideo, setHomeVideo] = useState<HomeVideoConfig>({ enabled: true, video_url: 'assets/images/ambhujakshi-all.mp4', title: 'AmbhuJakshi Royal Collection' })
+  const [splashVideo, setSplashVideo] = useState<SplashVideoConfig>({ enabled: true, video_url: '', title: '' })
   const [tasteOptions, setTasteOptions] = useState<TasteOption[]>([])
   
   const [kitchenStory, setKitchenStory] = useState<KitchenStory>({
@@ -154,10 +156,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -196,6 +198,7 @@ export default function ContentManager() {
       if (cartConfigDoc && Object.keys(cartConfigDoc).length > 0) setCartConfig(cartConfigDoc as CartConfig)
       if (billingConfigDoc && Object.keys(billingConfigDoc).length > 0) setBillingConfig(billingConfigDoc as BillingConfig)
       if (homeVideoDoc && Object.keys(homeVideoDoc).length > 0) setHomeVideo(homeVideoDoc as HomeVideoConfig)
+      if (splashVideoDoc && Object.keys(splashVideoDoc).length > 0) setSplashVideo(splashVideoDoc as SplashVideoConfig)
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -278,6 +281,9 @@ export default function ContentManager() {
         break
       case 'home_video':
         handleSaveTab('home_video', homeVideo)
+        break
+      case 'splash_video':
+        handleSaveTab('splash_video', splashVideo)
         break
     }
   }
@@ -479,6 +485,7 @@ export default function ContentManager() {
           <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
           <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Billing</TabsTrigger>
           <TabsTrigger value="home_video" className="justify-start data-[state=active]:bg-white">Home Video</TabsTrigger>
+          <TabsTrigger value="splash_video" className="justify-start data-[state=active]:bg-white">Splash Video</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pr-2 pb-20 custom-scrollbar">
@@ -518,6 +525,48 @@ export default function ContentManager() {
                     placeholder="e.g. AmbhuJakshi Royal Collection" 
                     value={homeVideo.title} 
                     onChange={e => setHomeVideo(prev => ({ ...prev, title: e.target.value }))} 
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* SPLASH VIDEO */}
+          <TabsContent value="splash_video" className="mt-0 space-y-6">
+            <Card>
+              <CardHeader className="pb-4 border-b mb-4">
+                <CardTitle>Splash Screen Video</CardTitle>
+                <CardDescription>Configure the background video played when the app opens.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-3">
+                  <input 
+                    type="checkbox" 
+                    id="enable-splash-video" 
+                    className="w-5 h-5 accent-orange-600"
+                    checked={splashVideo.enabled} 
+                    onChange={e => setSplashVideo(prev => ({ ...prev, enabled: e.target.checked }))} 
+                  />
+                  <label htmlFor="enable-splash-video" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Enable Splash Screen Video
+                  </label>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Video URL / Asset Path</label>
+                  <VideoUpload 
+                    value={splashVideo.video_url} 
+                    onChange={url => setSplashVideo(prev => ({ ...prev, video_url: url }))} 
+                  />
+                  <p className="text-xs text-slate-500">Provide a network CDN URL or upload a video file.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Video Title / Caption</label>
+                  <Input 
+                    placeholder="e.g. AmbhuJakshi Royal Collection" 
+                    value={splashVideo.title} 
+                    onChange={e => setSplashVideo(prev => ({ ...prev, title: e.target.value }))} 
                   />
                 </div>
               </CardContent>
