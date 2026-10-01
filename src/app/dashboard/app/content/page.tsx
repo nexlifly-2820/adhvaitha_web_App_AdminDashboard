@@ -19,7 +19,7 @@ interface Story { label: string; icon: string; tag: string }
 interface BentoSelection { section_title: string; best_seller_product: string; card1_label: string; card2_label: string; card2_sub: string; card2_icon: string; card3_label: string; card3_sub: string; card3_icon: string }
 interface Category { label: string; img: string; tagline?: string; badge?: string; description?: string; banner_img?: string; }
 interface CategoryPageConfig { hero_title: string; hero_subtitle: string; hero_image: string; hero_tag: string }
-interface Coupon { code: string; title: string; sub: string }
+interface Coupon { type: 'image' | 'video'; image?: string; video_url?: string }
 interface Packaging { title: string; desc: string; img: string }
 interface OnboardingStep { title: string; subtitle: string; desc: string; img: string; overlay?: string }
 interface HomeVideoConfig { enabled: boolean; video_url: string; title: string }
@@ -354,7 +354,7 @@ export default function ContentManager() {
           title: 'DEALS OF THE DAY'
         }),
         postConfig('coupons', {
-          active_list: [{ code: 'ROYAL10', title: '10% OFF', sub: 'On your first order' }]
+          active_list: [{ type: 'image', image: img1 }]
         }),
         postConfig('packaging', {
           list: [{ title: 'Premium Glass Jars', desc: 'Sealed for freshness', img: img4 }]
@@ -951,18 +951,46 @@ export default function ContentManager() {
           <TabsContent value="coupons" className="mt-0">
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div><CardTitle>Active Coupons</CardTitle><CardDescription>Discount codes displayed in the app</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setCoupons, { code: '', title: '', sub: '' })}>+ Add Coupon</Button>
+                <div>
+                  <CardTitle>Home Page Coupons / Privileges</CardTitle>
+                  <CardDescription>Manage the media-only coupon cards displayed on the home page.</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setCoupons, { type: 'image', image: '' })}>+ Add Coupon Card</Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {coupons.map((coupon, idx) => (
-                  <div key={idx} className="flex gap-4 items-start p-3 border rounded">
-                    <div className="flex-1 grid grid-cols-2 gap-2">
-                      <Input placeholder="Code (e.g. ROYAL10)" value={coupon.code} onChange={e => updateArray(setCoupons, idx, 'code', e.target.value)} />
-                      <Input placeholder="Title" value={coupon.title} onChange={e => updateArray(setCoupons, idx, 'title', e.target.value)} />
-                      <Input placeholder="Subtitle" value={coupon.sub} onChange={e => updateArray(setCoupons, idx, 'sub', e.target.value)} className="col-span-2" />
+                  <div key={idx} className="flex flex-col gap-4 p-4 border rounded-xl bg-slate-50 dark:bg-slate-900/50 relative">
+                    <Button variant="ghost" className="absolute top-2 right-2 text-red-500 h-8 w-8 hover:bg-red-50 dark:hover:bg-red-950/50" onClick={() => removeFromArray(setCoupons, idx)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-10">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Media Type</label>
+                        <select 
+                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={coupon.type || 'image'} 
+                          onChange={e => {
+                            const newType = e.target.value as 'image' | 'video';
+                            const n = [...coupons];
+                            n[idx] = { type: newType, image: coupon.image || '', video_url: coupon.video_url || '' };
+                            setCoupons(n);
+                          }}
+                        >
+                          <option value="image">Image Card</option>
+                          <option value="video">Video Card</option>
+                        </select>
+                      </div>
+                      
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-sm font-medium">Upload Media (No Text Overlays)</label>
+                        {(!coupon.type || coupon.type === 'image') ? (
+                          <ImageUpload value={coupon.image || ''} onChange={url => updateArray(setCoupons, idx, 'image', url)} folder="app_content" />
+                        ) : (
+                          <VideoUpload value={coupon.video_url || ''} onChange={url => updateArray(setCoupons, idx, 'video_url', url)} />
+                        )}
+                        <p className="text-xs text-slate-500">The app displays only the raw media (image or video) with zero text overlays, so all design/text must be baked into your uploaded media file.</p>
+                      </div>
                     </div>
-                    <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setCoupons, idx)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 ))}
               </CardContent>
