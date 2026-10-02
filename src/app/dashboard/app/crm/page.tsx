@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
 import { toast } from 'sonner'
-import { Search, MessageSquare, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { Search, MessageSquare, CheckCircle, Clock, AlertCircle, Users, Mail, Phone, Calendar } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface Inquiry {
   id: string;
@@ -29,6 +30,11 @@ export default function CRMPage() {
   const [replyText, setReplyText] = useState('')
   const [isResolving, setIsResolving] = useState(false)
 
+  // Users Database State
+  const [users, setUsers] = useState<any[]>([])
+  const [isUsersLoading, setIsUsersLoading] = useState(true)
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+
 
   const fetchInquiries = async () => {
     try {
@@ -45,14 +51,30 @@ export default function CRMPage() {
       }
     } catch (error) {
       console.error('Error fetching inquiries:', error)
-      toast.error('Failed to load CRM data')
+      toast.error('Failed to load inquiries')
     } finally {
       setIsLoading(false)
     }
   }
 
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/dashboard/app/api/users')
+      const result = await res.json()
+      if (result.success && result.data) {
+        setUsers(result.data)
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+      toast.error('Failed to load users database')
+    } finally {
+      setIsUsersLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchInquiries()
+    fetchUsers()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleResolve = async () => {
@@ -93,31 +115,119 @@ export default function CRMPage() {
 
   const pendingCount = inquiries.filter(i => i.status === 'pending').length
 
+  const filteredUsers = users.filter(u => 
+    u.name?.toLowerCase().includes(userSearchTerm.toLowerCase()) || 
+    u.email?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    u.phone?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    u.user_id?.toLowerCase().includes(userSearchTerm.toLowerCase())
+  )
+
   return (
-    <div className="flex h-[calc(100vh-80px)] w-full gap-6 max-w-7xl mx-auto p-4 sm:p-6">
-      {/* Left Panel: List */}
-      <Card className="w-1/3 flex flex-col border-none shadow-md overflow-hidden">
-        <CardHeader className="pb-4 bg-slate-50 border-b border-slate-100 dark:bg-slate-900/50 dark:border-slate-800">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-indigo-500" />
-              Customer CRM
-            </CardTitle>
+    <div className="flex flex-col h-[calc(100vh-80px)] w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6 overflow-hidden">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Customer CRM</h1>
+          <p className="text-sm text-slate-500">Manage user accounts and support inquiries.</p>
+        </div>
+      </div>
+      
+      <Tabs defaultValue="users" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent mb-4 space-x-6">
+          <TabsTrigger value="users" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-600 data-[state=active]:shadow-none data-[state=active]:bg-transparent px-2 py-3">Users Database</TabsTrigger>
+          <TabsTrigger value="inquiries" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-600 data-[state=active]:shadow-none data-[state=active]:bg-transparent px-2 py-3 flex items-center gap-2">
+            Inquiries
             {pendingCount > 0 && (
-              <Badge variant="destructive" className="bg-red-500">{pendingCount} New</Badge>
+              <Badge variant="destructive" className="bg-red-500 text-[10px] px-1.5 py-0 rounded-full">{pendingCount}</Badge>
             )}
-          </div>
-          <div className="relative mt-4">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-            <Input
-              type="search"
-              placeholder="Search by name, email..."
-              className="pl-9 bg-white dark:bg-slate-950"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </CardHeader>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="users" className="flex-1 mt-0 min-h-0 flex flex-col">
+          <Card className="flex-1 border-none shadow-md overflow-hidden flex flex-col">
+            <CardHeader className="pb-4 bg-slate-50 border-b border-slate-100 dark:bg-slate-900/50 dark:border-slate-800">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                <Input
+                  type="search"
+                  placeholder="Search by name, email, phone, or User ID..."
+                  className="pl-9 bg-white dark:bg-slate-950 max-w-md"
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
+              {isUsersLoading ? (
+                <div className="p-8 text-center text-slate-500">Loading users...</div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">No users found.</div>
+              ) : (
+                <div className="min-w-[800px]">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-6 py-4 font-semibold">Customer</th>
+                        <th className="px-6 py-4 font-semibold">Contact Info</th>
+                        <th className="px-6 py-4 font-semibold">User ID</th>
+                        <th className="px-6 py-4 font-semibold">Joined Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredUsers.map((user, idx) => (
+                        <tr key={user.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold uppercase">
+                                {(user.name || 'U').charAt(0)}
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-100">{user.name || 'Anonymous User'}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 space-y-1">
+                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                              <Mail className="w-3.5 h-3.5" />
+                              <span>{user.email || '-'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>{user.phone || '-'}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant="outline" className="font-mono text-xs text-slate-500">{user.user_id || user.uid || '-'}</Badge>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="inquiries" className="flex-1 mt-0 min-h-0">
+          <div className="flex h-full w-full gap-6">
+            {/* Left Panel: List */}
+            <Card className="w-1/3 flex flex-col border-none shadow-md overflow-hidden min-h-0">
+              <CardHeader className="pb-4 bg-slate-50 border-b border-slate-100 dark:bg-slate-900/50 dark:border-slate-800">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                  <Input
+                    type="search"
+                    placeholder="Search inquiries..."
+                    className="pl-9 bg-white dark:bg-slate-950"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </CardHeader>
         <CardContent className="p-0 flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="p-8 text-center text-slate-500">Loading inquiries...</div>
@@ -226,7 +336,11 @@ export default function CRMPage() {
             <p>Select an inquiry to view details</p>
           </div>
         )}
-      </Card>
-    </div>
-  )
+            )}
+          </Card>
+        </div>
+      </TabsContent>
+    </Tabs>
+  </div>
+)
 }
