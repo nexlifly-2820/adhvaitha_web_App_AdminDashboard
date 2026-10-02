@@ -336,11 +336,10 @@ export default function CRMPage() {
             <p>Select an inquiry to view details</p>
           </div>
         )}
-            )}
           </Card>
         </div>
       </TabsContent>
     </Tabs>
   </div>
-)
+  )
 }
