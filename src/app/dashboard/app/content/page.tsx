@@ -17,7 +17,8 @@ interface MainBanner { title: string; category: string; image: string }
 interface AdBanner { tag: string; title: string; sub: string; img: string }
 interface Story { label: string; icon: string; tag: string }
 interface BentoSelection { section_title: string; best_seller_product: string; card1_label: string; card2_label: string; card2_sub: string; card2_icon: string; card3_label: string; card3_sub: string; card3_icon: string }
-interface Category { label: string; img: string; tagline?: string; badge?: string; description?: string; banner_img?: string; }
+interface ShopCategorySub { img: string; title: string; sub: string; prod: string; }
+interface Category { label: string; img: string; subs: ShopCategorySub[]; }
 interface CategoryPageConfig { hero_title: string; hero_subtitle: string; hero_image: string; hero_tag: string }
 interface Coupon { type: 'image' | 'video'; image?: string; video_url?: string }
 interface Packaging { title: string; desc: string; img: string }
@@ -141,6 +142,30 @@ export default function ContentManager() {
       return n
     })
   }
+
+  const updateCategorySub = (pIdx: number, sIdx: number, field: string, val: any) => {
+    setCategories((prev: any) => {
+      const n = [...prev]
+      n[pIdx].subs[sIdx] = { ...n[pIdx].subs[sIdx], [field]: val }
+      return n
+    })
+  }
+  const addCategorySub = (pIdx: number) => {
+    setCategories((prev: any) => {
+      const n = [...prev]
+      if (!n[pIdx].subs) n[pIdx].subs = []
+      n[pIdx].subs.push({ img: '', title: '', sub: '', prod: '' })
+      return n
+    })
+  }
+  const removeCategorySub = (pIdx: number, sIdx: number) => {
+    setCategories((prev: any) => {
+      const n = [...prev]
+      n[pIdx].subs.splice(sIdx, 1)
+      return n
+    })
+  }
+
   const [productNames, setProductNames] = useState<string[]>([])
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>(['Mango Special', 'New Snacks', 'Spicy Chicken', 'Ladoo', 'Combos'])
   const [allProducts, setAllProducts] = useState<any[]>([])
@@ -835,48 +860,78 @@ export default function ContentManager() {
 
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div><CardTitle>Royal Collections (Categories)</CardTitle><CardDescription>App category icons with tags and badges</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', tagline: '', badge: '', description: '', banner_img: '' })}>+ Add Category</Button>
+                <div>
+                  <CardTitle>Shop Categories (Parent & Small Cards)</CardTitle>
+                  <CardDescription>Manage parent category banners and their small sub-cards (displayed in rows of 2).</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', subs: [] })}>
+                  + Add Parent Category
+                </Button>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {categories.map((cat, idx) => (
-                  <div key={idx} className="flex flex-col gap-4 p-4 border rounded bg-white dark:bg-slate-900 relative">
-                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-red-500 h-8 w-8 hover:bg-red-50 dark:hover:bg-red-950/50" onClick={() => removeFromArray(setCategories, idx)}>
+              <CardContent className="space-y-8">
+                {categories.map((cat, pIdx) => (
+                  <div key={pIdx} className="p-6 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900 relative">
+                    <Button variant="destructive" size="icon" className="absolute top-4 right-4 h-8 w-8" onClick={() => removeFromArray(setCategories, pIdx)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pr-10">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Name</label>
-                        <Input placeholder="e.g. Pickles" value={cat.label || ''} onChange={e => updateArray(setCategories, idx, 'label', e.target.value)} />
+                    <h4 className="text-lg font-bold mb-4">Parent Category Card {pIdx + 1}</h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 pr-10">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Category Label</label>
+                        <Input placeholder="e.g. Pickles" value={cat.label || ''} onChange={e => updateArray(setCategories, pIdx, 'label', e.target.value)} />
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Corner Badge</label>
-                        <Input placeholder="e.g. HOT, NEW (Optional)" value={cat.badge || ''} onChange={e => updateArray(setCategories, idx, 'badge', e.target.value)} />
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Banner Image (No Text Overlay)</label>
+                        <ImageUpload value={cat.img || ''} onChange={url => updateArray(setCategories, pIdx, 'img', url)} folder="app_content" />
                       </div>
-                      <div className="space-y-1.5 sm:col-span-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Editorial Tagline</label>
-                        <Input placeholder="e.g. Sun-dried purity (Optional)" value={cat.tagline || ''} onChange={e => updateArray(setCategories, idx, 'tagline', e.target.value)} />
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                      <div className="flex justify-between items-center mb-4">
+                        <h5 className="font-semibold text-slate-700 dark:text-slate-300">Small Sub-Cards (Rows of 2)</h5>
+                        <Button variant="secondary" size="sm" onClick={() => addCategorySub(pIdx)}>
+                          + Add Small Card
+                        </Button>
                       </div>
-                      <div className="space-y-1.5 sm:col-span-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Description</label>
-                        <textarea 
-                          className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300 min-h-[60px]"
-                          placeholder="e.g. Experience the ancestral flavors of Coastal Andhra..." 
-                          value={cat.description || ''} 
-                          onChange={e => updateArray(setCategories, idx, 'description', e.target.value)} 
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Icon</label>
-                        <ImageUpload value={cat.img || ''} onChange={url => updateArray(setCategories, idx, 'img', url)} folder="app_content" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Banner Image</label>
-                        <ImageUpload value={cat.banner_img || ''} onChange={url => updateArray(setCategories, idx, 'banner_img', url)} folder="app_content" />
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {(cat.subs || []).map((sub, sIdx) => (
+                          <div key={sIdx} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 relative">
+                            <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-red-500 h-6 w-6" onClick={() => removeCategorySub(pIdx, sIdx)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <div className="space-y-3 pr-8">
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Image</label>
+                                <ImageUpload value={sub.img || ''} onChange={url => updateCategorySub(pIdx, sIdx, 'img', url)} folder="app_content" />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Title</label>
+                                <Input placeholder="e.g. Bellam Avakaya" value={sub.title || ''} onChange={e => updateCategorySub(pIdx, sIdx, 'title', e.target.value)} />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Subtitle</label>
+                                <Input placeholder="e.g. Sweet & Spicy Mango" value={sub.sub || ''} onChange={e => updateCategorySub(pIdx, sIdx, 'sub', e.target.value)} />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Search Product / Keyword</label>
+                                <Input placeholder="e.g. Bellam Avakaya" value={sub.prod || ''} onChange={e => updateCategorySub(pIdx, sIdx, 'prod', e.target.value)} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {(!cat.subs || cat.subs.length === 0) && (
+                          <p className="text-sm text-slate-500 italic col-span-2">No small cards added yet. Click "+ Add Small Card" to start.</p>
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
+                {categories.length === 0 && (
+                  <div className="text-center py-8 text-slate-500 border-2 border-dashed border-slate-200 rounded-lg">
+                    No parent categories configured yet.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
