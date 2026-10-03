@@ -18,7 +18,7 @@ interface AdBanner { tag: string; title: string; sub: string; img: string }
 interface Story { label: string; icon: string; tag: string }
 interface BentoSelection { section_title: string; best_seller_product: string; card1_label: string; card2_label: string; card2_sub: string; card2_icon: string; card3_label: string; card3_sub: string; card3_icon: string }
 interface CategoryParentCard { img: string; }
-interface Category { label: string; img: string; tagline?: string; badge?: string; description?: string; banner_img?: string; }
+interface Category { label: string; img: string; tag: string; title_line_1: string; title_line_2: string; description: string; subtitle: string; }
 interface CategoryPageConfig { hero_title: string; hero_subtitle: string; hero_image: string; hero_tag: string }
 interface Coupon { type: 'image' | 'video'; image?: string; video_url?: string }
 interface Packaging { title: string; desc: string; img: string }
@@ -872,8 +872,8 @@ export default function ContentManager() {
 
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div><CardTitle>Small Category Cards</CardTitle><CardDescription>App category icons with tags and badges (Displayed in rows of 2)</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', tagline: '', badge: '', description: '', banner_img: '' })}>+ Add Category</Button>
+                <div><CardTitle>Categories & Product Listing Banners</CardTitle><CardDescription>Manage Category Banners, Titles, Descriptions, and Subtitles dynamically</CardDescription></div>
+                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', tag: '', title_line_1: '', title_line_2: '', description: '', subtitle: '' })}>+ Add Category</Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {categories.map((cat, idx) => (
@@ -883,33 +883,37 @@ export default function ContentManager() {
                     </Button>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pr-10">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Name</label>
-                        <Input placeholder="e.g. Pickles" value={cat.label || ''} onChange={e => updateArray(setCategories, idx, 'label', e.target.value)} />
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Label (System)</label>
+                        <Input placeholder="e.g. Snacks" value={cat.label || ''} onChange={e => updateArray(setCategories, idx, 'label', e.target.value)} />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Corner Badge</label>
-                        <Input placeholder="e.g. HOT, NEW (Optional)" value={cat.badge || ''} onChange={e => updateArray(setCategories, idx, 'badge', e.target.value)} />
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Top Tag</label>
+                        <Input placeholder="e.g. CRISPY HERITAGE DELIGHTS" value={cat.tag || ''} onChange={e => updateArray(setCategories, idx, 'tag', e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Title Line 1</label>
+                        <Input placeholder="e.g. Traditional\n" value={cat.title_line_1 || ''} onChange={e => updateArray(setCategories, idx, 'title_line_1', e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Title Line 2</label>
+                        <Input placeholder="e.g. Indian Snacks" value={cat.title_line_2 || ''} onChange={e => updateArray(setCategories, idx, 'title_line_2', e.target.value)} />
                       </div>
                       <div className="space-y-1.5 sm:col-span-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Editorial Tagline</label>
-                        <Input placeholder="e.g. Sun-dried purity (Optional)" value={cat.tagline || ''} onChange={e => updateArray(setCategories, idx, 'tagline', e.target.value)} />
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Subtitle (Bottom text)</label>
+                        <Input placeholder="e.g. Traditional Bites, Timeless Taste" value={cat.subtitle || ''} onChange={e => updateArray(setCategories, idx, 'subtitle', e.target.value)} />
                       </div>
                       <div className="space-y-1.5 sm:col-span-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Description</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</label>
                         <textarea 
                           className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300 min-h-[60px]"
-                          placeholder="e.g. Experience the ancestral flavors of Coastal Andhra..." 
+                          placeholder="e.g. Authentic flavors crafted with love and tradition." 
                           value={cat.description || ''} 
                           onChange={e => updateArray(setCategories, idx, 'description', e.target.value)} 
                         />
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Icon</label>
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category Banner Image</label>
                         <ImageUpload value={cat.img || ''} onChange={url => updateArray(setCategories, idx, 'img', url)} folder="app_content" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Banner Image</label>
-                        <ImageUpload value={cat.banner_img || ''} onChange={url => updateArray(setCategories, idx, 'banner_img', url)} folder="app_content" />
                       </div>
                     </div>
                   </div>
