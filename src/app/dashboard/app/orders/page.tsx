@@ -177,16 +177,18 @@ export default function OrdersPage() {
       const data = await res.json();
       if (data.success && data.data) {
         const liveOrders: Order[] = Object.values(data.data).map((o: any) => {
-          // Map Firestore order to UI Order format
+          // Map backend order status to UI Order format
           const statusMap: Record<string, OrderStatus> = {
             'Placed': 'pending',
             'Pending': 'pending',
             'Accepted': 'accepted',
             'Processing': 'packing',
+            'Packing': 'packing',
             'Shipped': 'shipped',
             'Out for Delivery': 'out_for_delivery',
             'Delivered': 'delivered',
-            'Cancelled': 'rejected'
+            'Cancelled': 'rejected',
+            'Rejected': 'rejected'
           };
           
           let uiStatus: OrderStatus = statusMap[o.orderStatus] || statusMap[o.status] || 'pending';
@@ -197,51 +199,64 @@ export default function OrdersPage() {
           }
 
           const items: OrderItem[] = (o.products || o.items || []).map((item: any) => ({
-            name: item.name || 'Product',
-            qty: item.quantity || item.qty || 1,
-            price: item.unitPrice || item.price || 0
+            name: item.product_name || item.name || item.title || 'Product',
+            qty: Number(item.quantity || item.qty || 1),
+            price: Number(item.price || item.unitPrice || 0)
           }));
 
-          const address = typeof o.shippingAddress === 'string' 
+          const address = typeof o.shipping_address === 'string' && o.shipping_address.trim()
+            ? o.shipping_address
+            : typeof o.shippingAddress === 'string' && o.shippingAddress.trim()
             ? o.shippingAddress 
-            : o.shippingInfo?.address ? `${o.shippingInfo.address}, ${o.shippingInfo.city}` : o.deliveryAddress || 'Unknown Address';
+            : o.shippingInfo?.address ? `${o.shippingInfo.address}, ${o.shippingInfo.city || ''}`.trim() : o.deliveryAddress || 'Address not provided';
 
-          // Try to extract name from address or use a fallback
-          let customerName = o.customerName || o.customerInfo?.name;
-          if (!customerName && address.includes('\n')) {
+          // Try to extract name from user/customer fields
+          let customerName = o.customer_name || o.customerName || o.customerInfo?.name;
+          if (!customerName && address && address.includes('\n')) {
              customerName = address.split('\n')[0];
           }
-          if (!customerName) customerName = `User (${o.userId?.substring(0, 5) || 'Unknown'})`;
-
-          // Try to extract phone
-          let phone = o.mobileNumber || o.customerInfo?.mobileNumber || o.phone;
-          if (!phone) {
-             const phoneMatch = address.match(/\d{10}/);
-             if (phoneMatch) phone = phoneMatch[0];
-             else phone = 'Not provided';
+          if (!customerName) {
+            const uid = String(o.user_id || o.userId || '');
+            customerName = uid ? `User (${uid.substring(0, 8)})` : 'Customer';
           }
 
+          // Try to extract phone
+          let phone = o.customer_phone || o.phone || o.mobile_number || o.mobileNumber || o.customerInfo?.mobileNumber;
+          if (!phone && address) {
+             const phoneMatch = address.match(/\d{10}/);
+             if (phoneMatch) phone = phoneMatch[0];
+          }
+          if (!phone) phone = 'Not provided';
+
           // Try to extract date
+          const orderIdStr = String(o.order_id || o.orderId || o.id || '');
           let timeString = 'Recent';
-          if (o.orderDate) timeString = new Date(o.orderDate).toLocaleString();
-          else if (o.createdAt?.seconds) timeString = new Date(o.createdAt.seconds * 1000).toLocaleString();
-          else if (o.createdAt) timeString = new Date(o.createdAt).toLocaleString();
-          else {
+          if (o.created_at && o.created_at !== '0000-00-00 00:00:00') {
+            timeString = new Date(o.created_at).toLocaleString();
+          } else if (o.orderDate) {
+            timeString = new Date(o.orderDate).toLocaleString();
+          } else if (o.createdAt?.seconds) {
+            timeString = new Date(o.createdAt.seconds * 1000).toLocaleString();
+          } else if (o.createdAt) {
+            timeString = new Date(o.createdAt).toLocaleString();
+          } else {
              // Fallback to Order ID timestamp if ADH-17...
-             const idMatch = (o.orderId || o.id || '').match(/ADH-(\d+)/);
+             const idMatch = orderIdStr.match(/ADH-(\d+)/);
              if (idMatch && idMatch[1]) {
                 timeString = new Date(parseInt(idMatch[1])).toLocaleString();
              }
           }
 
+          const resolvedOrderId = o.order_id || o.orderId || String(o.id);
+
           return {
-            id: o.orderId || o.id,
+            id: resolvedOrderId,
             customer: customerName,
             phone: phone,
             address: address,
             items: items,
-            delivery: o.deliveryFee || 40,
-            payment: o.paymentMethod || o.paymentStatus || 'Online',
+            delivery: Number(o.delivery_fee || o.deliveryFee || 40),
+            payment: o.payment_method || o.paymentMethod || o.paymentStatus || 'Online',
             status: uiStatus,
             time: timeString,
             note: o.note || '',
@@ -254,8 +269,14 @@ export default function OrdersPage() {
           };
         });
 
-        // Sort by time descending
-        liveOrders.sort((a, b) => new Date(b.rawOrder?.createdAt || 0).getTime() - new Date(a.rawOrder?.createdAt || 0).getTime());
+        // Sort by id / time descending
+        liveOrders.sort((a, b) => {
+          const idA = Number(a.rawOrder?.id) || 0;
+          const idB = Number(b.rawOrder?.id) || 0;
+          if (idA && idB) return idB - idA;
+          return 0;
+        });
+
         setOrders(liveOrders);
       }
     } catch (err) {
@@ -286,7 +307,7 @@ export default function OrdersPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            documentId: orderToUpdate.rawOrder?.id || orderId,
+            documentId: orderToUpdate.rawOrder?.order_id || orderId,
             status: newStatus,
             rejectionReason: reason || ''
           })
@@ -312,7 +333,7 @@ export default function OrdersPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            documentId: orderToUpdate.rawOrder?.id || orderId,
+            documentId: orderToUpdate.rawOrder?.order_id || orderId,
             ...heritage
           })
         });
