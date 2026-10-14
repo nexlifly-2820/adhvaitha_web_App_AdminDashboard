@@ -48,7 +48,7 @@ export async function POST(request: Request) {
        // Creating new order
        const orderPayload = {
          ...orderData,
-         order_id: orderData.orderId || `ADH-${Date.now()}`,
+         order_id: orderData.orderId || `AMBJ${new Date().getFullYear()}${Math.floor(100 + Math.random() * 900)}`,
          user_id: orderData.userId,
          total_amount: orderData.total,
          shipping_address: orderData.shippingAddress
