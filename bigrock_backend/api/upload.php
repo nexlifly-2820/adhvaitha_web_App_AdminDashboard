@@ -25,18 +25,18 @@ $fileName = basename($file['name']);
 $fileTmpName = $file['tmp_name'];
 $fileSize = $file['size'];
 
-$allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+$allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg'];
 $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
 if (!in_array($fileExtension, $allowedExtensions)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Invalid file type. Only JPG, PNG, GIF, and WEBP are allowed.']);
+    echo json_encode(['error' => 'Invalid file type. Only JPG, PNG, GIF, WEBP, and MP4 are allowed.']);
     exit();
 }
 
-if ($fileSize > 5 * 1024 * 1024) { 
+if ($fileSize > 25 * 1024 * 1024) { 
     http_response_code(400);
-    echo json_encode(['error' => 'File size exceeds 5MB.']);
+    echo json_encode(['error' => 'File size exceeds 25MB (increased to support videos).']);
     exit();
 }
 

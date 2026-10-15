@@ -19,8 +19,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Echo the JSON data exactly as it was saved
         echo $result['json_data'];
     } else {
-        // Return an empty object if the document doesn't exist yet
-        echo json_encode(new stdClass());
+        // Return default fallback if the document doesn't exist yet
+        if ($doc_id === 'home_video') {
+            echo json_encode([
+                'enabled' => true,
+                'video_url' => 'assets/images/ambhujakshi-all.mp4',
+                'title' => 'AmbhuJakshi Royal Collection'
+            ]);
+        } else {
+            echo json_encode(new stdClass());
+        }
     }
     exit();
 }
