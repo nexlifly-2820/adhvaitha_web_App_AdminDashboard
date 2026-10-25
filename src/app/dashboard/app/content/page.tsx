@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -485,6 +485,13 @@ export default function ContentManager() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full flex gap-6 flex-col lg:flex-row items-start lg:h-[calc(100vh-180px)]">
         <TabsList className="flex flex-col justify-start bg-slate-100 dark:bg-slate-900 w-full lg:w-56 items-stretch p-2 gap-2 shrink-0 lg:h-full overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl custom-scrollbar">
           <TabsTrigger value="banners" className="justify-start data-[state=active]:bg-white">Banners</TabsTrigger>
+          <TabsTrigger value="home_video" className="justify-start data-[state=active]:bg-white flex items-center justify-between group">
+            <span className="flex items-center gap-2">
+              <Video className="h-4 w-4 text-orange-600" />
+              <span>Home Header Video</span>
+            </span>
+            <span className="text-[10px] bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 font-bold px-1.5 py-0.5 rounded uppercase">Opt 1</span>
+          </TabsTrigger>
           <TabsTrigger value="stories" className="justify-start data-[state=active]:bg-white">Stories</TabsTrigger>
           <TabsTrigger value="bento" className="justify-start data-[state=active]:bg-white">Bento Selection</TabsTrigger>
           <TabsTrigger value="categories" className="justify-start data-[state=active]:bg-white">Categories</TabsTrigger>
@@ -496,49 +503,138 @@ export default function ContentManager() {
           <TabsTrigger value="kitchen_story" className="justify-start data-[state=active]:bg-white">Kitchen Story</TabsTrigger>
           <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
           <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Billing</TabsTrigger>
-          <TabsTrigger value="home_video" className="justify-start data-[state=active]:bg-white">Home Video</TabsTrigger>
           <TabsTrigger value="splash_video" className="justify-start data-[state=active]:bg-white">Splash Video</TabsTrigger>
           <TabsTrigger value="snacks_story" className="justify-start data-[state=active]:bg-white">Snacks with a Story</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pr-2 pb-20 custom-scrollbar">
-          {/* HOME VIDEO */}
+          {/* HOME VIDEO (OPTION 1) */}
           <TabsContent value="home_video" className="mt-0 space-y-6">
-            <Card>
-              <CardHeader className="pb-4 border-b mb-4">
-                <CardTitle>Home Screen Video</CardTitle>
-                <CardDescription>Configure the dynamic video that plays below the search bar.</CardDescription>
+            <Card className="border-orange-200 dark:border-orange-900/50 shadow-sm">
+              <CardHeader className="pb-4 border-b bg-gradient-to-r from-orange-50/60 to-amber-50/40 dark:from-slate-900 dark:to-slate-900/80 rounded-t-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Video className="h-5 w-5 text-orange-600" />
+                      Home Header Video (Flutter Mobile App)
+                    </CardTitle>
+                    <span className="bg-orange-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                      Opt 1
+                    </span>
+                  </div>
+                  <CardDescription className="mt-1">
+                    Upload & update the background video playing behind the festive Home Header in your mobile app.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                    homeVideo.enabled 
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' 
+                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                  }`}>
+                    <span className={`h-2 w-2 rounded-full ${homeVideo.enabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+                    {homeVideo.enabled ? 'Active on App' : 'Disabled (Gradient Mode)'}
+                  </span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center space-x-3">
+              <CardContent className="space-y-6 pt-6">
+                {/* Enable / Disable Switch */}
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div className="space-y-0.5">
+                    <label htmlFor="enable-video" className="text-sm font-semibold text-slate-900 dark:text-slate-100 cursor-pointer">
+                      Enable Video Background
+                    </label>
+                    <p className="text-xs text-slate-500">
+                      When enabled, loops your festive Cloudinary MP4 video. When disabled or offline, shows the Royal Maroon gradient fallback.
+                    </p>
+                  </div>
                   <input 
                     type="checkbox" 
                     id="enable-video" 
-                    className="w-5 h-5 accent-orange-600"
+                    className="w-5 h-5 accent-orange-600 cursor-pointer"
                     checked={homeVideo.enabled} 
                     onChange={e => setHomeVideo(prev => ({ ...prev, enabled: e.target.checked }))} 
                   />
-                  <label htmlFor="enable-video" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Enable Home Screen Video
-                  </label>
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Video URL / Asset Path</label>
+                {/* Direct Cloudinary Video Upload & Preview */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Upload Video File (Direct to Cloudinary)
+                    </label>
+                    {homeVideo.video_url && (
+                      <a 
+                        href={homeVideo.video_url} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-medium hover:underline"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Preview in new tab
+                      </a>
+                    )}
+                  </div>
                   <VideoUpload 
                     value={homeVideo.video_url} 
                     onChange={url => setHomeVideo(prev => ({ ...prev, video_url: url }))} 
                   />
-                  <p className="text-xs text-slate-500">Provide a network CDN URL or upload a video file.</p>
+                  <p className="text-xs text-slate-500">
+                    Click above to upload any MP4 video directly to Cloudinary (folder <code className="text-orange-700 bg-orange-50 px-1 py-0.5 rounded">adhvaitha_foods_videos</code>), or paste an MP4 URL below.
+                  </p>
                 </div>
 
+                {/* Direct URL Input */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Video Title / Caption</label>
+                  <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Video CDN / Cloudinary URL</label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="https://res.cloudinary.com/dxynqm0zo/video/upload/.../video.mp4" 
+                      value={homeVideo.video_url} 
+                      onChange={e => setHomeVideo(prev => ({ ...prev, video_url: e.target.value }))}
+                      className="font-mono text-xs" 
+                    />
+                    {homeVideo.video_url && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          navigator.clipboard.writeText(homeVideo.video_url);
+                          toast.success('Video URL copied to clipboard!');
+                        }}
+                        title="Copy URL"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Video Title / Caption */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Video Title / Caption</label>
                   <Input 
                     placeholder="e.g. AmbhuJakshi Royal Collection" 
                     value={homeVideo.title} 
                     onChange={e => setHomeVideo(prev => ({ ...prev, title: e.target.value }))} 
                   />
+                </div>
+
+                {/* Dedicated Instant Save Button */}
+                <div className="pt-4 border-t flex items-center justify-between">
+                  <div className="text-xs text-slate-500">
+                    Changes save to BigRock database and reflect immediately in Flutter App.
+                  </div>
+                  <Button 
+                    type="button" 
+                    disabled={isSaving}
+                    onClick={() => handleSaveTab('home_video', homeVideo)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white font-medium shadow"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSaving ? 'Saving...' : 'Save Home Header Video'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
