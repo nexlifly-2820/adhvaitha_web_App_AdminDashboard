@@ -84,6 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             ],
             'products' => ['tag' => 'sankranti-2027', 'limit' => 10]
         ]);
+    } else if ($doc_id === 'featured_video_section') {
+        echo json_encode([
+            'enabled' => true,
+            'tag' => 'HERITAGE IN MOTION',
+            'title' => 'Behind the Craft: Our Sun-Dried Tradition',
+            'subtitle' => 'Watch how our 40-year-old authentic recipes come to life.',
+            'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4'
+        ]);
     } else {
         echo json_encode(new stdClass());
     }
