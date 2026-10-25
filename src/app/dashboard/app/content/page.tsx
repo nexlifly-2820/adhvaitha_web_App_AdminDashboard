@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -635,6 +635,116 @@ export default function ContentManager() {
                     <Save className="h-4 w-4 mr-2" />
                     {isSaving ? 'Saving...' : 'Save Home Header Video'}
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* LIVE APP HEADER PREVIEW CARD */}
+            <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+              <CardHeader className="pb-3 border-b bg-slate-50 dark:bg-slate-900/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-orange-600" />
+                    <CardTitle className="text-base font-semibold">Live Mobile Header Preview</CardTitle>
+                  </div>
+                  <span className="text-xs text-slate-500 font-medium">Exact Flutter App Simulation</span>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-950/50">
+                <div className="w-full max-w-[390px] rounded-[32px] overflow-hidden border-[5px] border-slate-900 shadow-2xl bg-[#7A0F12] relative">
+                  {/* Dynamic Video or Fallback Gradient */}
+                  <div className="relative h-[330px] w-full overflow-hidden">
+                    <div 
+                      className="absolute inset-0"
+                      style={{
+                        background: 'radial-gradient(110% 110% at 50% 45%, #C4262B 0%, #7A0F12 50%, #3A0406 100%)'
+                      }}
+                    />
+                    
+                    {homeVideo.enabled && homeVideo.video_url && (
+                      <video 
+                        src={homeVideo.video_url} 
+                        autoPlay 
+                        muted 
+                        loop 
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover mix-blend-screen opacity-90 pointer-events-none"
+                      />
+                    )}
+
+                    {/* Header Overlays */}
+                    <div className="relative z-10 p-4 pt-5 flex flex-col justify-between h-full select-none text-white">
+                      <div>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-1 text-[#F6C453] font-bold text-xs">
+                              <span>📍</span>
+                              <span className="truncate max-w-[130px]">Hyderabad, Jubilee Hills</span>
+                              <span>▾</span>
+                            </div>
+                            <p className="text-white/70 text-xs mt-0.5">Good Afternoon 👋</p>
+                            <h3 className="text-xl font-black text-white tracking-tight mt-0.5">
+                              Hemanth Silla
+                            </h3>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="h-7 w-7 rounded-full bg-black/35 border border-[#F6C453]/45 flex items-center justify-center text-xs">🤍</span>
+                              <span className="h-7 w-7 rounded-full bg-black/35 border border-[#F6C453]/45 flex items-center justify-center text-xs">👤</span>
+                              <div className="relative">
+                                <span className="h-7 w-7 rounded-full bg-black/35 border border-[#F6C453]/45 flex items-center justify-center text-xs">🛍️</span>
+                                <span className="absolute -top-1 -right-1 bg-emerald-600 text-[9px] text-white font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center">2</span>
+                              </div>
+                            </div>
+                            <span className="text-[#F6C453] text-[10px] font-semibold italic">Taste Tradition Every Day</span>
+                          </div>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="mt-3.5 bg-white rounded-xl py-2 px-3 shadow-md flex items-center justify-between text-slate-700">
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span>🔍</span>
+                            <span className="text-slate-600">Search royal flavors...</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="w-px h-3.5 bg-slate-200"></span>
+                            <span className="text-slate-500 text-xs">🎙️</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Category Chips */}
+                      <div className="flex items-center justify-between pt-2.5 pb-1 border-t border-white/10 text-xs">
+                        <div className="flex flex-col items-center">
+                          <span className="text-base">🛍️</span>
+                          <span className="font-bold text-[10px] mt-0.5 text-white">All</span>
+                          <span className="w-4 h-0.5 bg-white rounded-full mt-0.5"></span>
+                        </div>
+                        <div className="flex flex-col items-center opacity-85">
+                          <span className="text-base">🫙</span>
+                          <span className="text-[10px] mt-0.5">Pickles</span>
+                        </div>
+                        <div className="flex flex-col items-center opacity-85 relative">
+                          <span className="absolute -top-1.5 -right-2.5 bg-red-600 text-[7px] font-bold px-1 rounded-sm text-white">New</span>
+                          <span className="text-base">🥨</span>
+                          <span className="text-[10px] mt-0.5">Snacks</span>
+                        </div>
+                        <div className="flex flex-col items-center opacity-85">
+                          <span className="text-base">🍬</span>
+                          <span className="text-[10px] mt-0.5">Sweets</span>
+                        </div>
+                        <div className="flex flex-col items-center opacity-85">
+                          <span className="text-base">🌶️</span>
+                          <span className="text-[10px] mt-0.5">Podis</span>
+                        </div>
+                        <div className="flex flex-col items-center opacity-85">
+                          <span className="text-base">🎁</span>
+                          <span className="text-[10px] mt-0.5">Combos</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
