@@ -44,8 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     // Return default fallback if the document doesn't exist yet
     if ($doc_id === 'home_video') {
         echo json_encode([
+            'header_video_enabled' => true,
+            'header_video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4',
             'enabled' => true,
-            'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4',
+            'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1792920192/adhvaitha_foods_videos/okhemjaycs9mffdyoca9.mp4',
+            'featured_video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1792920192/adhvaitha_foods_videos/okhemjaycs9mffdyoca9.mp4',
             'title' => 'AmbhuJakshi Royal Collection'
         ]);
     } else {
