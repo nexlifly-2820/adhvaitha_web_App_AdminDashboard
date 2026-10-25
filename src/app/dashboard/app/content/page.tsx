@@ -745,6 +745,27 @@ export default function ContentManager() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Featured Video Card Below Header (As shown in your photo!) */}
+                  <div className="bg-[#F8F5EC] p-3 pb-4">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Featured Video Section (Below Header)</p>
+                    <div className="relative h-40 rounded-2xl overflow-hidden shadow-md bg-black border border-slate-200">
+                      {homeVideo.enabled && homeVideo.video_url && (
+                        <video 
+                          src={homeVideo.video_url} 
+                          autoPlay 
+                          muted 
+                          loop 
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                      <div className="absolute left-3 bottom-3 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg text-white font-bold text-[11px] flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        {homeVideo.title || 'AmbhuJakshi Royal Collection'}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
