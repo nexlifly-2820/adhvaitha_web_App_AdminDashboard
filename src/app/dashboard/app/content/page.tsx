@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -101,8 +101,150 @@ interface TabTransitionVideoConfig {
 interface SplashVideoConfig { enabled: boolean; video_url: string; title: string }
 interface SnackStory { product_name: string; storyImage: string; description: string; trustBadges: string[] }
 interface TasteOption { title: string; sub: string; icon: string; color: string }
-interface PairingSibling { isImageOnly: boolean; title: string; sub: string; img: string; prod: string; }
-interface PairingParent { isImageOnly: boolean; title: string; subtitle: string; desc: string; tagline: string; img: string; searchKey: string; subs: PairingSibling[]; }
+export interface PairItem {
+  id: string;
+  tag: string;
+  imageA: string;
+  imageB: string;
+  name: string;
+  bestWith: string;
+  price: number;
+}
+
+export interface HeroCombo {
+  id: string;
+  kicker: string;
+  title: string;
+  desc: string;
+  price: number;
+  imageA: string;
+  imageB: string;
+  colors: string[];
+  pairs: PairItem[];
+}
+
+export type PairingSibling = PairItem;
+export type PairingParent = HeroCombo;
+
+export const DEFAULT_PAIRINGS: HeroCombo[] = [
+  {
+    id: 'breakfast',
+    kicker: 'BREAKFAST',
+    title: "Dosa's Best Friends",
+    desc: 'Karam Podi + Avakaya',
+    price: 379,
+    imageA: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+    imageB: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+    colors: ['#5C0A0D', '#7A0F12', '#9B1D22'],
+    pairs: [
+      {
+        id: 'br1',
+        tag: 'BESTSELLER',
+        imageA: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+        imageB: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+        name: 'Karam Podi + Avakaya',
+        bestWith: 'Dosa · Idli',
+        price: 379
+      },
+      {
+        id: 'br2',
+        tag: 'POPULAR',
+        imageA: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+        imageB: 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg',
+        name: 'Karam Podi + Masala Peanuts',
+        bestWith: 'Dosa · Idli',
+        price: 299
+      },
+      {
+        id: 'br3',
+        tag: '',
+        imageA: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+        imageB: 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg',
+        name: 'Avakaya + Masala Peanuts',
+        bestWith: 'Dosa · Upma',
+        price: 329
+      }
+    ]
+  },
+  {
+    id: 'evening_tea',
+    kicker: 'EVENING TEA',
+    title: "Chai's Crunchy Partners",
+    desc: 'Murukku + Banana Chips',
+    price: 299,
+    imageA: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+    imageB: 'assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg',
+    colors: ['#18453B', '#235D4E', '#2E7563'],
+    pairs: [
+      {
+        id: 'et1',
+        tag: 'CRUNCHY',
+        imageA: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+        imageB: 'assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg',
+        name: 'Murukku + Banana Chips',
+        bestWith: 'Evening tea',
+        price: 299
+      },
+      {
+        id: 'et2',
+        tag: '',
+        imageA: 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg',
+        imageB: 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg',
+        name: 'Spicy Mixture + Masala Peanuts',
+        bestWith: 'Evening tea',
+        price: 279
+      },
+      {
+        id: 'et3',
+        tag: '',
+        imageA: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+        imageB: 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg',
+        name: 'Murukku + Spicy Mixture',
+        bestWith: 'Evening tea',
+        price: 319
+      }
+    ]
+  },
+  {
+    id: 'after_meals',
+    kicker: 'AFTER MEALS',
+    title: 'Sweet Endings',
+    desc: 'Sunnunda Laddu + Murukku',
+    price: 399,
+    imageA: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg',
+    imageB: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+    colors: ['#8B4513', '#A0522D', '#B8860B'],
+    pairs: [
+      {
+        id: 'am1',
+        tag: 'TRADITIONAL',
+        imageA: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg',
+        imageB: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+        name: 'Sunnunda Laddu + Murukku',
+        bestWith: 'After meals · Gifting',
+        price: 399
+      },
+      {
+        id: 'am2',
+        tag: '',
+        imageA: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg',
+        imageB: 'assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg',
+        name: 'Sunnunda Laddu + Banana Chips',
+        bestWith: 'After meals · Gifting',
+        price: 379
+      },
+      {
+        id: 'am3',
+        tag: '',
+        imageA: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg',
+        imageB: 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg',
+        name: 'Sunnunda Laddu + Spicy Mixture',
+        bestWith: 'After meals · Gifting',
+        price: 389
+      }
+    ]
+  }
+];
 interface DeliveryConfig { free_threshold: number; base_fee: number; packing_fee: number; gst_percentage: number }
 interface CartConfig { freshness_tagline: string; dispatch_reassurance: string; upsell_section_title: string }
 interface BillingConfig { delivery_estimate_text: string; support_chat_text: string; savings_highlight_text: string }
@@ -263,31 +405,159 @@ export default function ContentManager() {
     }
   })
   
-  // Pairing & Products State
-  const [pairings, setPairings] = useState<PairingParent[]>([])
+  // Pairing & Products State (The Art of Pairing)
+  const [pairings, setPairings] = useState<HeroCombo[]>(DEFAULT_PAIRINGS)
+  const [activeComboIndex, setActiveComboIndex] = useState<number>(0)
 
-  const updatePairingSub = (pIdx: number, sIdx: number, field: string, val: any) => {
-    setPairings((prev: any) => {
-      const n = [...prev]
-      n[pIdx].subs[sIdx] = { ...n[pIdx].subs[sIdx], [field]: val }
-      return n
-    })
-  }
-  const addPairingSub = (pIdx: number) => {
-    setPairings((prev: any) => {
-      const n = [...prev]
-      if (!n[pIdx].subs) n[pIdx].subs = []
-      n[pIdx].subs.push({ isImageOnly: true, title: '', sub: '', img: '', prod: '' })
-      return n
-    })
-  }
-  const removePairingSub = (pIdx: number, sIdx: number) => {
-    setPairings((prev: any) => {
-      const n = [...prev]
-      n[pIdx].subs.splice(sIdx, 1)
-      return n
-    })
-  }
+  const getPairingDisplayImg = (imgUrl?: string, fallback: 'powder' | 'pickle' | 'snack' | 'sweet' = 'pickle') => {
+    if (!imgUrl) {
+      return fallback === 'powder'
+        ? 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80'
+        : 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=400&q=80';
+    }
+    if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) return imgUrl;
+    if (imgUrl.includes('karam_podi') || imgUrl.includes('podi') || imgUrl.includes('gun_powder')) {
+      return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+    }
+    if (imgUrl.includes('avakaya') || imgUrl.includes('pickle') || imgUrl.includes('mango') || imgUrl.includes('bellam')) {
+      return 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=400&q=80';
+    }
+    if (imgUrl.includes('murukku') || imgUrl.includes('janthukalu') || imgUrl.includes('chips') || imgUrl.includes('mixture')) {
+      return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80';
+    }
+    if (imgUrl.includes('laddu') || imgUrl.includes('sunnunda') || imgUrl.includes('sweet') || imgUrl.includes('palli')) {
+      return 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=400&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=400&q=80';
+  };
+
+  const updateCombo = (idx: number, field: keyof HeroCombo, val: any) => {
+    setPairings(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: val };
+      return next;
+    });
+  };
+
+  const updateComboColor = (comboIdx: number, colorIdx: number, colorVal: string) => {
+    setPairings(prev => {
+      const next = [...prev];
+      const newColors = [...(next[comboIdx].colors || ['#5C0A0D', '#7A0F12', '#9B1D22'])];
+      newColors[colorIdx] = colorVal;
+      next[comboIdx] = { ...next[comboIdx], colors: newColors };
+      return next;
+    });
+  };
+
+  const applyGradientPreset = (comboIdx: number, colors: string[]) => {
+    setPairings(prev => {
+      const next = [...prev];
+      next[comboIdx] = { ...next[comboIdx], colors };
+      return next;
+    });
+  };
+
+  const swapComboImages = (comboIdx: number) => {
+    setPairings(prev => {
+      const next = [...prev];
+      const curA = next[comboIdx].imageA;
+      const curB = next[comboIdx].imageB;
+      next[comboIdx] = { ...next[comboIdx], imageA: curB, imageB: curA };
+      return next;
+    });
+    toast.success('Swapped Image A & Image B');
+  };
+
+  const addSubPair = (comboIdx: number) => {
+    setPairings(prev => {
+      const next = [...prev];
+      const combo = next[comboIdx];
+      const newPair: PairItem = {
+        id: `pair-${Date.now()}`,
+        tag: '',
+        imageA: combo.imageA || 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+        imageB: combo.imageB || 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+        name: `${combo.title} Duo`,
+        bestWith: 'Hot rice / Dosa',
+        price: combo.price || 349
+      };
+      next[comboIdx] = {
+        ...combo,
+        pairs: [...(combo.pairs || []), newPair]
+      };
+      return next;
+    });
+  };
+
+  const updateSubPair = (comboIdx: number, pairIdx: number, field: keyof PairItem, val: any) => {
+    setPairings(prev => {
+      const next = [...prev];
+      const pairs = [...(next[comboIdx].pairs || [])];
+      pairs[pairIdx] = { ...pairs[pairIdx], [field]: val };
+      next[comboIdx] = { ...next[comboIdx], pairs };
+      return next;
+    });
+  };
+
+  const removeSubPair = (comboIdx: number, pairIdx: number) => {
+    setPairings(prev => {
+      const next = [...prev];
+      const pairs = [...(next[comboIdx].pairs || [])];
+      pairs.splice(pairIdx, 1);
+      next[comboIdx] = { ...next[comboIdx], pairs };
+      return next;
+    });
+  };
+
+  const addNewCombo = () => {
+    const newCombo: HeroCombo = {
+      id: `combo-${Date.now()}`,
+      kicker: 'NEW COMBO',
+      title: 'Heritage Pairing',
+      desc: 'Pickle + Crunchy Snack',
+      price: 349,
+      imageA: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+      imageB: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+      colors: ['#5C0A0D', '#7A0F12', '#9B1D22'],
+      pairs: [
+        {
+          id: `p-${Date.now()}-1`,
+          tag: 'SPECIAL',
+          imageA: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+          imageB: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+          name: 'Signature Duo',
+          bestWith: 'Hot Meals',
+          price: 349
+        }
+      ]
+    };
+    setPairings(prev => [...prev, newCombo]);
+    setActiveComboIndex(pairings.length);
+    toast.success('Added new pairing combo');
+  };
+
+  const removeCombo = (comboIdx: number) => {
+    if (pairings.length <= 1) {
+      toast.error('You must keep at least one Pairing Combo.');
+      return;
+    }
+    if (!confirm(`Delete combo "${pairings[comboIdx]?.title || 'Untitled'}"?`)) return;
+    setPairings(prev => prev.filter((_, idx) => idx !== comboIdx));
+    setActiveComboIndex(0);
+    toast.success('Combo deleted');
+  };
+
+  const restoreDefaultPairings = () => {
+    if (!confirm('Reset all pairing combos to the 3 authentic presets (Breakfast, Evening Tea, After Meals)?')) return;
+    setPairings(DEFAULT_PAIRINGS);
+    setActiveComboIndex(0);
+    toast.success('Restored 3 Authentic Pairing Presets!');
+  };
+
+  // Backwards compatibility helpers
+  const updatePairingSub = (pIdx: number, sIdx: number, field: string, val: any) => updateSubPair(pIdx, sIdx, field as any, val);
+  const addPairingSub = (pIdx: number) => addSubPair(pIdx);
+  const removePairingSub = (pIdx: number, sIdx: number) => removeSubPair(pIdx, sIdx);
 
 
   const [productNames, setProductNames] = useState<string[]>([])
@@ -342,7 +612,41 @@ export default function ContentManager() {
         setOnboardingSteps(onboardDoc.steps || [])
         setTasteOptions(onboardDoc.taste_options || [])
       }
-      if (pairingsDoc && Object.keys(pairingsDoc).length > 0) setPairings(pairingsDoc.list || [])
+      if (pairingsDoc && Object.keys(pairingsDoc).length > 0) {
+        const rawList = pairingsDoc.list || (Array.isArray(pairingsDoc) ? pairingsDoc : []);
+        if (Array.isArray(rawList) && rawList.length > 0) {
+          const formatted: HeroCombo[] = rawList.map((item: any, idx: number) => {
+            const colors = Array.isArray(item.colors) && item.colors.length >= 3
+              ? item.colors
+              : ['#5C0A0D', '#7A0F12', '#9B1D22'];
+            const rawPairs = item.pairs || item.subs || item.subPairings || [];
+            const pairs: PairItem[] = Array.isArray(rawPairs) ? rawPairs.map((p: any, pIdx: number) => ({
+              id: p.id || `pair-${idx}-${pIdx}`,
+              tag: p.tag || '',
+              imageA: p.imageA || p.img || item.imageA || 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+              imageB: p.imageB || item.imageB || 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+              name: p.name || p.title || `Combo Item ${pIdx + 1}`,
+              bestWith: p.bestWith || p.sub || '',
+              price: Number(p.price) || 299
+            })) : [];
+
+            return {
+              id: item.id || `combo-${idx}`,
+              kicker: item.kicker || (item.tagline ? item.tagline.toUpperCase() : 'COMBO'),
+              title: item.title || 'Curated Combo',
+              desc: item.desc || item.subtitle || '',
+              price: Number(item.price) || 349,
+              imageA: item.imageA || item.img || 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+              imageB: item.imageB || 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+              colors,
+              pairs
+            };
+          });
+          setPairings(formatted);
+        } else {
+          setPairings(DEFAULT_PAIRINGS);
+        }
+      }
       if (kitchenStoryDoc && Object.keys(kitchenStoryDoc).length > 0) setKitchenStory(kitchenStoryDoc as KitchenStory)
       if (searchConfigDoc && searchConfigDoc.trending_keywords) setTrendingKeywords(searchConfigDoc.trending_keywords)
       if (catPageConfigDoc && Object.keys(catPageConfigDoc).length > 0) setCategoryPageConfig(catPageConfigDoc as CategoryPageConfig)
@@ -595,9 +899,7 @@ export default function ContentManager() {
           ]
         }),
         postConfig('pairings', {
-          list: [
-            { title: 'THE COASTAL CLASSIC', pairing: 'Rice + Ghee + Avakaya', desc: 'A timeless combination that brings out the best of Andhra flavors.', product_name: defaultProduct, image: img1 }
-          ]
+          list: DEFAULT_PAIRINGS
         })
       ])
       toast.success('Demo data seeded successfully!')
@@ -2154,7 +2456,9 @@ export default function ContentManager() {
                         ? 'Save Sector 4 (Tab Switch Video)'
                         : activeTab === 'festival'
                           ? 'Publish Festival Live'
-                          : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
+                          : activeTab === 'pairings'
+                            ? 'Publish Pairings Live'
+                            : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
           </Button>
         </div>
       </div>
@@ -2234,7 +2538,17 @@ export default function ContentManager() {
           <TabsTrigger value="coupons" className="justify-start data-[state=active]:bg-white">Active Coupons</TabsTrigger>
           <TabsTrigger value="packaging" className="justify-start data-[state=active]:bg-white">Packaging</TabsTrigger>
           <TabsTrigger value="onboarding" className="justify-start data-[state=active]:bg-white">Onboarding</TabsTrigger>
-          <TabsTrigger value="pairings" className="justify-start data-[state=active]:bg-white">Art of Pairing</TabsTrigger>
+          {/* ART OF PAIRING TAB TRIGGER */}
+          <TabsTrigger 
+            value="pairings" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <UtensilsCrossed className="h-4 w-4 text-rose-600" />
+              <span className="font-semibold text-xs text-left">Art of Pairing</span>
+            </span>
+            <span className="text-[9px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded uppercase">Combos</span>
+          </TabsTrigger>
           <TabsTrigger value="kitchen_story" className="justify-start data-[state=active]:bg-white">Kitchen Story</TabsTrigger>
           <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
           <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Billing</TabsTrigger>
@@ -3470,124 +3784,756 @@ export default function ContentManager() {
 
           {/* ART OF PAIRING */}
           <TabsContent value="pairings" className="mt-0">
-            <Card>
-              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div>
+            {pairings.length === 0 ? (
+              <Card>
+                <CardHeader>
                   <CardTitle>The Art of Pairing (Curated Combos)</CardTitle>
-                  <CardDescription>Manage parent combo cards and their 2x2 grid sibling cards.</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setPairings, { isImageOnly: true, title: '', subtitle: '', desc: '', tagline: '', img: '', searchKey: '', subs: [] })}>
-                  + Add Parent Combo
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                {pairings.map((parent, pIdx) => (
-                  <div key={pIdx} className="flex flex-col gap-4 p-4 border-2 border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/20 shadow-sm relative">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-bold text-lg text-slate-800 dark:text-slate-200">Combo #{pIdx + 1}: {parent.title || 'Untitled'}</h4>
-                      <Button variant="destructive" size="sm" onClick={() => removeFromArray(setPairings, pIdx)}>
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete Parent
-                      </Button>
-                    </div>
-                    
-                    {/* PARENT FIELDS */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-white dark:bg-slate-950 p-4 rounded-lg border shadow-sm">
-                      <div className="space-y-4 col-span-1 lg:col-span-2">
-                        <h5 className="font-semibold text-orange-600 mb-2">Parent Details</h5>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Title</label>
-                            <Input placeholder="e.g. THE COASTAL CLASSIC" value={parent.title} onChange={e => updateArray(setPairings, pIdx, 'title', e.target.value)} />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Subtitle</label>
-                            <Input placeholder="e.g. Rice + Ghee + Avakaya" value={parent.subtitle} onChange={e => updateArray(setPairings, pIdx, 'subtitle', e.target.value)} />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Search Key</label>
-                            <Input placeholder="e.g. Avakaya" value={parent.searchKey} onChange={e => updateArray(setPairings, pIdx, 'searchKey', e.target.value)} />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Tagline</label>
-                            <Input placeholder="e.g. Simple Food" value={parent.tagline} onChange={e => updateArray(setPairings, pIdx, 'tagline', e.target.value)} />
-                          </div>
-                        </div>
-                        <div className="space-y-2 mt-4">
-                          <label className="text-xs font-semibold text-slate-500 uppercase">Description</label>
-                          <textarea 
-                            value={parent.desc} 
-                            onChange={e => updateArray(setPairings, pIdx, 'desc', e.target.value)}
-                            className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm shadow-sm focus-visible:outline-none" 
-                            placeholder="Describe the pairing..."
-                          />
-                        </div>
-                        <div className="flex items-center space-x-2 mt-2">
-                          <input type="checkbox" id={`imgOnly-${pIdx}`} checked={parent.isImageOnly} onChange={e => updateArray(setPairings, pIdx, 'isImageOnly', e.target.checked)} className="w-4 h-4 accent-orange-600" />
-                          <label htmlFor={`imgOnly-${pIdx}`} className="text-sm font-medium">Use Image Only (Hide Texts)</label>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Parent Image</label>
-                        <ImageUpload value={parent.img} onChange={url => updateArray(setPairings, pIdx, 'img', url)} folder="app_content" className="h-full" />
-                      </div>
-                    </div>
+                  <CardDescription>No pairing combos configured. Restore authentic defaults to start.</CardDescription>
+                </CardHeader>
+                <CardContent className="py-12 text-center space-y-4">
+                  <UtensilsCrossed className="h-12 w-12 mx-auto text-rose-500/70" />
+                  <p className="text-sm text-slate-500">Initialize with the 3 authentic curated combos (Breakfast, Evening Tea, After Meals).</p>
+                  <Button onClick={restoreDefaultPairings} className="bg-rose-600 hover:bg-rose-700 text-white">
+                    <Sparkles className="h-4 w-4 mr-2" /> Restore 3 Authentic Presets
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (() => {
+              const currentCombo = pairings[activeComboIndex] || pairings[0];
+              const curColors = currentCombo.colors && currentCombo.colors.length >= 3 
+                ? currentCombo.colors 
+                : ['#5C0A0D', '#7A0F12', '#9B1D22'];
 
-                    {/* SIBLINGS SECTION */}
-                    <div className="mt-4 border-t-2 border-slate-200 dark:border-slate-800 pt-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <h5 className="font-semibold text-blue-600">Sibling Cards (Sub-pairings)</h5>
-                        <Button variant="secondary" size="sm" onClick={() => addPairingSub(pIdx)}>
-                          + Add Sibling
-                        </Button>
+              return (
+                <div className="space-y-6">
+                  {/* Top Bar with Combo Switcher */}
+                  <Card className="border-slate-200 dark:border-slate-800">
+                    <CardHeader className="pb-3 border-b">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <UtensilsCrossed className="h-5 w-5 text-rose-600" />
+                            <CardTitle className="text-xl">The Art of Pairing (Curated Combos)</CardTitle>
+                            <span className="text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Live Stream Sync
+                            </span>
+                          </div>
+                          <CardDescription className="mt-1">
+                            Manage hero pairing combos, dual circular product images, 3-color linear gradients, and 'Pairs Well With' sub-cards.
+                          </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap shrink-0">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={restoreDefaultPairings}
+                            className="text-xs text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5 mr-1 text-slate-500" />
+                            Restore Presets
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={addNewCombo}
+                            className="text-xs text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30"
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" />
+                            Add Combo
+                          </Button>
+                          <Button 
+                            size="sm"
+                            disabled={isSaving}
+                            onClick={() => handleSaveTab('pairings', { list: pairings })}
+                            className="bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-sm text-xs"
+                          >
+                            <Sparkles className="h-3.5 w-3.5 mr-1" />
+                            {isSaving ? 'Publishing...' : 'Publish Pairings Live'}
+                          </Button>
+                        </div>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(parent.subs || []).map((sub: any, sIdx: number) => (
-                          <div key={sIdx} className="p-3 bg-white dark:bg-slate-950 border rounded-lg shadow-sm relative">
-                            <Button variant="ghost" className="absolute top-2 right-2 text-red-500 h-6 w-6 p-0" onClick={() => removePairingSub(pIdx, sIdx)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                            <p className="text-xs font-bold text-slate-400 mb-3">Sibling #{sIdx + 1}</p>
-                            
-                            <div className="space-y-3">
-                              <div className="flex gap-2">
-                                <div className="flex-1 space-y-2">
-                                  <Input placeholder="Title" value={sub.title} onChange={e => updatePairingSub(pIdx, sIdx, 'title', e.target.value)} className="text-sm h-8" />
-                                  <Input placeholder="Sub" value={sub.sub} onChange={e => updatePairingSub(pIdx, sIdx, 'sub', e.target.value)} className="text-sm h-8" />
-                                  <select 
-                                    value={sub.prod} 
-                                    onChange={e => updatePairingSub(pIdx, sIdx, 'prod', e.target.value)}
-                                    className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-2 py-1 text-sm h-8"
-                                  >
-                                    <option value="">-- Linked Product --</option>
-                                    {productNames.map(name => (
-                                      <option key={name} value={name}>{name}</option>
-                                    ))}
-                                  </select>
-                                </div>
-                                <div className="w-1/3">
-                                  <ImageUpload value={sub.img} onChange={url => updatePairingSub(pIdx, sIdx, 'img', url)} folder="app_content" />
-                                </div>
+
+                      {/* Combo Switcher Pills */}
+                      <div className="flex items-center gap-2 pt-3 overflow-x-auto custom-scrollbar">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0 mr-1">
+                          Combos ({pairings.length}):
+                        </span>
+                        {pairings.map((c, idx) => {
+                          const isActive = idx === activeComboIndex;
+                          const cColors = c.colors && c.colors.length >= 3 ? c.colors : ['#5C0A0D', '#7A0F12', '#9B1D22'];
+                          return (
+                            <button
+                              key={c.id || idx}
+                              type="button"
+                              onClick={() => setActiveComboIndex(idx)}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 border ${
+                                isActive 
+                                  ? 'bg-white dark:bg-slate-900 border-rose-500 text-rose-700 dark:text-rose-300 shadow-sm ring-2 ring-rose-500/20' 
+                                  : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100'
+                              }`}
+                            >
+                              <span 
+                                className="h-3 w-3 rounded-full border border-white/50 shrink-0 shadow-xs"
+                                style={{
+                                  background: `linear-gradient(135deg, ${cColors[0]}, ${cColors[1]}, ${cColors[2]})`
+                                }}
+                              />
+                              <span className="font-bold">{c.kicker || `COMBO #${idx + 1}`}</span>
+                              <span className="text-slate-400 font-normal truncate max-w-[120px]">
+                                {c.title || 'Untitled'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  {/* Main Two-Column Layout */}
+                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                    {/* LEFT COLUMN: HERO COMBO & SUB-PAIRS SETTINGS (7 cols) */}
+                    <div className="xl:col-span-7 space-y-6">
+                      {/* 1. HERO COMBO CARD */}
+                      <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                        <CardHeader className="pb-3 border-b bg-slate-50/70 dark:bg-slate-900/40 flex flex-row items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span 
+                              className="h-4 w-4 rounded-full border border-white/60 shadow-xs shrink-0"
+                              style={{
+                                background: `linear-gradient(135deg, ${curColors[0]}, ${curColors[1]}, ${curColors[2]})`
+                              }}
+                            />
+                            <div>
+                              <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                                Hero Combo #{activeComboIndex + 1}: {currentCombo.title || 'Untitled'}
+                              </CardTitle>
+                              <CardDescription className="text-xs">
+                                Configure the main spotlight card and dual product circles.
+                              </CardDescription>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => removeCombo(activeComboIndex)}
+                            disabled={pairings.length <= 1}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 h-8 px-2 text-xs"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Combo
+                          </Button>
+                        </CardHeader>
+
+                        <CardContent className="p-5 space-y-5">
+                          {/* Top 4 Fields */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                Kicker Category Tag
+                              </label>
+                              <Input 
+                                placeholder="e.g. BREAKFAST, EVENING TEA" 
+                                value={currentCombo.kicker} 
+                                onChange={e => updateCombo(activeComboIndex, 'kicker', e.target.value.toUpperCase())}
+                                className="font-bold uppercase tracking-wider text-xs"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                Title
+                              </label>
+                              <Input 
+                                placeholder="e.g. Dosa's Best Friends" 
+                                value={currentCombo.title} 
+                                onChange={e => updateCombo(activeComboIndex, 'title', e.target.value)}
+                                className="font-bold text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                Subtitle / Description
+                              </label>
+                              <Input 
+                                placeholder="e.g. Karam Podi + Avakaya" 
+                                value={currentCombo.desc} 
+                                onChange={e => updateCombo(activeComboIndex, 'desc', e.target.value)}
+                                className="text-xs"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                Combo Offer Price (₹)
+                              </label>
+                              <Input 
+                                type="number" 
+                                placeholder="379" 
+                                value={currentCombo.price || ''} 
+                                onChange={e => updateCombo(activeComboIndex, 'price', Number(e.target.value) || 0)}
+                                className="font-bold text-xs"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Dual Circular Images Showcase */}
+                          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                                  Dual Overlapping Product Images (Circle A & Circle B)
+                                </span>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <input type="checkbox" id={`subImgOnly-${pIdx}-${sIdx}`} checked={sub.isImageOnly} onChange={e => updatePairingSub(pIdx, sIdx, 'isImageOnly', e.target.checked)} className="w-3 h-3 accent-blue-600" />
-                                <label htmlFor={`subImgOnly-${pIdx}-${sIdx}`} className="text-xs text-slate-500">Image Only (Hide texts)</label>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => swapComboImages(activeComboIndex)}
+                                className="h-7 text-[11px] gap-1 text-slate-600 dark:text-slate-400"
+                              >
+                                <ArrowRightLeft className="h-3 w-3" /> Swap A & B
+                              </Button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {/* Product A */}
+                              <div className="space-y-2 p-3 bg-white dark:bg-slate-950 border rounded-lg">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[11px] font-bold text-rose-700 dark:text-rose-400 uppercase">
+                                    Circle A (Left Product)
+                                  </label>
+                                  <span className="text-[10px] text-slate-400">e.g. Podi / Powder</span>
+                                </div>
+                                <Input 
+                                  placeholder="Path or URL (e.g. assets/images/...)" 
+                                  value={currentCombo.imageA} 
+                                  onChange={e => updateCombo(activeComboIndex, 'imageA', e.target.value)}
+                                  className="text-xs h-8"
+                                />
+                                <ImageUpload 
+                                  value={currentCombo.imageA} 
+                                  onChange={url => updateCombo(activeComboIndex, 'imageA', url)} 
+                                  folder="app_content" 
+                                />
+                                {productNames.length > 0 && (
+                                  <select 
+                                    className="w-full text-xs h-7 rounded border border-slate-200 dark:border-slate-800 bg-transparent px-2 text-slate-600 dark:text-slate-400"
+                                    onChange={e => {
+                                      const p = allProducts.find(prod => prod.name === e.target.value);
+                                      if (p?.image) updateCombo(activeComboIndex, 'imageA', p.image);
+                                    }}
+                                    defaultValue=""
+                                  >
+                                    <option value="" disabled>-- Quick pick from Products --</option>
+                                    {productNames.map(name => <option key={name} value={name}>{name}</option>)}
+                                  </select>
+                                )}
+                              </div>
+
+                              {/* Product B */}
+                              <div className="space-y-2 p-3 bg-white dark:bg-slate-950 border rounded-lg">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase">
+                                    Circle B (Right Product)
+                                  </label>
+                                  <span className="text-[10px] text-slate-400">e.g. Pickle / Snack</span>
+                                </div>
+                                <Input 
+                                  placeholder="Path or URL (e.g. assets/images/...)" 
+                                  value={currentCombo.imageB} 
+                                  onChange={e => updateCombo(activeComboIndex, 'imageB', e.target.value)}
+                                  className="text-xs h-8"
+                                />
+                                <ImageUpload 
+                                  value={currentCombo.imageB} 
+                                  onChange={url => updateCombo(activeComboIndex, 'imageB', url)} 
+                                  folder="app_content" 
+                                />
+                                {productNames.length > 0 && (
+                                  <select 
+                                    className="w-full text-xs h-7 rounded border border-slate-200 dark:border-slate-800 bg-transparent px-2 text-slate-600 dark:text-slate-400"
+                                    onChange={e => {
+                                      const p = allProducts.find(prod => prod.name === e.target.value);
+                                      if (p?.image) updateCombo(activeComboIndex, 'imageB', p.image);
+                                    }}
+                                    defaultValue=""
+                                  >
+                                    <option value="" disabled>-- Quick pick from Products --</option>
+                                    {productNames.map(name => <option key={name} value={name}>{name}</option>)}
+                                  </select>
+                                )}
                               </div>
                             </div>
                           </div>
-                        ))}
-                        {(parent.subs || []).length === 0 && (
-                          <div className="col-span-2 text-center p-4 border-2 border-dashed rounded-lg text-slate-400 text-sm">
-                            No siblings added. Click "+ Add Sibling" to create the 2x2 grid.
+
+                          {/* 3-Color Gradient Customizer */}
+                          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                <Palette className="h-3.5 w-3.5 text-purple-600" />
+                                3-Color Linear Gradient Palette
+                              </span>
+                              <span className="text-[11px] font-mono text-slate-500">
+                                {curColors.join(' → ')}
+                              </span>
+                            </div>
+
+                            {/* Gradient preview bar */}
+                            <div 
+                              className="h-6 w-full rounded-lg border border-slate-300 dark:border-slate-700 shadow-inner transition-all duration-300"
+                              style={{
+                                background: `linear-gradient(90deg, ${curColors[0]}, ${curColors[1]}, ${curColors[2]})`
+                              }}
+                            />
+
+                            {/* 3 Color Pickers */}
+                            <div className="grid grid-cols-3 gap-3">
+                              {[0, 1, 2].map(cIdx => (
+                                <div key={cIdx} className="space-y-1">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase">
+                                    {cIdx === 0 ? 'Color 1 (Start)' : cIdx === 1 ? 'Color 2 (Mid)' : 'Color 3 (End)'}
+                                  </label>
+                                  <div className="flex items-center gap-1.5 bg-white dark:bg-slate-950 p-1.5 border rounded-md">
+                                    <input 
+                                      type="color" 
+                                      value={curColors[cIdx]} 
+                                      onChange={e => updateComboColor(activeComboIndex, cIdx, e.target.value.toUpperCase())}
+                                      className="h-6 w-6 rounded cursor-pointer border-0 bg-transparent p-0"
+                                    />
+                                    <Input 
+                                      value={curColors[cIdx]} 
+                                      onChange={e => updateComboColor(activeComboIndex, cIdx, e.target.value.toUpperCase())}
+                                      className="h-6 text-[11px] font-mono px-1 border-0 shadow-none focus-visible:ring-0 uppercase"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* 1-Click Palette Presets */}
+                            <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                                Authentic Palette Presets:
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {[
+                                  { name: 'Royal Crimson', colors: ['#5C0A0D', '#7A0F12', '#9B1D22'] },
+                                  { name: 'Heritage Emerald', colors: ['#18453B', '#235D4E', '#2E7563'] },
+                                  { name: 'Golden Bronze', colors: ['#8B4513', '#A0522D', '#B8860B'] },
+                                  { name: 'Imperial Purple', colors: ['#3E103F', '#5E1B5F', '#7E2580'] },
+                                  { name: 'Deep Ocean', colors: ['#0D2538', '#163B59', '#1E527B'] },
+                                  { name: 'Warm Terracotta', colors: ['#6E260E', '#8C3112', '#AA3C16'] },
+                                ].map(p => (
+                                  <button
+                                    key={p.name}
+                                    type="button"
+                                    onClick={() => applyGradientPreset(activeComboIndex, p.colors)}
+                                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-[11px] font-medium hover:bg-slate-100 flex items-center gap-1.5 transition shadow-2xs"
+                                  >
+                                    <span 
+                                      className="h-2.5 w-2.5 rounded-full border border-black/10 shrink-0" 
+                                      style={{ background: `linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]}, ${p.colors[2]})` }}
+                                    />
+                                    {p.name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
-                        )}
+                        </CardContent>
+                      </Card>
+
+                      {/* 2. SUB-PAIRS SECTION ("PAIRS WELL WITH") */}
+                      <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                        <CardHeader className="pb-3 border-b bg-slate-50/70 dark:bg-slate-900/40 flex flex-row items-center justify-between">
+                          <div>
+                            <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                              Sub-Pairs for "{currentCombo.title || currentCombo.kicker}" ({currentCombo.pairs?.length || 0})
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                              Curated combination cards shown in the mobile carousel under the spotlight card.
+                            </CardDescription>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => addSubPair(activeComboIndex)}
+                            className="text-xs bg-white dark:bg-slate-900"
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1 text-rose-600" /> Add Sub-Pair
+                          </Button>
+                        </CardHeader>
+
+                        <CardContent className="p-5 space-y-4">
+                          {(currentCombo.pairs || []).map((pair, sIdx) => (
+                            <div 
+                              key={pair.id || sIdx}
+                              className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xs space-y-3 relative group"
+                            >
+                              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-900">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-slate-400">#{sIdx + 1}</span>
+                                  <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                                    {pair.name || 'Untitled Duo'}
+                                  </span>
+                                  {pair.tag && (
+                                    <span className="text-[9px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded uppercase">
+                                      {pair.tag}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      updateSubPair(activeComboIndex, sIdx, 'imageA', currentCombo.imageA);
+                                      updateSubPair(activeComboIndex, sIdx, 'imageB', currentCombo.imageB);
+                                      toast.success('Copied Hero images to sub-pair');
+                                    }}
+                                    className="h-7 text-[10px] text-slate-500 hover:text-slate-800 px-2"
+                                  >
+                                    Copy Hero Imgs
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => removeSubPair(activeComboIndex, sIdx)}
+                                    className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Form Fields for Sub-Pair */}
+                              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                                <div className="sm:col-span-2 space-y-1">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Pair Name</label>
+                                  <Input 
+                                    placeholder="e.g. Karam Podi + Avakaya" 
+                                    value={pair.name} 
+                                    onChange={e => updateSubPair(activeComboIndex, sIdx, 'name', e.target.value)}
+                                    className="text-xs font-semibold h-8"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Best With</label>
+                                  <Input 
+                                    placeholder="e.g. Dosa · Idli" 
+                                    value={pair.bestWith} 
+                                    onChange={e => updateSubPair(activeComboIndex, sIdx, 'bestWith', e.target.value)}
+                                    className="text-xs h-8"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Price (₹)</label>
+                                  <Input 
+                                    type="number"
+                                    placeholder="379" 
+                                    value={pair.price || ''} 
+                                    onChange={e => updateSubPair(activeComboIndex, sIdx, 'price', Number(e.target.value) || 0)}
+                                    className="text-xs font-bold h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Tag (Optional)</label>
+                                  <Input 
+                                    placeholder="e.g. BESTSELLER, CRUNCHY" 
+                                    value={pair.tag || ''} 
+                                    onChange={e => updateSubPair(activeComboIndex, sIdx, 'tag', e.target.value.toUpperCase())}
+                                    className="text-xs font-bold h-8 uppercase"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Image A (Path/URL)</label>
+                                  <Input 
+                                    placeholder="assets/images/... or https://" 
+                                    value={pair.imageA} 
+                                    onChange={e => updateSubPair(activeComboIndex, sIdx, 'imageA', e.target.value)}
+                                    className="text-xs h-8"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Image B (Path/URL)</label>
+                                  <Input 
+                                    placeholder="assets/images/... or https://" 
+                                    value={pair.imageB} 
+                                    onChange={e => updateSubPair(activeComboIndex, sIdx, 'imageB', e.target.value)}
+                                    className="text-xs h-8"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                          {(currentCombo.pairs || []).length === 0 && (
+                            <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-xs space-y-2">
+                              <p>No sub-pairs added for this combo yet.</p>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => addSubPair(activeComboIndex)}
+                                className="text-xs"
+                              >
+                                + Add First Sub-Pair
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Instant Save Bar */}
+                      <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                        <div className="text-xs text-slate-500">
+                          Saves to BigRock MySQL database and immediately triggers <code className="text-rose-600 font-mono text-[11px]">AppConfigRepository().getPairingsStream()</code> live across all user mobile apps.
+                        </div>
+                        <Button 
+                          type="button" 
+                          disabled={isSaving}
+                          onClick={() => handleSaveTab('pairings', { list: pairings })}
+                          className="bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md px-6 shrink-0"
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          {isSaving ? 'Publishing...' : 'Publish Pairings Live'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: LIVE MOBILE APP SIMULATION (5 cols) */}
+                    <div className="xl:col-span-5 flex flex-col items-center">
+                      <div className="w-full text-center mb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-center gap-1.5">
+                          <Smartphone className="h-3.5 w-3.5 text-rose-600" />
+                          Live Mobile "Art of Pairing" Simulation
+                        </span>
+                      </div>
+
+                      {/* Phone Bezel */}
+                      <div className="w-full max-w-[370px] rounded-[38px] overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-[#F8F5EE] relative flex flex-col">
+                        {/* Status Bar */}
+                        <div className="pt-3 px-6 pb-2 flex justify-between items-center text-[11px] font-bold text-slate-700 bg-white/70 backdrop-blur-xs border-b border-black/5">
+                          <span>9:41</span>
+                          <div className="h-4 w-16 bg-slate-900 rounded-full mx-auto" />
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px]">5G</span>
+                            <div className="w-4 h-2 border border-slate-700 rounded-xs p-0.5">
+                              <div className="w-full h-full bg-slate-700 rounded-2xs" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* App Section Header */}
+                        <div className="p-4 pb-2 bg-gradient-to-b from-[#F8F5EE] to-[#F3EDE2]">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black tracking-widest text-[#8B1D24] uppercase">
+                              AUTHENTIC HERITAGE
+                            </span>
+                            <span className="text-[10px] font-semibold text-slate-500">Curated Combos</span>
+                          </div>
+                          <h3 className="text-lg font-serif font-black tracking-tight text-[#3B0E11] mt-0.5">
+                            The Art of Pairing
+                          </h3>
+                          <p className="text-[11px] text-slate-600 font-medium">
+                            Handcrafted combinations that elevate every bite
+                          </p>
+
+                          {/* Category Switcher in Simulation */}
+                          <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-1 scrollbar-none">
+                            {pairings.map((c, idx) => {
+                              const isSimActive = idx === activeComboIndex;
+                              const cColors = c.colors && c.colors.length >= 3 ? c.colors : ['#5C0A0D', '#7A0F12', '#9B1D22'];
+                              return (
+                                <button
+                                  key={c.id || idx}
+                                  type="button"
+                                  onClick={() => setActiveComboIndex(idx)}
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 transition flex items-center gap-1 shadow-2xs ${
+                                    isSimActive
+                                      ? 'text-white border border-amber-300/40 shadow-sm'
+                                      : 'bg-white/80 text-slate-600 border border-slate-200'
+                                  }`}
+                                  style={isSimActive ? {
+                                    background: `linear-gradient(135deg, ${cColors[0]}, ${cColors[1]})`
+                                  } : {}}
+                                >
+                                  <span>{c.kicker || `COMBO ${idx + 1}`}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Mobile Body Content */}
+                        <div className="p-4 space-y-4 max-h-[560px] overflow-y-auto custom-scrollbar">
+                          {/* HERO SPOTLIGHT CARD */}
+                          <div 
+                            className="p-4 rounded-2xl text-white shadow-lg relative overflow-hidden transition-all duration-300"
+                            style={{
+                              background: `linear-gradient(135deg, ${curColors[0]} 0%, ${curColors[1]} 55%, ${curColors[2]} 100%)`
+                            }}
+                          >
+                            {/* Decorative background overlay */}
+                            <div className="absolute inset-0 bg-radial from-white/10 via-transparent to-black/25 pointer-events-none" />
+
+                            <div className="relative z-10 space-y-3">
+                              {/* Top Tag & Price */}
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-amber-200 shadow-2xs">
+                                  {currentCombo.kicker || 'BREAKFAST'}
+                                </span>
+                                <span className="text-xs font-black text-white px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-xs border border-white/20">
+                                  ₹{currentCombo.price || 379}
+                                </span>
+                              </div>
+
+                              {/* Title & Description */}
+                              <div>
+                                <h4 className="text-xl font-serif font-black tracking-wide text-white drop-shadow-xs">
+                                  {currentCombo.title || "Dosa's Best Friends"}
+                                </h4>
+                                <p className="text-xs text-amber-100/90 font-medium mt-0.5">
+                                  {currentCombo.desc || "Karam Podi + Avakaya"}
+                                </p>
+                              </div>
+
+                              {/* Dual Overlapping Product Image Circles */}
+                              <div className="pt-2 pb-1 flex items-center justify-center">
+                                <div className="relative flex items-center justify-center">
+                                  {/* Left Circle A */}
+                                  <div className="h-20 w-20 rounded-full border-[3px] border-[#F3C64D] shadow-md overflow-hidden bg-white/20 shrink-0 relative z-10 transform -rotate-3 hover:scale-105 transition">
+                                    <img 
+                                      src={getPairingDisplayImg(currentCombo.imageA, 'powder')} 
+                                      alt="Product A" 
+                                      className="h-full w-full object-cover"
+                                      onError={(e: any) => {
+                                        e.target.onerror = null;
+                                        e.target.src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Floating Center Plus Connector */}
+                                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#FFE380] to-[#E5A824] text-slate-900 border-2 border-white font-black text-xs flex items-center justify-center shadow-lg relative z-30 -mx-3">
+                                    +
+                                  </div>
+
+                                  {/* Right Circle B (Overlapping) */}
+                                  <div className="h-20 w-20 rounded-full border-[3px] border-[#F3C64D] shadow-md overflow-hidden bg-white/20 shrink-0 relative z-20 transform rotate-3 hover:scale-105 transition">
+                                    <img 
+                                      src={getPairingDisplayImg(currentCombo.imageB, 'pickle')} 
+                                      alt="Product B" 
+                                      className="h-full w-full object-cover"
+                                      onError={(e: any) => {
+                                        e.target.onerror = null;
+                                        e.target.src = 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=400&q=80';
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Button */}
+                              <button 
+                                type="button"
+                                className="w-full py-2 px-3 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
+                              >
+                                <span>Order Combo Pack</span>
+                                <span className="text-amber-200">· ₹{currentCombo.price || 379}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* "PAIRS WELL WITH" CURATED SUB-ITEMS */}
+                          <div className="space-y-2 pt-1">
+                            <div className="flex items-center justify-between px-1">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">
+                                EXPLORE PAIRINGS ({currentCombo.pairs?.length || 0})
+                              </span>
+                              <span className="text-[10px] text-rose-700 font-bold">Handcrafted Duos</span>
+                            </div>
+
+                            <div className="space-y-2">
+                              {(currentCombo.pairs || []).map((pair, pIdx) => (
+                                <div 
+                                  key={pair.id || pIdx}
+                                  className="p-2.5 rounded-xl bg-white border border-amber-900/10 shadow-xs flex items-center justify-between gap-3 hover:border-amber-400/40 transition"
+                                >
+                                  {/* Dual Mini Thumbnails */}
+                                  <div className="flex items-center shrink-0">
+                                    <div className="h-10 w-10 rounded-full border border-amber-300 shadow-2xs overflow-hidden bg-slate-100 relative z-10">
+                                      <img 
+                                        src={getPairingDisplayImg(pair.imageA, 'powder')} 
+                                        alt="A" 
+                                        className="h-full w-full object-cover" 
+                                        onError={(e: any) => {
+                                          e.target.onerror = null;
+                                          e.target.src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="h-4 w-4 rounded-full bg-amber-400 text-slate-900 font-black text-[9px] flex items-center justify-center shadow-xs -mx-1.5 relative z-30 border border-white">
+                                      +
+                                    </div>
+                                    <div className="h-10 w-10 rounded-full border border-amber-300 shadow-2xs overflow-hidden bg-slate-100 relative z-20">
+                                      <img 
+                                        src={getPairingDisplayImg(pair.imageB, 'pickle')} 
+                                        alt="B" 
+                                        className="h-full w-full object-cover" 
+                                        onError={(e: any) => {
+                                          e.target.onerror = null;
+                                          e.target.src = 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=400&q=80';
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Middle Texts */}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <h5 className="text-xs font-bold text-slate-900 truncate">
+                                        {pair.name || 'Curated Duo'}
+                                      </h5>
+                                      {pair.tag && (
+                                        <span className="text-[8px] bg-rose-50 text-rose-700 font-black px-1.5 py-0.2 rounded-xs border border-rose-200">
+                                          {pair.tag}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
+                                      Best with: {pair.bestWith || 'Hot Meals'}
+                                    </p>
+                                  </div>
+
+                                  {/* Price & Add Button */}
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-xs font-black text-[#5C0A0D]">
+                                      ₹{pair.price || 299}
+                                    </span>
+                                    <div className="h-6 w-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center font-bold text-xs shadow-2xs cursor-pointer">
+                                      +
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Live Sync Footer in Phone */}
+                          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[10px] text-emerald-800 flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                            <span>
+                              Stream live connected to <strong>AppConfigRepository().getPairingsStream()</strong>
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </div>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="kitchen_story" className="space-y-6 mt-0">
