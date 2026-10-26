@@ -92,6 +92,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             'subtitle' => 'Watch how our 40-year-old authentic recipes come to life.',
             'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4'
         ]);
+    } else if ($doc_id === 'tab_transition_video') {
+        echo json_encode([
+            'enabled' => true,
+            'duration_ms' => 1200,
+            'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4',
+            'caption' => 'Swapping Heritage Kitchens...',
+            'show_spinner' => true
+        ]);
     } else {
         echo json_encode(new stdClass());
     }
