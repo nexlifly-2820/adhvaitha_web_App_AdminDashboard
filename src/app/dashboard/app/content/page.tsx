@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -99,7 +99,55 @@ interface TabTransitionVideoConfig {
 }
 
 interface SplashVideoConfig { enabled: boolean; video_url: string; title: string }
-interface SnackStory { product_name: string; storyImage: string; description: string; trustBadges: string[] }
+
+export interface SnackStoryIngredient {
+  name: string;
+  image: string;
+}
+
+export interface SnackStory {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+  story: string;
+  since: string;
+  ingredients: SnackStoryIngredient[];
+  // Backwards compatibility
+  product_name?: string;
+  storyImage?: string;
+  description?: string;
+  trustBadges?: string[];
+}
+
+export const DEFAULT_STORY_SNACKS: SnackStory[] = [
+  {
+    id: "murukku",
+    name: "Kara Murukku",
+    image: "assets/images/karam_janthukalu_murukku_strings_snack.jpg",
+    price: 129,
+    story: "A crispy spiral snack made from rice flour and urad dal, prepared in our family kitchen for festive evenings.",
+    since: "1985",
+    ingredients: [
+      { name: "Rice Flour", image: "assets/images/rice_papad_crispy_rice_flour_papadums.jpg" },
+      { name: "Urad Dal", image: "assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg" },
+      { name: "Spices", image: "assets/images/special_kura_karam_podi_all-purpose_curry_powder.jpg" }
+    ]
+  },
+  {
+    id: "mixture",
+    name: "Khara Mixture",
+    image: "assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg",
+    price: 149,
+    story: "A delicious assortment of spiced boondi, peanuts, and sev tossed with roasted curry leaves in pure oil.",
+    since: "1992",
+    ingredients: [
+      { name: "Gram Flour", image: "assets/images/bundhi_crispy_spiced_gram_flour_droplets.jpg" },
+      { name: "Peanuts", image: "assets/images/palli_patti_peanut_and_jaggery_chikki.jpg" },
+      { name: "Curry Leaves", image: "assets/images/karvepaku_karam_podi_curry_leaves_powder.jpg" }
+    ]
+  }
+];
 interface TasteOption { title: string; sub: string; icon: string; color: string }
 export interface PairItem {
   id: string;
@@ -428,7 +476,7 @@ export default function ContentManager() {
   })
   const [isSimulatingTabSwitch, setIsSimulatingTabSwitch] = useState(false)
   const [splashVideo, setSplashVideo] = useState<SplashVideoConfig>({ enabled: true, video_url: '', title: '' })
-  const [snackStories, setSnackStories] = useState<SnackStory[]>([])
+  const [snackStories, setSnackStories] = useState<SnackStory[]>(DEFAULT_STORY_SNACKS)
   const [tasteOptions, setTasteOptions] = useState<TasteOption[]>([])
   
   const [kitchenStory, setKitchenStory] = useState<KitchenStory>({
@@ -651,6 +699,114 @@ export default function ContentManager() {
     toast.success('Restored 6 Authentic Specials Presets!');
   };
 
+  // Snacks with a Story (SnacksStoryFlip / story_snacks) State & Helpers
+  const [activeStoryIdx, setActiveStoryIdx] = useState<number>(0)
+  const [isStoryFlipped, setIsStoryFlipped] = useState<boolean>(false)
+
+  const updateStorySnack = (idx: number, field: keyof SnackStory, val: any) => {
+    setSnackStories(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: val };
+      return next;
+    });
+  };
+
+  const addStoryIngredient = (snackIdx: number) => {
+    setSnackStories(prev => {
+      const next = [...prev];
+      const cur = next[snackIdx];
+      const newIng: SnackStoryIngredient = {
+        name: 'Fresh Ingredient',
+        image: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg'
+      };
+      next[snackIdx] = {
+        ...cur,
+        ingredients: [...(cur.ingredients || []), newIng]
+      };
+      return next;
+    });
+  };
+
+  const updateStoryIngredient = (snackIdx: number, ingIdx: number, field: keyof SnackStoryIngredient, val: string) => {
+    setSnackStories(prev => {
+      const next = [...prev];
+      const cur = next[snackIdx];
+      const ings = [...(cur.ingredients || [])];
+      ings[ingIdx] = { ...ings[ingIdx], [field]: val };
+      next[snackIdx] = { ...cur, ingredients: ings };
+      return next;
+    });
+  };
+
+  const removeStoryIngredient = (snackIdx: number, ingIdx: number) => {
+    setSnackStories(prev => {
+      const next = [...prev];
+      const cur = next[snackIdx];
+      const ings = [...(cur.ingredients || [])];
+      ings.splice(ingIdx, 1);
+      next[snackIdx] = { ...cur, ingredients: ings };
+      return next;
+    });
+  };
+
+  const addStorySnack = () => {
+    const newSnack: SnackStory = {
+      id: `snack_${Date.now()}`,
+      name: 'New Heritage Snack',
+      image: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+      price: 139,
+      story: 'Traditional family snack made with love and time-honored techniques.',
+      since: '1995',
+      ingredients: [
+        { name: 'Rice Flour', image: 'assets/images/rice_papad_crispy_rice_flour_papadums.jpg' }
+      ]
+    };
+    setSnackStories(prev => [...prev, newSnack]);
+    setActiveStoryIdx(snackStories.length);
+    toast.success('Story snack added');
+  };
+
+  const removeStorySnack = (idx: number) => {
+    if (snackStories.length <= 1) {
+      toast.error('You must keep at least 1 story snack.');
+      return;
+    }
+    setSnackStories(prev => prev.filter((_, i) => i !== idx));
+    setActiveStoryIdx(0);
+    toast.success('Story snack removed');
+  };
+
+  const restoreDefaultStorySnacks = () => {
+    if (!confirm('Reset Snacks with a Story to authentic presets (Kara Murukku & Khara Mixture)?')) return;
+    setSnackStories(DEFAULT_STORY_SNACKS);
+    setActiveStoryIdx(0);
+    toast.success('Restored Authentic Story Snacks Presets!');
+  };
+
+  const getStoryDisplayImg = (imgUrl?: string) => {
+    if (!imgUrl) return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80';
+    if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://') || imgUrl.startsWith('data:')) return imgUrl;
+    if (imgUrl.includes('murukku') || imgUrl.includes('janthukalu') || imgUrl.includes('spiral')) {
+      return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80';
+    }
+    if (imgUrl.includes('mixture') || imgUrl.includes('boondi') || imgUrl.includes('sev')) {
+      return 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80';
+    }
+    if (imgUrl.includes('rice') || imgUrl.includes('flour') || imgUrl.includes('papad')) {
+      return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
+    }
+    if (imgUrl.includes('dal') || imgUrl.includes('urad') || imgUrl.includes('gram')) {
+      return 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80';
+    }
+    if (imgUrl.includes('peanut') || imgUrl.includes('palli')) {
+      return 'https://images.unsplash.com/photo-1567406899671-97576282366f?auto=format&fit=crop&w=300&q=80';
+    }
+    if (imgUrl.includes('curry') || imgUrl.includes('leaves') || imgUrl.includes('spice')) {
+      return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=300&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80';
+  };
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -664,10 +820,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -805,7 +961,30 @@ export default function ContentManager() {
         });
       }
       if (splashVideoDoc && Object.keys(splashVideoDoc).length > 0) setSplashVideo(splashVideoDoc as SplashVideoConfig)
-      if (snackStoryDoc && Object.keys(snackStoryDoc).length > 0) setSnackStories(snackStoryDoc.list || [])
+      const storySnacksRaw = (storySnacksDoc && Object.keys(storySnacksDoc).length > 0) ? storySnacksDoc : snackStoryDoc;
+      if (storySnacksRaw && Object.keys(storySnacksRaw).length > 0) {
+        const rawList = storySnacksRaw.list || (Array.isArray(storySnacksRaw) ? storySnacksRaw : []);
+        if (Array.isArray(rawList) && rawList.length > 0) {
+          const formatted: SnackStory[] = rawList.map((s: any, idx: number) => ({
+            id: s.id || `snack_${idx}`,
+            name: s.name || s.product_name || 'Heritage Snack',
+            image: s.image || s.storyImage || 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+            price: Number(s.price) || 129,
+            story: s.story || s.description || 'A crispy spiral snack made from rice flour and urad dal, prepared in our family kitchen for festive evenings.',
+            since: s.since || '1985',
+            ingredients: Array.isArray(s.ingredients) ? s.ingredients.map((i: any) => ({
+              name: i.name || 'Pure Ingredient',
+              image: i.image || 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg'
+            })) : [
+              { name: 'Rice Flour', image: 'assets/images/rice_papad_crispy_rice_flour_papadums.jpg' },
+              { name: 'Urad Dal', image: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg' }
+            ]
+          }));
+          setSnackStories(formatted);
+        } else {
+          setSnackStories(DEFAULT_STORY_SNACKS);
+        }
+      }
       if (specialsLightDoc && Object.keys(specialsLightDoc).length > 0) {
         const list = specialsLightDoc.list || (Array.isArray(specialsLightDoc) ? specialsLightDoc : []);
         if (Array.isArray(list) && list.length > 0) {
@@ -904,6 +1083,7 @@ export default function ContentManager() {
         handleSaveTab('splash_video', splashVideo)
         break
       case 'snacks_story':
+        handleSaveTab('story_snacks', { list: snackStories })
         handleSaveTab('snacks_with_story', { list: snackStories })
         break
       case 'festival':
@@ -1001,6 +1181,12 @@ export default function ContentManager() {
         }),
         postConfig('specials_light', {
           list: DEFAULT_SPECIALS_LIGHT
+        }),
+        postConfig('story_snacks', {
+          list: DEFAULT_STORY_SNACKS
+        }),
+        postConfig('snacks_with_story', {
+          list: DEFAULT_STORY_SNACKS
         })
       ])
       toast.success('Demo data seeded successfully!')
@@ -2561,7 +2747,9 @@ export default function ContentManager() {
                             ? 'Publish Pairings Live'
                             : activeTab === 'specials_light'
                               ? 'Publish Specials Live'
-                              : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
+                              : activeTab === 'snacks_story'
+                                ? 'Publish Story Snacks Live'
+                                : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
           </Button>
         </div>
       </div>
@@ -2668,7 +2856,17 @@ export default function ContentManager() {
           <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
           <TabsTrigger value="cart_delivery" className="justify-start data-[state=active]:bg-white">Cart & Billing</TabsTrigger>
           <TabsTrigger value="splash_video" className="justify-start data-[state=active]:bg-white">Splash Video</TabsTrigger>
-          <TabsTrigger value="snacks_story" className="justify-start data-[state=active]:bg-white">Snacks with a Story</TabsTrigger>
+          {/* SNACKS WITH A STORY (SNACKS STORY FLIP) TAB TRIGGER */}
+          <TabsTrigger 
+            value="snacks_story" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-amber-700" />
+              <span className="font-semibold text-xs text-left">Snacks Story Flip</span>
+            </span>
+            <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">Flip Cards</span>
+          </TabsTrigger>
         </TabsList>
         
         <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pr-2 pb-20 custom-scrollbar">
@@ -3364,97 +3562,622 @@ export default function ContentManager() {
             </Card>
           </TabsContent>
           
-          {/* SNACKS WITH A STORY */}
-          <TabsContent value="snacks_story" className="mt-0">
-            <Card>
-              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div>
-                  <CardTitle>Snacks with a Story</CardTitle>
-                  <CardDescription>Configure the story banners and heritage text for featured snacks.</CardDescription>
+          {/* SNACKS WITH A STORY (SnacksStoryFlip) */}
+          <TabsContent value="snacks_story" className="mt-0 space-y-6">
+            {/* Header / Action Bar */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 border border-amber-500/20 shadow-sm backdrop-blur-md">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                    <BookOpen className="w-5 h-5" />
+                  </span>
+                  <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    Snacks with a Story
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                      SnacksStoryFlip
+                    </span>
+                  </h2>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setSnackStories, { product_name: '', storyImage: '', description: '', trustBadges: [] })}>
-                  + Add Snack Story
+                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+                  Manage heritage story flip cards with origin stories, vintage years, and stone-ground ingredients. Syncs live with mobile home page via <code className="text-xs font-mono bg-amber-500/10 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">AppConfigRepository().getStorySnacksStream()</code>.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={restoreDefaultStorySnacks}
+                  className="gap-1.5 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Restore Presets
                 </Button>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {snackStories.map((story, idx) => (
-                  <div key={idx} className="p-4 border border-slate-200 rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-4 relative">
-                    <button onClick={() => removeFromArray(setSnackStories, idx)} className="absolute top-4 right-4 text-red-500">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Select Product</label>
-                        <select 
-                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                          value={story.product_name} 
-                          onChange={e => updateArray(setSnackStories, idx, 'product_name', e.target.value)}
-                        >
-                          <option value="">-- Select Snack --</option>
-                          {productNames.map(name => <option key={name} value={name}>{name}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Story Image</label>
-                        <ImageUpload 
-                          value={story.storyImage} 
-                          onChange={url => updateArray(setSnackStories, idx, 'storyImage', url)} 
-                          folder="app_content"
-                        />
-                      </div>
-                      <div className="md:col-span-2 space-y-2">
-                        <label className="text-sm font-medium">Heritage Description</label>
-                        <textarea 
-                          className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                          value={story.description} 
-                          onChange={e => updateArray(setSnackStories, idx, 'description', e.target.value)}
-                        />
-                      </div>
-                      <div className="md:col-span-2 space-y-2">
-                        <label className="text-sm font-medium block">Trust Badges (e.g. Rice Flour, Homemade)</label>
-                        <div className="flex gap-2 flex-wrap mb-2">
-                          {(story.trustBadges || []).map((badge, bIdx) => (
-                            <div key={bIdx} className="flex items-center gap-1 bg-white dark:bg-slate-950 border px-2 py-1 rounded">
-                              <span className="text-sm">{badge}</span>
-                              <button 
-                                onClick={() => {
-                                  const n = [...snackStories];
-                                  n[idx].trustBadges = n[idx].trustBadges.filter((_, i) => i !== bIdx);
-                                  setSnackStories(n);
-                                }}
-                                className="text-slate-400 hover:text-red-500 ml-1"
-                              >
-                                &times;
-                              </button>
-                            </div>
-                          ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addStorySnack}
+                  className="gap-1.5 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  + Add Story Snack
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleSaveTab('story_snacks', { list: snackStories });
+                    handleSaveTab('snacks_with_story', { list: snackStories });
+                  }}
+                  disabled={isSaving}
+                  size="sm"
+                  className="gap-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-sm"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Publishing Live...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      Publish Story Snacks Live
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Snack Selector Tabs / Carousel Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+                Story Cards ({snackStories.length}):
+              </span>
+              {snackStories.map((snack, idx) => {
+                const isActive = idx === activeStoryIdx;
+                return (
+                  <button
+                    key={snack.id || idx}
+                    onClick={() => {
+                      setActiveStoryIdx(idx);
+                      setIsStoryFlipped(false);
+                    }}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all shrink-0 border ${
+                      isActive
+                        ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white border-transparent shadow-md shadow-amber-500/20'
+                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {idx + 1}
+                    </span>
+                    <span className="font-semibold">{snack.name || `Snack #${idx + 1}`}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                    }`}>
+                      {snack.since ? `ESTD. ${snack.since}` : `₹${snack.price}`}
+                    </span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={addStorySnack}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-amber-600 dark:text-amber-400 border border-dashed border-amber-500/40 hover:bg-amber-500/5 transition-all shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Snack
+              </button>
+            </div>
+
+            {/* Main Two-Column Layout: Left = Editor, Right = Interactive 3D Flip Phone Preview */}
+            {(() => {
+              const cIdx = Math.min(activeStoryIdx, Math.max(0, snackStories.length - 1));
+              const currentSnack = snackStories[cIdx] || {
+                id: 'murukku',
+                name: 'Kara Murukku',
+                image: '',
+                price: 129,
+                story: '',
+                since: '1985',
+                ingredients: []
+              };
+
+              return (
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                  {/* Left Column: Form Editor (xl:col-span-7) */}
+                  <div className="xl:col-span-7 space-y-6">
+                    {/* Card 1: Snack Identification & Heritage Metadata */}
+                    <Card className="border-amber-500/20 shadow-sm">
+                      <CardHeader className="pb-3 border-b">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold">
+                              {cIdx + 1}
+                            </span>
+                            <CardTitle className="text-base font-semibold">
+                              Heritage Snack Details
+                            </CardTitle>
+                          </div>
+                          <span className="text-xs font-mono text-slate-400">
+                            doc_id: story_snacks → list[{cIdx}]
+                          </span>
                         </div>
-                        <div className="flex gap-2">
-                          <Input 
-                            placeholder="Add new badge... (e.g. Mild Spicy)" 
-                            className="max-w-xs"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                const val = (e.target as HTMLInputElement).value.trim();
-                                if (val) {
-                                  const n = [...snackStories];
-                                  if (!n[idx].trustBadges) n[idx].trustBadges = [];
-                                  n[idx].trustBadges.push(val);
-                                  setSnackStories(n);
-                                  (e.target as HTMLInputElement).value = '';
+                      </CardHeader>
+                      <CardContent className="pt-4 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                              Snack Name / Title <span className="text-red-500">*</span>
+                            </label>
+                            <Input
+                              value={currentSnack.name || ''}
+                              onChange={e => updateStorySnack(cIdx, 'name', e.target.value)}
+                              placeholder="e.g. Kara Murukku, Khara Mixture"
+                              className="font-medium"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                              Unique Identifier (id)
+                            </label>
+                            <Input
+                              value={currentSnack.id || ''}
+                              onChange={e => updateStorySnack(cIdx, 'id', e.target.value)}
+                              placeholder="e.g. murukku, mixture"
+                              className="font-mono text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                              Price (₹) <span className="text-red-500">*</span>
+                            </label>
+                            <Input
+                              type="number"
+                              value={currentSnack.price ?? 129}
+                              onChange={e => updateStorySnack(cIdx, 'price', Number(e.target.value) || 0)}
+                              placeholder="129"
+                              className="font-semibold"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                              Heritage Year / Since (Vintage)
+                            </label>
+                            <Input
+                              value={currentSnack.since || ''}
+                              onChange={e => updateStorySnack(cIdx, 'since', e.target.value)}
+                              placeholder="e.g. 1985, 1992"
+                            />
+                            <p className="text-[10px] text-slate-400">Displays "ESTD. 1985" on card</p>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                              Quick Pick Product
+                            </label>
+                            <select
+                              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-xs"
+                              onChange={e => {
+                                const selected = allProducts.find(p => p.name === e.target.value);
+                                if (selected) {
+                                  updateStorySnack(cIdx, 'name', selected.name);
+                                  if (selected.price) updateStorySnack(cIdx, 'price', Number(selected.price));
+                                  if (selected.image_url) updateStorySnack(cIdx, 'image', selected.image_url);
                                 }
-                              }
-                            }}
+                              }}
+                              defaultValue=""
+                            >
+                              <option value="">-- Autofill from catalog --</option>
+                              {allProducts.map((p, pIdx) => (
+                                <option key={p.id || pIdx} value={p.name}>
+                                  {p.name} ({p.price ? `₹${p.price}` : ''})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Hero Image */}
+                        <div className="space-y-2 pt-2 border-t">
+                          <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                            <span>Snack Hero Image (Front of Card)</span>
+                            <span className="text-[11px] text-slate-400 font-normal">
+                              Supports direct upload, CDN URL, or local asset path
+                            </span>
+                          </label>
+                          <ImageUpload
+                            value={currentSnack.image || ''}
+                            onChange={url => updateStorySnack(cIdx, 'image', url)}
+                            folder="story_snacks"
                           />
-                          <p className="text-xs text-slate-500 py-2">Press Enter to add</p>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={currentSnack.image || ''}
+                              onChange={e => updateStorySnack(cIdx, 'image', e.target.value)}
+                              placeholder="assets/images/karam_janthukalu_murukku_strings_snack.jpg or https://..."
+                              className="text-xs font-mono"
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Card 2: The Heritage Craft Story Description */}
+                    <Card className="border-amber-500/20 shadow-sm">
+                      <CardHeader className="pb-3 border-b">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-amber-500" />
+                          Heritage Story Narrative (Back of Card)
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          The authentic story read by customers when they flip the card. Highlight family traditions, culinary origin, and grandmother's recipe.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-4 space-y-2">
+                        <textarea
+                          rows={4}
+                          value={currentSnack.story || ''}
+                          onChange={e => updateStorySnack(cIdx, 'story', e.target.value)}
+                          placeholder="e.g. A crispy spiral snack made from rice flour and urad dal, prepared in our family kitchen for festive evenings..."
+                          className="w-full rounded-lg border border-input bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 leading-relaxed font-sans"
+                        />
+                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <span>Characters: {(currentSnack.story || '').length}</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">
+                            Tip: 80 - 150 characters fits beautifully on mobile cards
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Card 3: Stone-Ground Ingredients Manager */}
+                    <Card className="border-amber-500/20 shadow-sm">
+                      <CardHeader className="pb-3 border-b">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-base font-semibold flex items-center gap-2">
+                              <UtensilsCrossed className="w-4 h-4 text-amber-500" />
+                              Stone-Ground Ingredients ({(currentSnack.ingredients || []).length})
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                              Key wholesome ingredients shown with circle photo badges on the flipped heritage card.
+                            </CardDescription>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addStoryIngredient(cIdx)}
+                            className="gap-1 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            + Add Ingredient
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-4 space-y-3">
+                        {(!currentSnack.ingredients || currentSnack.ingredients.length === 0) ? (
+                          <div className="text-center py-6 border border-dashed rounded-xl border-amber-500/20">
+                            <p className="text-xs text-slate-500 mb-2">No ingredients added yet.</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addStoryIngredient(cIdx)}
+                              className="text-xs gap-1"
+                            >
+                              <Plus className="w-3 h-3" /> Add First Ingredient
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {currentSnack.ingredients.map((ing, ingIdx) => (
+                              <div
+                                key={ingIdx}
+                                className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col sm:flex-row items-start sm:items-center gap-3"
+                              >
+                                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold flex items-center justify-center shrink-0">
+                                  {ingIdx + 1}
+                                </span>
+
+                                <div className="flex-1 w-full space-y-1">
+                                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                    Ingredient Name
+                                  </label>
+                                  <Input
+                                    value={ing.name || ''}
+                                    onChange={e => updateStoryIngredient(cIdx, ingIdx, 'name', e.target.value)}
+                                    placeholder="e.g. Rice Flour, Urad Dal, Spices"
+                                    className="h-8 text-xs font-medium"
+                                  />
+                                </div>
+
+                                <div className="flex-1 w-full space-y-1">
+                                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                                    <span>Image (Upload / Asset)</span>
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      value={ing.image || ''}
+                                      onChange={e => updateStoryIngredient(cIdx, ingIdx, 'image', e.target.value)}
+                                      placeholder="assets/images/... or url"
+                                      className="h-8 text-xs font-mono"
+                                    />
+                                    <div className="w-8 h-8 rounded-full border border-amber-500/30 overflow-hidden shrink-0 bg-amber-500/10">
+                                      <img
+                                        src={getStoryDisplayImg(ing.image)}
+                                        alt={ing.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=100&q=80';
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => removeStoryIngredient(cIdx, ingIdx)}
+                                  className="text-slate-400 hover:text-red-500 transition-colors p-1.5 self-end sm:self-center"
+                                  title="Delete Ingredient"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Bottom Actions Row for Current Snack */}
+                    <div className="flex items-center justify-between pt-2">
+                      {snackStories.length > 1 ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeStorySnack(cIdx)}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 gap-1.5 text-xs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete This Story Snack
+                        </Button>
+                      ) : (
+                        <div />
+                      )}
+
+                      <Button
+                        onClick={() => {
+                          handleSaveTab('story_snacks', { list: snackStories });
+                          handleSaveTab('snacks_with_story', { list: snackStories });
+                        }}
+                        disabled={isSaving}
+                        className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-sm"
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Publishing...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4" />
+                            Save & Publish Story Snacks
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Interactive 3D Flip Card Mobile Simulation (xl:col-span-5) */}
+                  <div className="xl:col-span-5 flex flex-col items-center">
+                    <div className="w-full max-w-[370px] bg-slate-950 p-4 rounded-[40px] shadow-2xl border-4 border-slate-800 relative">
+                      {/* Speaker / Camera Notch */}
+                      <div className="w-28 h-4 bg-slate-800 rounded-full mx-auto mb-3" />
+
+                      {/* Screen Container */}
+                      <div className="bg-[#120805] text-slate-100 rounded-[28px] overflow-hidden border border-amber-950/60 p-4 relative min-h-[580px] flex flex-col justify-between select-none">
+                        {/* Status Bar */}
+                        <div className="flex justify-between items-center text-[10px] text-amber-200/60 mb-2 font-mono">
+                          <span>09:41</span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Live Stream
+                          </span>
+                        </div>
+
+                        {/* Section Header inside App */}
+                        <div className="text-center mb-4 space-y-1">
+                          <span className="inline-block text-[9px] font-bold tracking-widest uppercase text-amber-400 bg-amber-950/60 border border-amber-800/40 px-2.5 py-0.5 rounded-full">
+                            HANDCRAFTED HERITAGE
+                          </span>
+                          <h3 className="text-lg font-serif font-bold text-amber-100 tracking-wide">
+                            Snacks with a Story
+                          </h3>
+                          <p className="text-[10px] text-amber-200/70 max-w-[240px] mx-auto leading-tight">
+                            Flip to discover authentic grandmother recipes & stone-ground craft.
+                          </p>
+                        </div>
+
+                        {/* 3D Flip Card Container */}
+                        <div
+                          className="relative w-full h-[380px] cursor-pointer group"
+                          style={{ perspective: '1000px' }}
+                          onClick={() => setIsStoryFlipped(!isStoryFlipped)}
+                          title="Click anywhere to flip the card!"
+                        >
+                          <div
+                            className="w-full h-full relative duration-700 transition-transform"
+                            style={{
+                              transformStyle: 'preserve-3d',
+                              transform: isStoryFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                              transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                          >
+                            {/* FRONT FACE (Photo, Price, Estd, Title) */}
+                            <div
+                              className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden border-2 border-amber-500/30 shadow-xl flex flex-col justify-between p-4 bg-slate-900"
+                              style={{
+                                backfaceVisibility: 'hidden',
+                                WebkitBackfaceVisibility: 'hidden',
+                              }}
+                            >
+                              {/* Background Image */}
+                              <img
+                                src={getStoryDisplayImg(currentSnack.image)}
+                                alt={currentSnack.name}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80';
+                                }}
+                              />
+                              {/* Dark Gradient Overlay for Readability */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/50" />
+
+                              {/* Front Top Row */}
+                              <div className="relative z-10 flex items-center justify-between">
+                                <span className="bg-amber-900/80 backdrop-blur-md text-amber-200 border border-amber-400/40 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg">
+                                  ESTD. {currentSnack.since || '1985'}
+                                </span>
+                                <span className="bg-amber-500 text-slate-950 text-xs font-bold px-2.5 py-1 rounded-full shadow-lg">
+                                  ₹{currentSnack.price || 129}
+                                </span>
+                              </div>
+
+                              {/* Front Bottom Content */}
+                              <div className="relative z-10 space-y-2">
+                                <div>
+                                  <h4 className="text-xl font-serif font-bold text-white drop-shadow-md">
+                                    {currentSnack.name || 'Kara Murukku'}
+                                  </h4>
+                                  <p className="text-[11px] text-amber-200/80 line-clamp-1">
+                                    {(currentSnack.ingredients || []).map(i => i.name).join(' · ') || 'Authentic stone-ground recipe'}
+                                  </p>
+                                </div>
+
+                                <div className="pt-2 border-t border-white/20 flex items-center justify-between">
+                                  <span className="text-[10px] text-amber-300 font-medium flex items-center gap-1 group-hover:underline">
+                                    <RotateCcw className="w-3 h-3 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+                                    Tap to Read Heritage Story ↷
+                                  </span>
+                                  <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">
+                                    Flip Card
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* BACK FACE (Warm Parchment / Heritage Narrative & Ingredients) */}
+                            <div
+                              className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden border-2 border-amber-400/50 shadow-2xl p-4 flex flex-col justify-between bg-gradient-to-br from-[#2b140d] via-[#1f0d08] to-[#120704] text-amber-100"
+                              style={{
+                                backfaceVisibility: 'hidden',
+                                WebkitBackfaceVisibility: 'hidden',
+                                transform: 'rotateY(180deg)',
+                              }}
+                            >
+                              {/* Subtle Ornate Heritage Border Corners */}
+                              <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-amber-400/40" />
+                              <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-amber-400/40" />
+                              <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-amber-400/40" />
+                              <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-amber-400/40" />
+
+                              {/* Back Top Header */}
+                              <div>
+                                <div className="flex items-center justify-between border-b border-amber-500/20 pb-2 mb-2">
+                                  <span className="text-[9px] uppercase tracking-widest font-bold text-amber-400">
+                                    THE HERITAGE CRAFT
+                                  </span>
+                                  <span className="text-[10px] font-mono text-amber-300/70">
+                                    Since {currentSnack.since || '1985'}
+                                  </span>
+                                </div>
+                                <h4 className="text-base font-serif font-bold text-amber-100">
+                                  {currentSnack.name || 'Kara Murukku'}
+                                </h4>
+                                <p className="text-[11px] leading-relaxed text-amber-200/90 font-serif italic mt-1 line-clamp-4">
+                                  "{currentSnack.story || 'A crispy spiral snack made from rice flour and urad dal, prepared in our family kitchen for festive evenings.'}"
+                                </p>
+                              </div>
+
+                              {/* Back Middle: Stone-Ground Ingredients Avatars */}
+                              <div className="space-y-1.5 my-auto">
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/80 block">
+                                  Stone-Ground Ingredients:
+                                </span>
+                                <div className="flex items-center justify-start gap-2.5 overflow-x-auto pb-1">
+                                  {(currentSnack.ingredients || []).slice(0, 4).map((ing, iIdx) => (
+                                    <div key={iIdx} className="flex flex-col items-center shrink-0 w-14">
+                                      <div className="w-10 h-10 rounded-full border-2 border-amber-400/60 overflow-hidden shadow-md bg-amber-950">
+                                        <img
+                                          src={getStoryDisplayImg(ing.image)}
+                                          alt={ing.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=100&q=80';
+                                          }}
+                                        />
+                                      </div>
+                                      <span className="text-[9px] text-amber-200/90 text-center font-medium mt-1 truncate w-full">
+                                        {ing.name}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Back Bottom CTA Bar */}
+                              <div className="pt-2 border-t border-amber-500/20 flex items-center justify-between">
+                                <div>
+                                  <span className="text-[9px] text-amber-300/60 uppercase block">Price</span>
+                                  <span className="text-sm font-bold text-white">
+                                    ₹{currentSnack.price || 129}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs shadow-md transition-all">
+                                  <ShoppingBag className="w-3.5 h-3.5" />
+                                  <span>Add to Box</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Flip Card Switcher Button below simulation */}
+                        <div className="mt-3 pt-2 border-t border-amber-950/80 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setIsStoryFlipped(!isStoryFlipped)}
+                            className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            {isStoryFlipped ? 'Show Front Photo' : 'Show Story & Ingredients'}
+                          </button>
+                          <span className="text-[10px] text-amber-300/50">
+                            Card {cIdx + 1} of {snackStories.length}
+                          </span>
                         </div>
                       </div>
                     </div>
+
+                    {/* Live Stream Sync Note below phone */}
+                    <div className="mt-3 text-center space-y-1">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        Live Stream: AppConfigRepository().getStorySnacksStream()
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Changes published here update live on the mobile home page instantly.
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </div>
+              );
+            })()}
           </TabsContent>
           {/* BANNERS */}
           <TabsContent value="banners" className="mt-0 space-y-6">
