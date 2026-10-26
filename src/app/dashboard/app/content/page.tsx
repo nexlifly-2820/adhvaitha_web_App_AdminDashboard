@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -243,6 +243,45 @@ export const DEFAULT_PAIRINGS: HeroCombo[] = [
         price: 389
       }
     ]
+  }
+];
+
+export interface SpecialLightItem {
+  id: string;
+  name: string;
+  image: string;
+}
+
+export const DEFAULT_SPECIALS_LIGHT: SpecialLightItem[] = [
+  {
+    id: "avakaya",
+    name: "Avakaya",
+    image: "assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg"
+  },
+  {
+    id: "karam_podi",
+    name: "Karam Podi",
+    image: "assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg"
+  },
+  {
+    id: "murukku",
+    name: "Murukku",
+    image: "assets/images/karam_janthukalu_murukku_strings_snack.jpg"
+  },
+  {
+    id: "sunnunda",
+    name: "Sunnunda",
+    image: "assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg"
+  },
+  {
+    id: "mixture",
+    name: "Mixture",
+    image: "assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg"
+  },
+  {
+    id: "banana_chips",
+    name: "Banana Chips",
+    image: "assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg"
   }
 ];
 interface DeliveryConfig { free_threshold: number; base_fee: number; packing_fee: number; gst_percentage: number }
@@ -564,6 +603,54 @@ export default function ContentManager() {
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>(['Mango Special', 'New Snacks', 'Spicy Chicken', 'Ladoo', 'Combos'])
   const [allProducts, setAllProducts] = useState<any[]>([])
 
+  // AmbhuJakshi Specials (specials_light) State & Helpers
+  const [specialsLight, setSpecialsLight] = useState<SpecialLightItem[]>(DEFAULT_SPECIALS_LIGHT)
+
+  const updateSpecialItem = (idx: number, field: keyof SpecialLightItem, val: string) => {
+    setSpecialsLight(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: val };
+      return next;
+    });
+  };
+
+  const addSpecialItem = () => {
+    const newItem: SpecialLightItem = {
+      id: `special_${Date.now()}`,
+      name: 'New Special',
+      image: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg'
+    };
+    setSpecialsLight(prev => [...prev, newItem]);
+    toast.success('Special tile added');
+  };
+
+  const removeSpecialItem = (idx: number) => {
+    if (specialsLight.length <= 1) {
+      toast.error('You must keep at least 1 special tile.');
+      return;
+    }
+    setSpecialsLight(prev => prev.filter((_, i) => i !== idx));
+    toast.success('Special tile removed');
+  };
+
+  const moveSpecialItem = (idx: number, direction: 'up' | 'down') => {
+    setSpecialsLight(prev => {
+      const next = [...prev];
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= next.length) return prev;
+      const temp = next[idx];
+      next[idx] = next[targetIdx];
+      next[targetIdx] = temp;
+      return next;
+    });
+  };
+
+  const restoreDefaultSpecialsLight = () => {
+    if (!confirm('Reset AmbhuJakshi Specials to the 6 authentic presets?')) return;
+    setSpecialsLight(DEFAULT_SPECIALS_LIGHT);
+    toast.success('Restored 6 Authentic Specials Presets!');
+  };
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -577,10 +664,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -719,6 +806,14 @@ export default function ContentManager() {
       }
       if (splashVideoDoc && Object.keys(splashVideoDoc).length > 0) setSplashVideo(splashVideoDoc as SplashVideoConfig)
       if (snackStoryDoc && Object.keys(snackStoryDoc).length > 0) setSnackStories(snackStoryDoc.list || [])
+      if (specialsLightDoc && Object.keys(specialsLightDoc).length > 0) {
+        const list = specialsLightDoc.list || (Array.isArray(specialsLightDoc) ? specialsLightDoc : []);
+        if (Array.isArray(list) && list.length > 0) {
+          setSpecialsLight(list);
+        } else {
+          setSpecialsLight(DEFAULT_SPECIALS_LIGHT);
+        }
+      }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -821,6 +916,9 @@ export default function ContentManager() {
       case 'tab_transition_video':
         handleSaveTab('tab_transition_video', tabTransitionVideo)
         break
+      case 'specials_light':
+        handleSaveTab('specials_light', { list: specialsLight })
+        break
     }
   }
 
@@ -900,6 +998,9 @@ export default function ContentManager() {
         }),
         postConfig('pairings', {
           list: DEFAULT_PAIRINGS
+        }),
+        postConfig('specials_light', {
+          list: DEFAULT_SPECIALS_LIGHT
         })
       ])
       toast.success('Demo data seeded successfully!')
@@ -2458,7 +2559,9 @@ export default function ContentManager() {
                           ? 'Publish Festival Live'
                           : activeTab === 'pairings'
                             ? 'Publish Pairings Live'
-                            : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
+                            : activeTab === 'specials_light'
+                              ? 'Publish Specials Live'
+                              : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
           </Button>
         </div>
       </div>
@@ -2548,6 +2651,18 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Art of Pairing</span>
             </span>
             <span className="text-[9px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded uppercase">Combos</span>
+          </TabsTrigger>
+
+          {/* AMBHUJAKSHI SPECIALS (SPECIALS_LIGHT) TAB TRIGGER */}
+          <TabsTrigger 
+            value="specials_light" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-amber-600" />
+              <span className="font-semibold text-xs text-left">AmbhuJakshi Specials</span>
+            </span>
+            <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">6 Tiles</span>
           </TabsTrigger>
           <TabsTrigger value="kitchen_story" className="justify-start data-[state=active]:bg-white">Kitchen Story</TabsTrigger>
           <TabsTrigger value="trending_searches" className="justify-start data-[state=active]:bg-white">Trending Searches</TabsTrigger>
@@ -4534,6 +4649,340 @@ export default function ContentManager() {
                 </div>
               );
             })()}
+          </TabsContent>
+
+          {/* AMBHUJAKSHI SPECIALS (SPECIALS_LIGHT) */}
+          <TabsContent value="specials_light" className="mt-0 space-y-6">
+            <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Crown className="h-5 w-5 text-amber-600" />
+                      <CardTitle className="text-xl">AmbhuJakshi Specials (SpecialsLightSection)</CardTitle>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Live Stream Sync
+                      </span>
+                    </div>
+                    <CardDescription className="mt-1">
+                      Manage the 6 signature specials featured prominently in the spotlight section on the home page. Reorder, rename, or swap images in real time.
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap shrink-0">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={restoreDefaultSpecialsLight}
+                      className="text-xs text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 mr-1 text-slate-500" />
+                      Restore 6 Presets
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={addSpecialItem}
+                      className="text-xs text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30"
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      Add Special Tile
+                    </Button>
+                    <Button 
+                      size="sm"
+                      disabled={isSaving}
+                      onClick={() => handleSaveTab('specials_light', { list: specialsLight })}
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-sm text-xs"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 mr-1" />
+                      {isSaving ? 'Publishing...' : 'Publish Specials Live'}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Main Two-Column Layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+              {/* LEFT COLUMN: 6 SPECIALS TILES MANAGER (7 cols) */}
+              <div className="xl:col-span-7 space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Specials Tiles ({specialsLight.length} configured):
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    Use ▲ and ▼ to reorder tiles on the home screen
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {specialsLight.map((item, idx) => (
+                    <Card key={item.id || idx} className="border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden">
+                      <div className="p-3 bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                            #{idx + 1}
+                          </span>
+                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                            {item.name || 'Untitled Special'}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            ({item.id})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            disabled={idx === 0}
+                            onClick={() => moveSpecialItem(idx, 'up')}
+                            className="h-7 w-7 p-0 text-slate-600 hover:text-slate-900 disabled:opacity-30"
+                            title="Move Up"
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            disabled={idx === specialsLight.length - 1}
+                            onClick={() => moveSpecialItem(idx, 'down')}
+                            className="h-7 w-7 p-0 text-slate-600 hover:text-slate-900 disabled:opacity-30"
+                            title="Move Down"
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            disabled={specialsLight.length <= 1}
+                            onClick={() => removeSpecialItem(idx)}
+                            className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-30 ml-1"
+                            title="Delete Tile"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <CardContent className="p-4 space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase">
+                              Special Title / Name
+                            </label>
+                            <Input 
+                              placeholder="e.g. Avakaya, Karam Podi" 
+                              value={item.name} 
+                              onChange={e => updateSpecialItem(idx, 'name', e.target.value)}
+                              className="font-bold text-xs h-8"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase">
+                              Unique Identifier (id)
+                            </label>
+                            <Input 
+                              placeholder="e.g. avakaya, karam_podi" 
+                              value={item.id} 
+                              onChange={e => updateSpecialItem(idx, 'id', e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                              className="font-mono text-xs h-8"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Image field & Upload */}
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase">
+                              Tile Image (Local Asset Path or Cloudinary URL)
+                            </label>
+                            {productNames.length > 0 && (
+                              <select 
+                                className="text-xs h-6 rounded border border-slate-200 dark:border-slate-800 bg-transparent px-2 text-slate-600 dark:text-slate-400"
+                                onChange={e => {
+                                  const p = allProducts.find(prod => prod.name === e.target.value);
+                                  if (p) {
+                                    updateSpecialItem(idx, 'name', p.name);
+                                    if (p.image) updateSpecialItem(idx, 'image', p.image);
+                                  }
+                                }}
+                                defaultValue=""
+                              >
+                                <option value="" disabled>-- Auto-fill from Product --</option>
+                                {productNames.map(name => <option key={name} value={name}>{name}</option>)}
+                              </select>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-xl border border-amber-300/80 shadow-xs overflow-hidden bg-slate-100 shrink-0">
+                              <img 
+                                src={getPairingDisplayImg(item.image, 'pickle')} 
+                                alt={item.name} 
+                                className="h-full w-full object-cover"
+                                onError={(e: any) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1 space-y-1.5">
+                              <Input 
+                                placeholder="assets/images/... or https://" 
+                                value={item.image} 
+                                onChange={e => updateSpecialItem(idx, 'image', e.target.value)}
+                                className="text-xs h-8"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-1">
+                            <ImageUpload 
+                              value={item.image} 
+                              onChange={url => updateSpecialItem(idx, 'image', url)} 
+                              folder="app_content" 
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Add Tile Button */}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={addSpecialItem}
+                  className="w-full border-dashed border-2 py-4 text-xs font-semibold text-slate-600 hover:text-amber-700 hover:border-amber-400"
+                >
+                  <Plus className="h-4 w-4 mr-1 text-amber-600" />
+                  + Add Another Special Tile
+                </Button>
+
+                {/* Instant Save Bar */}
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div className="text-xs text-slate-500">
+                    Saves to BigRock MySQL database under <code className="text-amber-600 font-mono text-[11px]">specials_light</code> and instantly broadcasts through <code className="text-amber-600 font-mono text-[11px]">AppConfigRepository().getSpecialsLightStream()</code> to live app users.
+                  </div>
+                  <Button 
+                    type="button" 
+                    disabled={isSaving}
+                    onClick={() => handleSaveTab('specials_light', { list: specialsLight })}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md px-6 shrink-0"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {isSaving ? 'Publishing...' : 'Publish Specials Live'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: LIVE MOBILE APP SIMULATION (5 cols) */}
+              <div className="xl:col-span-5 flex flex-col items-center">
+                <div className="w-full text-center mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-center gap-1.5">
+                    <Smartphone className="h-3.5 w-3.5 text-amber-600" />
+                    Live Mobile "AmbhuJakshi Specials" Simulation
+                  </span>
+                </div>
+
+                {/* Phone Bezel */}
+                <div className="w-full max-w-[370px] rounded-[38px] overflow-hidden border-[6px] border-slate-900 shadow-2xl bg-[#F8F5EE] relative flex flex-col">
+                  {/* Status Bar */}
+                  <div className="pt-3 px-6 pb-2 flex justify-between items-center text-[11px] font-bold text-slate-700 bg-white/70 backdrop-blur-xs border-b border-black/5">
+                    <span>9:41</span>
+                    <div className="h-4 w-16 bg-slate-900 rounded-full mx-auto" />
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px]">5G</span>
+                      <div className="w-4 h-2 border border-slate-700 rounded-xs p-0.5">
+                        <div className="w-full h-full bg-slate-700 rounded-2xs" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* App Context Header */}
+                  <div className="p-4 pb-2 bg-gradient-to-b from-[#F8F5EE] to-[#F3EDE2] border-b border-black/5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black tracking-widest text-[#9A6700] uppercase flex items-center gap-1">
+                        <Crown className="h-3 w-3 text-amber-600" />
+                        SIGNATURE FAVORITES
+                      </span>
+                      <span className="text-[10px] font-bold text-[#8B1D24] flex items-center gap-0.5 cursor-pointer hover:underline">
+                        Explore All →
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-serif font-black tracking-tight text-[#3B0E11] mt-0.5">
+                      AmbhuJakshi Specials
+                    </h3>
+                    <p className="text-[11px] text-slate-600 font-medium">
+                      Traditional handcrafted culinary marvels, made fresh
+                    </p>
+                  </div>
+
+                  {/* Mobile Grid Showcase */}
+                  <div className="p-4 space-y-3 max-h-[580px] overflow-y-auto custom-scrollbar">
+                    {/* 3x2 Grid of Specials */}
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {specialsLight.map((item, idx) => (
+                        <div 
+                          key={item.id || idx}
+                          className="bg-white rounded-2xl p-2.5 border border-[#E8DFC9] shadow-xs hover:shadow-md hover:border-amber-400 transition-all flex flex-col items-center text-center relative group"
+                        >
+                          {/* Mini badge */}
+                          <div className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded-full bg-amber-100 text-amber-800 text-[8px] font-bold flex items-center justify-center">
+                            ★
+                          </div>
+
+                          {/* Circular Product Image with Gold Ring */}
+                          <div className="h-16 w-16 rounded-full border-[2.5px] border-[#E8C56A] shadow-xs overflow-hidden bg-slate-50 my-1 group-hover:scale-105 transition-transform duration-200">
+                            <img 
+                              src={getPairingDisplayImg(item.image, 'pickle')} 
+                              alt={item.name} 
+                              className="h-full w-full object-cover"
+                              onError={(e: any) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+                              }}
+                            />
+                          </div>
+
+                          {/* Item Title */}
+                          <span className="text-xs font-bold text-slate-800 line-clamp-1 mt-1 leading-tight">
+                            {item.name || 'Special'}
+                          </span>
+
+                          <span className="text-[9px] text-amber-700 font-semibold mt-0.5">
+                            Handcrafted
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Bottom Promo Ribbon inside Mobile View */}
+                    <div className="p-3 rounded-2xl bg-gradient-to-r from-[#5C0A0D] to-[#8B1D24] text-white shadow-sm flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-300">
+                          AUTHENTIC BATCHES
+                        </span>
+                        <p className="text-xs font-bold">100% Cold-Pressed & Stone-Ground</p>
+                      </div>
+                      <span className="text-xs font-black bg-white/20 px-2 py-1 rounded-lg backdrop-blur-xs">
+                        Pure
+                      </span>
+                    </div>
+
+                    {/* Live Stream Connectivity Notice */}
+                    <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[10px] text-emerald-800 flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span>
+                        Stream live connected to <strong>AppConfigRepository().getSpecialsLightStream()</strong>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="kitchen_story" className="space-y-6 mt-0">
