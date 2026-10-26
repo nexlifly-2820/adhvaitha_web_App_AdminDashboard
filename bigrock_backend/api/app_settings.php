@@ -96,9 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         echo json_encode([
             'enabled' => true,
             'duration_ms' => 1200,
-            'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4',
+            'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793005669/adhvaitha_foods_videos/ofnsjz4frs9ur2pzpufe.mp4',
             'caption' => 'Swapping Heritage Kitchens...',
-            'show_spinner' => true
+            'show_spinner' => true,
+            'display_mode' => 'fullscreen',
+            'is_fullscreen' => true
         ]);
     } else {
         echo json_encode(new stdClass());

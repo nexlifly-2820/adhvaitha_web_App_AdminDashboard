@@ -94,6 +94,8 @@ interface TabTransitionVideoConfig {
   video_url: string;
   caption: string;
   show_spinner: boolean;
+  display_mode?: 'fullscreen' | 'card';
+  is_fullscreen?: boolean;
 }
 
 interface SplashVideoConfig { enabled: boolean; video_url: string; title: string }
@@ -237,9 +239,11 @@ export default function ContentManager() {
   const [tabTransitionVideo, setTabTransitionVideo] = useState<TabTransitionVideoConfig>({
     enabled: true,
     duration_ms: 1200,
-    video_url: 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4',
+    video_url: 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793005669/adhvaitha_foods_videos/ofnsjz4frs9ur2pzpufe.mp4',
     caption: 'Swapping Heritage Kitchens...',
-    show_spinner: true
+    show_spinner: true,
+    display_mode: 'fullscreen',
+    is_fullscreen: true
   })
   const [isSimulatingTabSwitch, setIsSimulatingTabSwitch] = useState(false)
   const [splashVideo, setSplashVideo] = useState<SplashVideoConfig>({ enabled: true, video_url: '', title: '' })
@@ -402,9 +406,11 @@ export default function ContentManager() {
         setTabTransitionVideo({
           enabled: tabTransitionDoc.enabled ?? true,
           duration_ms: tabTransitionDoc.duration_ms || 1200,
-          video_url: tabTransitionDoc.video_url || 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4',
+          video_url: tabTransitionDoc.video_url || 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793005669/adhvaitha_foods_videos/ofnsjz4frs9ur2pzpufe.mp4',
           caption: tabTransitionDoc.caption || 'Swapping Heritage Kitchens...',
-          show_spinner: tabTransitionDoc.show_spinner ?? true
+          show_spinner: tabTransitionDoc.show_spinner ?? true,
+          display_mode: tabTransitionDoc.display_mode || 'fullscreen',
+          is_fullscreen: tabTransitionDoc.is_fullscreen ?? true
         });
       }
       if (splashVideoDoc && Object.keys(splashVideoDoc).length > 0) setSplashVideo(splashVideoDoc as SplashVideoConfig)
@@ -1454,12 +1460,62 @@ export default function ContentManager() {
               </p>
             </div>
 
+            {/* Display Mode Switcher (Full Screen vs Card) */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide flex items-center gap-1.5">
+                <Smartphone className="h-4 w-4 text-emerald-700" />
+                Overlay Display Style
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setTabTransitionVideo(prev => ({ ...prev, display_mode: 'fullscreen', is_fullscreen: true }))}
+                  className={`p-3 rounded-lg text-left transition border ${
+                    tabTransitionVideo.display_mode !== 'card'
+                      ? 'bg-emerald-700 text-white border-emerald-800 shadow'
+                      : 'bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs">
+                    <Smartphone className="h-4 w-4" />
+                    <span>Full-Screen Video (Recommended)</span>
+                  </div>
+                  <p className={`text-[11px] mt-1 ${tabTransitionVideo.display_mode !== 'card' ? 'text-emerald-100' : 'text-slate-500'}`}>
+                    Video expands to cover 100% of the mobile screen like splash/loading screen.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTabTransitionVideo(prev => ({ ...prev, display_mode: 'card', is_fullscreen: false }))}
+                  className={`p-3 rounded-lg text-left transition border ${
+                    tabTransitionVideo.display_mode === 'card'
+                      ? 'bg-emerald-700 text-white border-emerald-800 shadow'
+                      : 'bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs">
+                    <Box className="h-4 w-4" />
+                    <span>Floating Gold Card (220x220)</span>
+                  </div>
+                  <p className={`text-[11px] mt-1 ${tabTransitionVideo.display_mode === 'card' ? 'text-emerald-100' : 'text-slate-500'}`}>
+                    Video is shown inside a centered floating card with a rich gold border.
+                  </p>
+                </button>
+              </div>
+            </div>
+
             {/* Direct Cloudinary Video Upload */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Upload Transition Video File (Direct to Cloudinary)
-                </label>
+                <div>
+                  <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    Upload Loading Video (Full-Screen 9:16 Supported)
+                  </label>
+                  <span className="text-[11px] text-emerald-700 font-semibold ml-2">
+                    Up to 100MB MP4 / MOV
+                  </span>
+                </div>
                 {tabTransitionVideo.video_url && (
                   <a 
                     href={tabTransitionVideo.video_url} 
@@ -1468,17 +1524,48 @@ export default function ContentManager() {
                     className="text-xs text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium hover:underline"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
-                    Preview in new tab
+                    Preview URL
                   </a>
                 )}
               </div>
+
               <VideoUpload 
                 value={tabTransitionVideo.video_url} 
                 onChange={url => setTabTransitionVideo(prev => ({ ...prev, video_url: url }))} 
+                aspectRatio="portrait"
+                maxSizeMB={100}
               />
-              <p className="text-xs text-slate-500">
-                Upload any short looping MP4 video (cooking process, gold sparkles, ladle stirring pickle, sweets packaging).
-              </p>
+
+              {/* 1-Click Ready Presets */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                  Quick Presets:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTabTransitionVideo(prev => ({
+                    ...prev,
+                    video_url: 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793005669/adhvaitha_foods_videos/ofnsjz4frs9ur2pzpufe.mp4',
+                    display_mode: 'fullscreen',
+                    is_fullscreen: true
+                  }))}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 font-medium transition flex items-center gap-1 shadow-sm"
+                >
+                  <Smartphone className="h-3 w-3" /> AmbhuJakshi Full-Screen Video
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTabTransitionVideo(prev => ({
+                    ...prev,
+                    video_url: 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793003773/adhvaitha_foods_videos/obgj28qbng83ndziq5k4.mp4',
+                    display_mode: 'fullscreen',
+                    is_fullscreen: true
+                  }))}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-medium transition shadow-sm"
+                >
+                  Carousel Loading Video
+                </button>
+              </div>
             </div>
 
             {/* Direct URL Input */}
@@ -1544,7 +1631,7 @@ export default function ContentManager() {
               </Button>
             </div>
 
-            <div className="w-full max-w-[340px] rounded-[28px] overflow-hidden border-[4px] border-slate-900 shadow-2xl bg-[#F8F5EC] relative h-[440px] flex flex-col justify-between">
+            <div className="w-full max-w-[340px] rounded-[28px] overflow-hidden border-[4px] border-slate-900 shadow-2xl bg-[#F8F5EC] relative h-[480px] flex flex-col justify-between">
               {/* Underlying App Screen */}
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -1562,44 +1649,92 @@ export default function ContentManager() {
               {/* Transition Video Overlay (Shown if active or simulated) */}
               {(isSimulatingTabSwitch || tabTransitionVideo.enabled) && (
                 <div 
-                  className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-4 transition-opacity duration-300 ${
+                  className={`absolute inset-0 z-20 flex flex-col transition-opacity duration-300 ${
                     isSimulatingTabSwitch ? 'opacity-100' : 'opacity-95'
                   }`}
-                  style={{ backgroundColor: 'rgba(24, 69, 59, 0.94)' }}
                 >
-                  {/* Video Box with Gold Border */}
-                  <div 
-                    className="w-44 h-44 rounded-2xl overflow-hidden shadow-2xl relative bg-black shrink-0"
-                    style={{ border: '3px solid #F6C453' }}
-                  >
-                    {tabTransitionVideo.video_url ? (
-                      <video 
-                        src={tabTransitionVideo.video_url} 
-                        autoPlay 
-                        muted 
-                        loop 
-                        playsInline
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
-                        No Video
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Spinner & Caption */}
-                  <div className="mt-4 flex flex-col items-center space-y-2 text-center">
-                    {tabTransitionVideo.show_spinner && (
-                      <Loader2 className="h-5 w-5 text-[#F6C453] animate-spin" />
-                    )}
-                    <p 
-                      className="text-xs font-bold tracking-wide"
-                      style={{ color: '#F6C453', fontFamily: 'serif' }}
+                  {tabTransitionVideo.display_mode === 'card' ? (
+                    /* Centered Floating Gold Card Mode */
+                    <div 
+                      className="absolute inset-0 flex flex-col items-center justify-center p-4"
+                      style={{ backgroundColor: 'rgba(24, 69, 59, 0.94)' }}
                     >
-                      {tabTransitionVideo.caption || 'Swapping Heritage Kitchens...'}
-                    </p>
-                  </div>
+                      <div 
+                        className="w-44 h-44 rounded-2xl overflow-hidden shadow-2xl relative bg-black shrink-0"
+                        style={{ border: '3px solid #F6C453' }}
+                      >
+                        {tabTransitionVideo.video_url ? (
+                          <video 
+                            src={tabTransitionVideo.video_url} 
+                            autoPlay 
+                            muted 
+                            loop 
+                            playsInline
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
+                            No Video
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Spinner & Caption */}
+                      <div className="mt-4 flex flex-col items-center space-y-2 text-center">
+                        {tabTransitionVideo.show_spinner && (
+                          <Loader2 className="h-5 w-5 text-[#F6C453] animate-spin" />
+                        )}
+                        <p 
+                          className="text-xs font-bold tracking-wide"
+                          style={{ color: '#F6C453', fontFamily: 'serif' }}
+                        >
+                          {tabTransitionVideo.caption || 'Swapping Heritage Kitchens...'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* FULL-SCREEN VIDEO MODE (100% COVER) */
+                    <div className="absolute inset-0 z-20 flex flex-col justify-between overflow-hidden bg-black">
+                      {/* Video Player */}
+                      {tabTransitionVideo.video_url ? (
+                        <video 
+                          src={tabTransitionVideo.video_url} 
+                          autoPlay 
+                          muted 
+                          loop 
+                          playsInline
+                          className="absolute inset-0 w-full h-full object-cover z-0"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-xs z-0">
+                          No Video Selected
+                        </div>
+                      )}
+
+                      {/* Dark Gradient Overlay for perfect typography readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/45 z-10 pointer-events-none" />
+
+                      {/* Top Status */}
+                      <div className="relative z-20 p-3 flex justify-between items-center">
+                        <span className="text-[10px] bg-black/60 backdrop-blur-md text-[#F6C453] font-bold px-2 py-0.5 rounded-full border border-[#F6C453]/30 flex items-center gap-1">
+                          <Smartphone className="h-3 w-3" /> Full-Screen Loading Active
+                        </span>
+                      </div>
+
+                      {/* Center / Bottom Spinner & Caption */}
+                      <div className="relative z-20 p-4 pb-6 flex flex-col items-center space-y-2 text-center">
+                        {tabTransitionVideo.show_spinner && (
+                          <Loader2 className="h-6 w-6 text-[#F6C453] animate-spin drop-shadow" />
+                        )}
+                        <p 
+                          className="text-xs font-bold tracking-wide drop-shadow-md max-w-[240px]"
+                          style={{ color: '#F6C453', fontFamily: 'serif' }}
+                        >
+                          {tabTransitionVideo.caption || 'Swapping Heritage Kitchens...'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2572,43 +2707,193 @@ export default function ContentManager() {
             </Card>
           </TabsContent>
 
-          {/* SPLASH VIDEO */}          {/* SPLASH VIDEO */}
+          {/* SPLASH VIDEO */}
           <TabsContent value="splash_video" className="mt-0 space-y-6">
-            <Card>
-              <CardHeader className="pb-4 border-b mb-4">
-                <CardTitle>Splash Screen Video</CardTitle>
-                <CardDescription>Configure the background video played when the app opens.</CardDescription>
+            <Card className="border-orange-200 dark:border-orange-950/60 shadow-sm overflow-hidden">
+              <CardHeader className="pb-4 border-b bg-gradient-to-r from-orange-50/80 via-amber-50/50 to-yellow-50/30 dark:from-slate-900 dark:to-slate-900/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-xl flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                      <Smartphone className="h-5 w-5 text-orange-600" />
+                      Splash Screen Video (App Launch)
+                    </CardTitle>
+                    <span className="bg-orange-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                      Full-Screen 9:16
+                    </span>
+                  </div>
+                  <CardDescription className="mt-1">
+                    Configure the background full-screen video played when users first open the mobile app.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                    splashVideo.enabled 
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' 
+                      : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                  }`}>
+                    <span className={`h-2 w-2 rounded-full ${splashVideo.enabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                    {splashVideo.enabled ? 'Splash Video Active' : 'Disabled'}
+                  </span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center space-x-3">
-                  <input 
-                    type="checkbox" 
-                    id="enable-splash-video" 
-                    className="w-5 h-5 accent-orange-600"
-                    checked={splashVideo.enabled} 
-                    onChange={e => setSplashVideo(prev => ({ ...prev, enabled: e.target.checked }))} 
-                  />
-                  <label htmlFor="enable-splash-video" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Enable Splash Screen Video
-                  </label>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Video URL / Asset Path</label>
-                  <VideoUpload 
-                    value={splashVideo.video_url} 
-                    onChange={url => setSplashVideo(prev => ({ ...prev, video_url: url }))} 
-                  />
-                  <p className="text-xs text-slate-500">Provide a network CDN URL or upload a video file.</p>
-                </div>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  {/* Left Column: Form & Upload */}
+                  <div className="lg:col-span-7 space-y-6">
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+                      <div className="space-y-0.5">
+                        <label htmlFor="enable-splash-video" className="text-sm font-bold text-slate-900 dark:text-slate-100 cursor-pointer">
+                          Enable Splash Screen Video
+                        </label>
+                        <p className="text-xs text-slate-500">
+                          Plays the full-screen branding video before presenting the home feed.
+                        </p>
+                      </div>
+                      <input 
+                        type="checkbox" 
+                        id="enable-splash-video" 
+                        className="w-5 h-5 accent-orange-600 cursor-pointer"
+                        checked={splashVideo.enabled} 
+                        onChange={e => setSplashVideo(prev => ({ ...prev, enabled: e.target.checked }))} 
+                      />
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            Upload Splash Video (Full-Screen 9:16 Supported)
+                          </label>
+                          <span className="text-[11px] text-orange-600 font-semibold ml-2">
+                            Up to 100MB MP4 / MOV
+                          </span>
+                        </div>
+                        {splashVideo.video_url && (
+                          <a 
+                            href={splashVideo.video_url} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-medium hover:underline"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Preview URL
+                          </a>
+                        )}
+                      </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Video Title / Caption</label>
-                  <Input 
-                    placeholder="e.g. AmbhuJakshi Royal Collection" 
-                    value={splashVideo.title} 
-                    onChange={e => setSplashVideo(prev => ({ ...prev, title: e.target.value }))} 
-                  />
+                      <VideoUpload 
+                        value={splashVideo.video_url} 
+                        onChange={url => setSplashVideo(prev => ({ ...prev, video_url: url }))} 
+                        aspectRatio="portrait"
+                        maxSizeMB={100}
+                      />
+
+                      {/* 1-Click Quick Presets */}
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                          Presets:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSplashVideo(prev => ({
+                            ...prev,
+                            video_url: 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793005669/adhvaitha_foods_videos/ofnsjz4frs9ur2pzpufe.mp4',
+                            title: 'AmbhuJakshi Royal Collection'
+                          }))}
+                          className="px-2.5 py-1 text-xs rounded-lg border border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 hover:bg-orange-100 font-medium transition flex items-center gap-1 shadow-sm"
+                        >
+                          <Smartphone className="h-3 w-3" /> AmbhuJakshi Full-Screen Video
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSplashVideo(prev => ({
+                            ...prev,
+                            video_url: 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793003773/adhvaitha_foods_videos/obgj28qbng83ndziq5k4.mp4',
+                            title: 'Heritage Craft Video'
+                          }))}
+                          className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-medium transition shadow-sm"
+                        >
+                          Carousel Video
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-900 dark:text-slate-100">Splash Video Title / Caption</label>
+                      <Input 
+                        placeholder="e.g. AmbhuJakshi Royal Collection" 
+                        value={splashVideo.title} 
+                        onChange={e => setSplashVideo(prev => ({ ...prev, title: e.target.value }))} 
+                        className="text-xs font-medium"
+                      />
+                    </div>
+
+                    <div className="pt-4 border-t flex items-center justify-between">
+                      <div className="text-xs text-slate-500">
+                        Updates the app startup splash video in BigRock database.
+                      </div>
+                      <Button 
+                        type="button" 
+                        disabled={isSaving}
+                        onClick={() => handleSaveTab('splash_video', splashVideo)}
+                        className="bg-orange-600 hover:bg-orange-700 text-white font-medium shadow"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {isSaving ? 'Saving...' : 'Save Splash Video'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Live Mobile Splash Screen Simulation */}
+                  <div className="lg:col-span-5 flex flex-col items-center">
+                    <div className="w-full text-center mb-2 flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Splash Screen Mobile Preview
+                      </span>
+                      <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-bold px-2 py-0.5 rounded-full">
+                        Full-Screen 9:16
+                      </span>
+                    </div>
+
+                    <div className="w-full max-w-[320px] rounded-[32px] overflow-hidden border-[5px] border-slate-900 shadow-2xl bg-black relative h-[500px] flex flex-col justify-between">
+                      {/* Fullscreen Video */}
+                      {splashVideo.video_url ? (
+                        <video 
+                          src={splashVideo.video_url} 
+                          autoPlay 
+                          muted 
+                          loop 
+                          playsInline
+                          className="absolute inset-0 w-full h-full object-cover z-0"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 text-xs z-0 p-4 text-center">
+                          <Smartphone className="h-10 w-10 mb-2 opacity-40 text-orange-500" />
+                          <span>No Video Uploaded</span>
+                          <span className="text-[10px] text-slate-600 mt-1">Upload a vertical 9:16 full-screen video</span>
+                        </div>
+                      )}
+
+                      {/* Top Camera Notch */}
+                      <div className="relative z-20 pt-2.5 flex justify-center pointer-events-none">
+                        <div className="h-2 w-16 bg-white/30 rounded-full" />
+                      </div>
+
+                      {/* Gradient Overlay for Title */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/40 z-10 pointer-events-none" />
+
+                      {/* Bottom Title & Loader */}
+                      <div className="relative z-20 p-5 pb-7 flex flex-col items-center space-y-2 text-center">
+                        <Loader2 className="h-6 w-6 text-orange-400 animate-spin" />
+                        <h3 className="text-sm font-bold text-white tracking-wide">
+                          {splashVideo.title || 'AmbhuJakshi Royal Collection'}
+                        </h3>
+                        <span className="text-[10px] text-white/70 tracking-widest uppercase font-semibold">
+                          Pure Authentic Flavours
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

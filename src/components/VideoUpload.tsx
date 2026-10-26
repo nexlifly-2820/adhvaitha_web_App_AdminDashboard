@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { 
   UploadCloud, 
@@ -14,7 +15,13 @@ import {
   Maximize2, 
   X, 
   Trash2,
-  ExternalLink 
+  ExternalLink,
+  Smartphone,
+  Monitor,
+  Maximize,
+  Minimize,
+  Link as LinkIcon,
+  Check
 } from 'lucide-react'
 
 interface VideoUploadProps {
@@ -23,9 +30,19 @@ interface VideoUploadProps {
   folder?: string;
   className?: string;
   maxSizeMB?: number;
+  aspectRatio?: 'landscape' | 'portrait' | 'auto';
+  label?: string;
 }
 
-export function VideoUpload({ value, onChange, folder = 'uploads/videos', className = '', maxSizeMB = 50 }: VideoUploadProps) {
+export function VideoUpload({ 
+  value, 
+  onChange, 
+  folder = 'uploads/videos', 
+  className = '', 
+  maxSizeMB = 100,
+  aspectRatio = 'auto',
+  label
+}: VideoUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [videoError, setVideoError] = useState(false)
@@ -33,9 +50,25 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
+  const [isVertical, setIsVertical] = useState(false)
+  const [currentAspect, setCurrentAspect] = useState<'landscape' | 'portrait'>(
+    aspectRatio === 'portrait' ? 'portrait' : 'landscape'
+  )
+  const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover')
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false)
+  const [urlInputValue, setUrlInputValue] = useState('')
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  // Sync aspect ratio when prop changes
+  useEffect(() => {
+    if (aspectRatio === 'portrait') {
+      setCurrentAspect('portrait')
+    } else if (aspectRatio === 'landscape') {
+      setCurrentAspect('landscape')
+    }
+  }, [aspectRatio])
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -54,15 +87,31 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
     setIsMuted(videoRef.current.muted);
   }
 
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const v = e.currentTarget;
+    if (v.videoHeight && v.videoWidth) {
+      const isVert = v.videoHeight > v.videoWidth;
+      setIsVertical(isVert);
+      // Auto-switch to portrait for full screen videos unless explicitly forced by prop
+      if (aspectRatio === 'auto') {
+        setCurrentAspect(isVert ? 'portrait' : 'landscape');
+      }
+    }
+  }
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate size
-    if (file.size > maxSizeMB * 1024 * 1024) {
-      toast.error(`Video must be less than ${maxSizeMB}MB`)
-      setErrorMessage(`Video must be less than ${maxSizeMB}MB`)
-      return
+    const fileSizeMB = file.size / (1024 * 1024);
+
+    // Validate size (defaults to 100MB standard Cloudinary unsigned limit)
+    if (fileSizeMB > maxSizeMB) {
+      const msg = `Selected video is ${fileSizeMB.toFixed(1)}MB. Limit is ${maxSizeMB}MB. For best mobile app performance, please compress under 100MB or trim duration.`;
+      toast.error(msg);
+      setErrorMessage(msg);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
     }
 
     setIsUploading(true)
@@ -74,7 +123,7 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
       if (!cloudName || !uploadPreset) {
-        throw new Error('Cloudinary environment variables are missing. Please configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in Vercel.');
+        throw new Error('Cloudinary environment variables missing. Please configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME & NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.');
       }
 
       const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`;
@@ -84,7 +133,7 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
       formData.append('upload_preset', uploadPreset);
       formData.append('folder', 'adhvaitha_foods_videos');
 
-      // Use XMLHttpRequest to track upload progress accurately
+      // Use XMLHttpRequest to track live upload progress
       const xhr = new XMLHttpRequest();
       xhr.open('POST', CLOUDINARY_URL, true);
 
@@ -102,22 +151,28 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
         if (xhr.status >= 200 && xhr.status < 300) {
           const response = JSON.parse(xhr.responseText);
           onChange(response.secure_url);
-          toast.success('Video uploaded perfectly to Cloudinary!');
+          setVideoError(false);
+          toast.success('Video uploaded successfully to Cloudinary!');
         } else {
           let errorMsg = 'Failed to upload video';
           try {
-            errorMsg = JSON.parse(xhr.responseText).error.message;
+            const errJson = JSON.parse(xhr.responseText);
+            errorMsg = errJson.error?.message || xhr.statusText;
           } catch(e) {}
+          
+          if (errorMsg.includes('File size too large')) {
+            errorMsg = 'Cloudinary size limit reached (max 100MB). Please compress the video or export at 1080p 30fps.';
+          }
           setErrorMessage(`Cloudinary Error: ${errorMsg}`);
-          toast.error('Cloudinary Error: ' + errorMsg);
+          toast.error(errorMsg);
         }
       };
 
       xhr.onerror = () => {
         setIsUploading(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
-        setErrorMessage('Network error during upload to Cloudinary');
-        toast.error('Upload failed. Network error.');
+        setErrorMessage('Network error during upload to Cloudinary. Please check your connection.');
+        toast.error('Upload failed due to network error.');
       };
 
       xhr.send(formData);
@@ -131,187 +186,330 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
     }
   }
 
+  const handleApplyUrl = () => {
+    if (!urlInputValue.trim()) return;
+    onChange(urlInputValue.trim());
+    setIsUrlModalOpen(false);
+    setUrlInputValue('');
+    setVideoError(false);
+    toast.success('Video URL updated successfully!');
+  };
+
   const videoSrc = value
     ? (value.startsWith('assets/')
         ? `/${value}`
         : (value.startsWith('/') ? `https://adhvaithafoods.in${value}` : value))
     : '';
 
+  const isPortraitMode = currentAspect === 'portrait';
+
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
+      {/* Hidden file input supporting full-screen and standard formats */}
       <input
         type="file"
-        accept="video/*"
+        accept="video/*,video/mp4,video/quicktime,video/webm,video/x-m4v,.mp4,.mov,.webm,.m4v"
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
       />
       
       {value ? (
-        <div className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 aspect-video bg-black flex items-center justify-center shadow-sm">
-          <video 
-            ref={videoRef}
-            src={videoSrc} 
-            className={`object-cover w-full h-full ${videoError ? 'hidden' : 'block'}`} 
-            autoPlay 
-            muted={isMuted} 
-            loop 
-            playsInline
-            onError={() => setVideoError(true)}
-            onLoadStart={() => setVideoError(false)}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
+        <div className="flex flex-col items-center">
+          {/* Main Video Card Container with dynamic Aspect Ratio */}
+          <div 
+            className={`relative group overflow-hidden bg-black flex items-center justify-center shadow-lg transition-all duration-300 ${
+              isPortraitMode 
+                ? 'w-full max-w-[270px] aspect-[9/16] rounded-[24px] border-[3px] border-slate-800 dark:border-slate-700 shadow-2xl' 
+                : 'w-full aspect-video rounded-xl border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            {/* Mobile phone camera notch indicator for portrait full-screen */}
+            {isPortraitMode && (
+              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-20 h-1.5 w-14 bg-white/30 rounded-full pointer-events-none" />
+            )}
 
-          {/* Fallback if video cannot load */}
-          {videoError && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-100 dark:bg-slate-900 p-4">
-              <VideoIcon className="h-10 w-10 mb-2 opacity-50 text-orange-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Video Preview Unavailable</span>
-              <span className="text-xs text-center px-4 mt-1 mb-3 text-slate-500">
-                URL may be offline or local asset. Click below to upload a fresh MP4 video.
-              </span>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="bg-white dark:bg-slate-800 shadow-sm"
-              >
-                {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <UploadCloud className="h-4 w-4 mr-1" />}
-                Upload New Video
-              </Button>
-            </div>
-          )}
+            <video 
+              ref={videoRef}
+              src={videoSrc} 
+              className={`w-full h-full transition-all duration-200 ${
+                fitMode === 'cover' ? 'object-cover' : 'object-contain'
+              } ${videoError ? 'hidden' : 'block'}`} 
+              autoPlay 
+              muted={isMuted} 
+              loop 
+              playsInline
+              onLoadedMetadata={handleLoadedMetadata}
+              onError={() => setVideoError(true)}
+              onLoadStart={() => setVideoError(false)}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+            />
 
-          {/* Interactive Player Controls Overlay */}
-          {!videoError && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/30 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
-              {/* Top controls: Badges & Fullscreen Preview */}
-              <div className="flex items-center justify-between">
-                <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/20">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Preview Mode
+            {/* Fallback if video cannot load */}
+            {videoError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-100 dark:bg-slate-900 p-4 z-10">
+                <VideoIcon className="h-10 w-10 mb-2 opacity-50 text-orange-500" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Video Preview Unavailable</span>
+                <span className="text-xs text-center px-4 mt-1 mb-3 text-slate-500">
+                  URL may be an internal Flutter asset or requires network access.
                 </span>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setIsPreviewModalOpen(true)}
-                    className="h-8 w-8 text-white bg-black/50 hover:bg-black/80 hover:text-white rounded-lg border border-white/20"
-                    title="Fullscreen Preview with Controls"
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="bg-white dark:bg-slate-800 shadow-sm text-xs"
                   >
-                    <Maximize2 className="h-4 w-4" />
+                    {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <UploadCloud className="h-3.5 w-3.5 mr-1" />}
+                    Upload New File
                   </Button>
                   <Button
                     type="button"
-                    size="icon"
                     variant="ghost"
-                    onClick={() => onChange('')}
-                    className="h-8 w-8 text-white bg-black/50 hover:bg-red-600/80 hover:text-white rounded-lg border border-white/20"
-                    title="Remove Video"
+                    size="sm"
+                    onClick={() => {
+                      setUrlInputValue(value);
+                      setIsUrlModalOpen(true);
+                    }}
+                    className="text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    Edit URL
                   </Button>
                 </div>
               </div>
+            )}
 
-              {/* Bottom controls: Play/Pause, Mute/Unmute, Change Video */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={togglePlay}
-                    className="h-8 w-8 text-white bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/30 transition-all"
-                    title={isPlaying ? "Pause" : "Play"}
-                  >
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current ml-0.5" />}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={toggleMute}
-                    className="h-8 w-8 text-white bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/30 transition-all"
-                    title={isMuted ? "Unmute Audio" : "Mute Audio"}
-                  >
-                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                  </Button>
-                  <span className="text-[11px] text-white/80 font-medium hidden sm:inline">
-                    {isMuted ? 'Muted' : 'Sound On'}
+            {/* Interactive Player Controls Overlay */}
+            {!videoError && (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3 z-10">
+                {/* Top controls: Badges & Aspect switchers */}
+                <div className="flex items-center justify-between gap-1">
+                  <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/20">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    {isPortraitMode ? '9:16 Full Screen' : '16:9 Landscape'}
                   </span>
+                  
+                  <div className="flex items-center gap-1">
+                    {/* Aspect Ratio Switcher */}
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setCurrentAspect(prev => prev === 'portrait' ? 'landscape' : 'portrait')}
+                      className="h-7 w-7 text-white bg-black/50 hover:bg-black/80 hover:text-white rounded-lg border border-white/20"
+                      title={isPortraitMode ? "Switch to 16:9 Landscape Box" : "Switch to 9:16 Full-Screen Mobile Box"}
+                    >
+                      {isPortraitMode ? <Monitor className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
+                    </Button>
+
+                    {/* Fit Mode Switcher */}
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setFitMode(prev => prev === 'cover' ? 'contain' : 'cover')}
+                      className="h-7 w-7 text-white bg-black/50 hover:bg-black/80 hover:text-white rounded-lg border border-white/20 text-[10px] font-bold"
+                      title={fitMode === 'cover' ? "Switch to Fit (No Crop)" : "Switch to Fill (Cover Screen)"}
+                    >
+                      {fitMode === 'cover' ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
+                    </Button>
+
+                    {/* Fullscreen Modal Preview */}
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setIsPreviewModalOpen(true)}
+                      className="h-7 w-7 text-white bg-black/50 hover:bg-black/80 hover:text-white rounded-lg border border-white/20"
+                      title="Fullscreen Preview with Controls"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    </Button>
+
+                    {/* Remove Video */}
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => onChange('')}
+                      className="h-7 w-7 text-white bg-black/50 hover:bg-red-600/80 hover:text-white rounded-lg border border-white/20"
+                      title="Remove Video"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
 
-                <Button 
-                  type="button" 
-                  variant="secondary" 
-                  size="sm" 
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="bg-white/90 hover:bg-white text-slate-900 font-semibold text-xs shadow-md"
-                >
-                  {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <UploadCloud className="h-3.5 w-3.5 mr-1" />}
-                  {isUploading ? `${uploadProgress}%` : 'Change Video'}
-                </Button>
+                {/* Bottom controls: Play/Pause, Mute/Unmute, Change Video */}
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={togglePlay}
+                      className="h-7 w-7 text-white bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/30 transition-all"
+                      title={isPlaying ? "Pause" : "Play"}
+                    >
+                      {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current ml-0.5" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={toggleMute}
+                      className="h-7 w-7 text-white bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/30 transition-all"
+                      title={isMuted ? "Unmute Audio" : "Mute Audio"}
+                    >
+                      {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="h-7 px-2.5 bg-white/90 hover:bg-white text-slate-900 font-semibold text-xs shadow-md"
+                    >
+                      {isUploading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <UploadCloud className="h-3 w-3 mr-1" />}
+                      {isUploading ? `${uploadProgress}%` : 'Replace'}
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Quick toggle bar below video for easy switching */}
+          <div className="mt-2 flex items-center justify-between w-full max-w-[270px] text-[11px] text-slate-500">
+            <button
+              type="button"
+              onClick={() => setCurrentAspect(prev => prev === 'portrait' ? 'landscape' : 'portrait')}
+              className="hover:text-slate-900 dark:hover:text-white flex items-center gap-1 font-medium transition"
+            >
+              {isPortraitMode ? <Monitor className="h-3 w-3" /> : <Smartphone className="h-3 w-3" />}
+              {isPortraitMode ? 'View as 16:9' : 'View as 9:16 Full Screen'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setUrlInputValue(value);
+                setIsUrlModalOpen(true);
+              }}
+              className="hover:text-slate-900 dark:hover:text-white flex items-center gap-1 font-medium transition"
+            >
+              <LinkIcon className="h-3 w-3" />
+              Edit URL
+            </button>
+          </div>
         </div>
       ) : (
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="h-28 border-dashed border-2 border-orange-300 dark:border-orange-800 text-slate-600 dark:text-slate-300 hover:text-orange-600 hover:border-orange-500 bg-orange-50/40 dark:bg-slate-900/50 rounded-xl transition-all"
-        >
-          {isUploading ? (
-            <div className="flex flex-col items-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin text-orange-600" />
-              <span className="font-semibold text-sm">Uploading Video {uploadProgress}% to Cloudinary...</span>
-              <span className="text-xs text-slate-400">Please keep this window open</span>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-950 flex items-center justify-center text-orange-600">
-                <UploadCloud className="h-5 w-5" />
+        /* Empty Upload Dropzone */
+        <div className="flex flex-col gap-2">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="min-h-[140px] border-dashed border-2 border-orange-300 dark:border-orange-800 text-slate-600 dark:text-slate-300 hover:text-orange-600 hover:border-orange-500 bg-orange-50/40 dark:bg-slate-900/50 rounded-2xl transition-all p-4 flex flex-col justify-center"
+          >
+            {isUploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+                <span className="font-semibold text-sm">Uploading Video to Cloudinary ({uploadProgress}%)...</span>
+                <div className="w-48 bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-orange-600 h-full transition-all duration-150"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-slate-400">Please keep this page open until complete</span>
               </div>
-              <span className="font-semibold text-sm">Click to Upload MP4 Video</span>
-              <span className="text-xs text-slate-400">Uploads directly to Cloudinary (up to {maxSizeMB}MB)</span>
-            </div>
-          )}
-        </Button>
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="h-11 w-11 rounded-full bg-orange-100 dark:bg-orange-950 flex items-center justify-center text-orange-600 shadow-sm">
+                  <UploadCloud className="h-6 w-6" />
+                </div>
+                <div>
+                  <span className="font-bold text-sm block text-slate-800 dark:text-slate-200">
+                    Click to Upload Video (Full-Screen 9:16 & 16:9)
+                  </span>
+                  <span className="text-xs text-slate-500 block mt-0.5">
+                    Supports high-res mobile MP4, MOV, WebM (up to {maxSizeMB}MB)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Smartphone className="h-3 w-3" /> Full-Screen Mobile Ready
+                  </span>
+                  <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">
+                    Direct Cloudinary CDN
+                  </span>
+                </div>
+              </div>
+            )}
+          </Button>
+
+          {/* Quick Option to Paste Direct Video URL */}
+          <div className="flex items-center justify-between px-1 text-xs text-slate-500">
+            <span>Already have a Cloudinary or CDN video URL?</span>
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => {
+                setUrlInputValue('');
+                setIsUrlModalOpen(true);
+              }}
+              className="text-xs text-orange-600 dark:text-orange-400 h-auto p-0 font-semibold hover:underline"
+            >
+              Paste Direct URL
+            </Button>
+          </div>
+        </div>
       )}
       
       {/* Upload Error Banner */}
       {errorMessage && (
-        <div className="text-xs text-red-600 bg-red-50 dark:bg-red-950/50 p-2.5 rounded-lg border border-red-200 dark:border-red-900 font-medium break-words">
-          Upload Error: {errorMessage}
+        <div className="text-xs text-red-600 bg-red-50 dark:bg-red-950/50 p-3 rounded-xl border border-red-200 dark:border-red-900 font-medium break-words space-y-1">
+          <div className="font-bold flex items-center gap-1.5">
+            <X className="h-3.5 w-3.5" /> Upload Failed
+          </div>
+          <div>{errorMessage}</div>
+          <div className="text-[11px] text-slate-500 pt-1">
+            Tip: You can also paste an existing Cloudinary or CDN URL directly using the "Paste Direct URL" button.
+          </div>
         </div>
       )}
 
       {/* FULLSCREEN PREVIEW MODAL */}
       {isPreviewModalOpen && value && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="relative w-full max-w-4xl bg-slate-900 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-950">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className={`relative w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col ${
+            isPortraitMode ? 'max-w-md' : 'max-w-4xl'
+          }`}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-950">
               <div className="flex items-center gap-2">
                 <VideoIcon className="h-4 w-4 text-orange-500" />
-                <span className="text-sm font-semibold text-white">Full Video Player Preview</span>
+                <span className="text-sm font-semibold text-white">
+                  {isPortraitMode ? '9:16 Full-Screen Mobile Preview' : '16:9 Video Preview'}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <a 
                   href={videoSrc} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="text-xs text-slate-400 hover:text-white flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700"
+                  className="text-xs text-slate-400 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  Open Raw URL
+                  Raw URL
                 </a>
                 <Button
                   size="icon"
@@ -324,25 +522,74 @@ export function VideoUpload({ value, onChange, folder = 'uploads/videos', classN
               </div>
             </div>
             
-            <div className="aspect-video bg-black flex items-center justify-center">
+            <div className={`bg-black flex items-center justify-center ${
+              isPortraitMode ? 'aspect-[9/16] max-h-[75vh]' : 'aspect-video max-h-[70vh]'
+            }`}>
               <video 
                 src={videoSrc} 
                 controls 
                 autoPlay 
                 playsInline
-                className="w-full h-full max-h-[70vh] object-contain"
+                className="w-full h-full object-contain"
               />
             </div>
 
-            <div className="p-3 bg-slate-950 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-              <span className="truncate max-w-md font-mono text-[11px] text-slate-300">{value}</span>
+            <div className="p-3 bg-slate-950 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between gap-2">
+              <span className="truncate max-w-xs font-mono text-[11px] text-slate-300">{value}</span>
               <Button 
                 size="sm" 
                 variant="secondary" 
                 onClick={() => setIsPreviewModalOpen(false)}
-                className="text-xs"
+                className="text-xs shrink-0"
               >
                 Close Preview
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DIRECT URL MODAL */}
+      {isUrlModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 w-full max-w-md shadow-2xl space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <LinkIcon className="h-4 w-4 text-orange-600" />
+                Set Direct Video URL
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Paste any Cloudinary, CDN, or local asset video link (e.g. assets/images/ambhujakshi_loading_screen.mp4)
+              </p>
+            </div>
+
+            <Input 
+              placeholder="https://res.cloudinary.com/... or assets/images/...mp4" 
+              value={urlInputValue}
+              onChange={e => setUrlInputValue(e.target.value)}
+              className="text-xs font-mono"
+              autoFocus
+            />
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsUrlModalOpen(false)}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleApplyUrl}
+                disabled={!urlInputValue.trim()}
+                className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+              >
+                <Check className="h-3.5 w-3.5 mr-1" />
+                Apply Video URL
               </Button>
             </div>
           </div>
