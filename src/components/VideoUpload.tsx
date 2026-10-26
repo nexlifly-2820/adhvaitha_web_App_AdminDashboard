@@ -21,7 +21,8 @@ import {
   Maximize,
   Minimize,
   Link as LinkIcon,
-  Check
+  Check,
+  Sparkles
 } from 'lucide-react'
 
 interface VideoUploadProps {
@@ -60,6 +61,9 @@ export function VideoUpload({
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  // Detect if current media is an animated GIF
+  const isGif = Boolean(value && (value.toLowerCase().endsWith('.gif') || value.toLowerCase().includes('.gif')));
 
   // Sync aspect ratio when prop changes
   useEffect(() => {
@@ -107,7 +111,7 @@ export function VideoUpload({
 
     // Validate size (defaults to 100MB standard Cloudinary unsigned limit)
     if (fileSizeMB > maxSizeMB) {
-      const msg = `Selected video is ${fileSizeMB.toFixed(1)}MB. Limit is ${maxSizeMB}MB. For best mobile app performance, please compress under 100MB or trim duration.`;
+      const msg = `Selected file is ${fileSizeMB.toFixed(1)}MB. Limit is ${maxSizeMB}MB. For best mobile app performance, please compress under 100MB.`;
       toast.error(msg);
       setErrorMessage(msg);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -126,7 +130,8 @@ export function VideoUpload({
         throw new Error('Cloudinary environment variables missing. Please configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME & NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.');
       }
 
-      const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`;
+      // Use /auto/upload to handle both MP4/MOV videos AND animated GIFs (.gif) seamlessly
+      const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
       
       const formData = new FormData();
       formData.append('file', file);
@@ -152,16 +157,16 @@ export function VideoUpload({
           const response = JSON.parse(xhr.responseText);
           onChange(response.secure_url);
           setVideoError(false);
-          toast.success('Video uploaded successfully to Cloudinary!');
+          toast.success(file.name.endsWith('.gif') ? 'Full-screen GIF animation uploaded to Cloudinary!' : 'Video uploaded successfully to Cloudinary!');
         } else {
-          let errorMsg = 'Failed to upload video';
+          let errorMsg = 'Failed to upload file';
           try {
             const errJson = JSON.parse(xhr.responseText);
             errorMsg = errJson.error?.message || xhr.statusText;
           } catch(e) {}
           
           if (errorMsg.includes('File size too large')) {
-            errorMsg = 'Cloudinary size limit reached (max 100MB). Please compress the video or export at 1080p 30fps.';
+            errorMsg = 'Cloudinary size limit reached (max 100MB). Please compress the video or export under 100MB.';
           }
           setErrorMessage(`Cloudinary Error: ${errorMsg}`);
           toast.error(errorMsg);
@@ -192,7 +197,7 @@ export function VideoUpload({
     setIsUrlModalOpen(false);
     setUrlInputValue('');
     setVideoError(false);
-    toast.success('Video URL updated successfully!');
+    toast.success('Media URL updated successfully!');
   };
 
   const videoSrc = value
@@ -205,10 +210,10 @@ export function VideoUpload({
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      {/* Hidden file input supporting full-screen and standard formats */}
+      {/* Hidden file input supporting full-screen videos (MP4, MOV, WebM) AND animated GIFs */}
       <input
         type="file"
-        accept="video/*,video/mp4,video/quicktime,video/webm,video/x-m4v,.mp4,.mov,.webm,.m4v"
+        accept="video/*,image/gif,.mp4,.mov,.webm,.m4v,.gif"
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
@@ -216,7 +221,7 @@ export function VideoUpload({
       
       {value ? (
         <div className="flex flex-col items-center">
-          {/* Main Video Card Container with dynamic Aspect Ratio */}
+          {/* Main Video/GIF Card Container with dynamic Aspect Ratio */}
           <div 
             className={`relative group overflow-hidden bg-black flex items-center justify-center shadow-lg transition-all duration-300 ${
               isPortraitMode 
@@ -229,28 +234,50 @@ export function VideoUpload({
               <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-20 h-1.5 w-14 bg-white/30 rounded-full pointer-events-none" />
             )}
 
-            <video 
-              ref={videoRef}
-              src={videoSrc} 
-              className={`w-full h-full transition-all duration-200 ${
-                fitMode === 'cover' ? 'object-cover' : 'object-contain'
-              } ${videoError ? 'hidden' : 'block'}`} 
-              autoPlay 
-              muted={isMuted} 
-              loop 
-              playsInline
-              onLoadedMetadata={handleLoadedMetadata}
-              onError={() => setVideoError(true)}
-              onLoadStart={() => setVideoError(false)}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-            />
+            {isGif ? (
+              <img 
+                src={videoSrc}
+                alt="Full-Screen Animation"
+                className={`w-full h-full transition-all duration-200 ${
+                  fitMode === 'cover' ? 'object-cover' : 'object-contain'
+                } ${videoError ? 'hidden' : 'block'}`}
+                onError={() => setVideoError(true)}
+                onLoad={(e) => {
+                  setVideoError(false);
+                  const img = e.currentTarget;
+                  if (img.naturalHeight && img.naturalWidth) {
+                    const isVert = img.naturalHeight > img.naturalWidth;
+                    setIsVertical(isVert);
+                    if (aspectRatio === 'auto') {
+                      setCurrentAspect(isVert ? 'portrait' : 'landscape');
+                    }
+                  }
+                }}
+              />
+            ) : (
+              <video 
+                ref={videoRef}
+                src={videoSrc} 
+                className={`w-full h-full transition-all duration-200 ${
+                  fitMode === 'cover' ? 'object-cover' : 'object-contain'
+                } ${videoError ? 'hidden' : 'block'}`} 
+                autoPlay 
+                muted={isMuted} 
+                loop 
+                playsInline
+                onLoadedMetadata={handleLoadedMetadata}
+                onError={() => setVideoError(true)}
+                onLoadStart={() => setVideoError(false)}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+            )}
 
-            {/* Fallback if video cannot load */}
+            {/* Fallback if media cannot load */}
             {videoError && (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-100 dark:bg-slate-900 p-4 z-10">
                 <VideoIcon className="h-10 w-10 mb-2 opacity-50 text-orange-500" />
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Video Preview Unavailable</span>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Media Preview Unavailable</span>
                 <span className="text-xs text-center px-4 mt-1 mb-3 text-slate-500">
                   URL may be an internal Flutter asset or requires network access.
                 </span>
@@ -289,7 +316,7 @@ export function VideoUpload({
                 <div className="flex items-center justify-between gap-1">
                   <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/20">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    {isPortraitMode ? '9:16 Full Screen' : '16:9 Landscape'}
+                    {isGif ? '✨ Animated GIF' : (isPortraitMode ? '9:16 Full Screen' : '16:9 Landscape')}
                   </span>
                   
                   <div className="flex items-center gap-1">
@@ -329,14 +356,14 @@ export function VideoUpload({
                       <Maximize2 className="h-3.5 w-3.5" />
                     </Button>
 
-                    {/* Remove Video */}
+                    {/* Remove Media */}
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
                       onClick={() => onChange('')}
                       className="h-7 w-7 text-white bg-black/50 hover:bg-red-600/80 hover:text-white rounded-lg border border-white/20"
-                      title="Remove Video"
+                      title="Remove Media"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -345,28 +372,34 @@ export function VideoUpload({
 
                 {/* Bottom controls: Play/Pause, Mute/Unmute, Change Video */}
                 <div className="flex items-center justify-between gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={togglePlay}
-                      className="h-7 w-7 text-white bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/30 transition-all"
-                      title={isPlaying ? "Pause" : "Play"}
-                    >
-                      {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current ml-0.5" />}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={toggleMute}
-                      className="h-7 w-7 text-white bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/30 transition-all"
-                      title={isMuted ? "Unmute Audio" : "Mute Audio"}
-                    >
-                      {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-                    </Button>
-                  </div>
+                  {!isGif ? (
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={togglePlay}
+                        className="h-7 w-7 text-white bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/30 transition-all"
+                        title={isPlaying ? "Pause" : "Play"}
+                      >
+                        {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current ml-0.5" />}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={toggleMute}
+                        className="h-7 w-7 text-white bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/30 transition-all"
+                        title={isMuted ? "Unmute Audio" : "Mute Audio"}
+                      >
+                        {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-white/90 font-medium px-2 py-0.5 bg-black/50 rounded-full border border-white/20 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-amber-400" /> Auto-Looping Animation
+                    </span>
+                  )}
 
                   <div className="flex items-center gap-1.5">
                     <Button 
@@ -378,7 +411,7 @@ export function VideoUpload({
                       className="h-7 px-2.5 bg-white/90 hover:bg-white text-slate-900 font-semibold text-xs shadow-md"
                     >
                       {isUploading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <UploadCloud className="h-3 w-3 mr-1" />}
-                      {isUploading ? `${uploadProgress}%` : 'Replace'}
+                      {isUploading ? `${uploadProgress}%` : 'Replace File'}
                     </Button>
                   </div>
                 </div>
@@ -422,7 +455,7 @@ export function VideoUpload({
             {isUploading ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-                <span className="font-semibold text-sm">Uploading Video to Cloudinary ({uploadProgress}%)...</span>
+                <span className="font-semibold text-sm">Uploading File to Cloudinary ({uploadProgress}%)...</span>
                 <div className="w-48 bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                   <div 
                     className="bg-orange-600 h-full transition-all duration-150"
@@ -438,18 +471,21 @@ export function VideoUpload({
                 </div>
                 <div>
                   <span className="font-bold text-sm block text-slate-800 dark:text-slate-200">
-                    Click to Upload Video (Full-Screen 9:16 & 16:9)
+                    Click to Upload Video or Animated GIF (Full-Screen 9:16 & 16:9)
                   </span>
                   <span className="text-xs text-slate-500 block mt-0.5">
-                    Supports high-res mobile MP4, MOV, WebM (up to {maxSizeMB}MB)
+                    Supports high-res mobile MP4, MOV, WebM, and GIF (up to {maxSizeMB}MB)
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Smartphone className="h-3 w-3" /> Full-Screen Mobile Ready
+                    <Smartphone className="h-3 w-3" /> Full-Screen 9:16 Ready
+                  </span>
+                  <span className="text-[10px] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-semibold px-2 py-0.5 rounded-full">
+                    GIF & MP4 Auto-Detect
                   </span>
                   <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">
-                    Direct Cloudinary CDN
+                    Cloudinary CDN
                   </span>
                 </div>
               </div>
@@ -458,7 +494,7 @@ export function VideoUpload({
 
           {/* Quick Option to Paste Direct Video URL */}
           <div className="flex items-center justify-between px-1 text-xs text-slate-500">
-            <span>Already have a Cloudinary or CDN video URL?</span>
+            <span>Already have a Cloudinary, CDN, or GIF URL?</span>
             <Button
               type="button"
               variant="link"
@@ -498,7 +534,7 @@ export function VideoUpload({
               <div className="flex items-center gap-2">
                 <VideoIcon className="h-4 w-4 text-orange-500" />
                 <span className="text-sm font-semibold text-white">
-                  {isPortraitMode ? '9:16 Full-Screen Mobile Preview' : '16:9 Video Preview'}
+                  {isGif ? '✨ Animated GIF Preview' : (isPortraitMode ? '9:16 Full-Screen Mobile Preview' : '16:9 Video Preview')}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -525,13 +561,21 @@ export function VideoUpload({
             <div className={`bg-black flex items-center justify-center ${
               isPortraitMode ? 'aspect-[9/16] max-h-[75vh]' : 'aspect-video max-h-[70vh]'
             }`}>
-              <video 
-                src={videoSrc} 
-                controls 
-                autoPlay 
-                playsInline
-                className="w-full h-full object-contain"
-              />
+              {isGif ? (
+                <img 
+                  src={videoSrc}
+                  alt="Full-Screen Animation Preview"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <video 
+                  src={videoSrc} 
+                  controls 
+                  autoPlay 
+                  playsInline
+                  className="w-full h-full object-contain"
+                />
+              )}
             </div>
 
             <div className="p-3 bg-slate-950 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between gap-2">
@@ -556,15 +600,15 @@ export function VideoUpload({
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <LinkIcon className="h-4 w-4 text-orange-600" />
-                Set Direct Video URL
+                Set Direct Media URL
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Paste any Cloudinary, CDN, or local asset video link (e.g. assets/images/ambhujakshi_loading_screen.mp4)
+                Paste any Cloudinary, CDN, or local asset link (e.g. assets/images/ambhujakshi_loading_fullscreen.gif or .mp4)
               </p>
             </div>
 
             <Input 
-              placeholder="https://res.cloudinary.com/... or assets/images/...mp4" 
+              placeholder="https://res.cloudinary.com/... or assets/images/....gif" 
               value={urlInputValue}
               onChange={e => setUrlInputValue(e.target.value)}
               className="text-xs font-mono"
@@ -589,7 +633,7 @@ export function VideoUpload({
                 className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-semibold"
               >
                 <Check className="h-3.5 w-3.5 mr-1" />
-                Apply Video URL
+                Apply Media URL
               </Button>
             </div>
           </div>

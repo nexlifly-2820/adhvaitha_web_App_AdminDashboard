@@ -1545,13 +1545,25 @@ export default function ContentManager() {
                   type="button"
                   onClick={() => setTabTransitionVideo(prev => ({
                     ...prev,
+                    video_url: 'https://res.cloudinary.com/dxynqm0zo/image/upload/v1793006733/adhvaitha_foods_videos/bilvtnnkusx16rdofh82.gif',
+                    display_mode: 'fullscreen',
+                    is_fullscreen: true
+                  }))}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 hover:bg-amber-100 font-medium transition flex items-center gap-1 shadow-sm"
+                >
+                  <Sparkles className="h-3 w-3 text-amber-600" /> AmbhuJakshi Full-Screen GIF (Live)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTabTransitionVideo(prev => ({
+                    ...prev,
                     video_url: 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793005669/adhvaitha_foods_videos/ofnsjz4frs9ur2pzpufe.mp4',
                     display_mode: 'fullscreen',
                     is_fullscreen: true
                   }))}
                   className="px-2.5 py-1 text-xs rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 font-medium transition flex items-center gap-1 shadow-sm"
                 >
-                  <Smartphone className="h-3 w-3" /> AmbhuJakshi Full-Screen Video
+                  <Smartphone className="h-3 w-3" /> AmbhuJakshi Full-Screen MP4
                 </button>
                 <button
                   type="button"
@@ -1664,17 +1676,25 @@ export default function ContentManager() {
                         style={{ border: '3px solid #F6C453' }}
                       >
                         {tabTransitionVideo.video_url ? (
-                          <video 
-                            src={tabTransitionVideo.video_url} 
-                            autoPlay 
-                            muted 
-                            loop 
-                            playsInline
-                            className="w-full h-full object-cover"
-                          />
+                          tabTransitionVideo.video_url.toLowerCase().includes('.gif') ? (
+                            <img 
+                              src={tabTransitionVideo.video_url} 
+                              alt="Loading Animation"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <video 
+                              src={tabTransitionVideo.video_url} 
+                              autoPlay 
+                              muted 
+                              loop 
+                              playsInline
+                              className="w-full h-full object-cover"
+                            />
+                          )
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
-                            No Video
+                            No Media
                           </div>
                         )}
                       </div>
@@ -1693,18 +1713,26 @@ export default function ContentManager() {
                       </div>
                     </div>
                   ) : (
-                    /* FULL-SCREEN VIDEO MODE (100% COVER) */
+                    /* FULL-SCREEN VIDEO / GIF MODE (100% COVER) */
                     <div className="absolute inset-0 z-20 flex flex-col justify-between overflow-hidden bg-black">
-                      {/* Video Player */}
+                      {/* Video / GIF Player */}
                       {tabTransitionVideo.video_url ? (
-                        <video 
-                          src={tabTransitionVideo.video_url} 
-                          autoPlay 
-                          muted 
-                          loop 
-                          playsInline
-                          className="absolute inset-0 w-full h-full object-cover z-0"
-                        />
+                        tabTransitionVideo.video_url.toLowerCase().includes('.gif') ? (
+                          <img 
+                            src={tabTransitionVideo.video_url} 
+                            alt="Full-Screen Loading Animation"
+                            className="absolute inset-0 w-full h-full object-cover z-0"
+                          />
+                        ) : (
+                          <video 
+                            src={tabTransitionVideo.video_url} 
+                            autoPlay 
+                            muted 
+                            loop 
+                            playsInline
+                            className="absolute inset-0 w-full h-full object-cover z-0"
+                          />
+                        )
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-xs z-0">
                           No Video Selected
@@ -2856,21 +2884,29 @@ export default function ContentManager() {
                     </div>
 
                     <div className="w-full max-w-[320px] rounded-[32px] overflow-hidden border-[5px] border-slate-900 shadow-2xl bg-black relative h-[500px] flex flex-col justify-between">
-                      {/* Fullscreen Video */}
+                      {/* Fullscreen Video / GIF */}
                       {splashVideo.video_url ? (
-                        <video 
-                          src={splashVideo.video_url} 
-                          autoPlay 
-                          muted 
-                          loop 
-                          playsInline
-                          className="absolute inset-0 w-full h-full object-cover z-0"
-                        />
+                        splashVideo.video_url.toLowerCase().includes('.gif') ? (
+                          <img 
+                            src={splashVideo.video_url} 
+                            alt="Splash Animation"
+                            className="absolute inset-0 w-full h-full object-cover z-0"
+                          />
+                        ) : (
+                          <video 
+                            src={splashVideo.video_url} 
+                            autoPlay 
+                            muted 
+                            loop 
+                            playsInline
+                            className="absolute inset-0 w-full h-full object-cover z-0"
+                          />
+                        )
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 text-xs z-0 p-4 text-center">
                           <Smartphone className="h-10 w-10 mb-2 opacity-40 text-orange-500" />
-                          <span>No Video Uploaded</span>
-                          <span className="text-[10px] text-slate-600 mt-1">Upload a vertical 9:16 full-screen video</span>
+                          <span>No Media Uploaded</span>
+                          <span className="text-[10px] text-slate-600 mt-1">Upload a vertical 9:16 full-screen video or GIF</span>
                         </div>
                       )}
 
