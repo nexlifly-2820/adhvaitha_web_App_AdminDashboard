@@ -11,7 +11,8 @@ import {
   Bell, 
   Settings,
   MessageSquare,
-  Star
+  Star,
+  Gift
 } from 'lucide-react'
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { title: 'Orders', icon: ShoppingCart, href: '/dashboard/app/orders' },
   { title: 'Products', icon: Package, href: '/dashboard/app/products' },
   { title: 'Content Manager', icon: ImageIcon, href: '/dashboard/app/content' },
+  { title: 'Scratch & Save Rewards', icon: Gift, href: '/dashboard/app/rewards' },
   { title: 'Notifications', icon: Bell, href: '/dashboard/app/notifications' },
   { title: 'Customer CRM', icon: MessageSquare, href: '/dashboard/app/crm' },
   { title: 'Reviews', icon: Star, href: '/dashboard/app/reviews' },
