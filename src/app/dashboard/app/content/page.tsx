@@ -15,6 +15,7 @@ import { MostLovedManager, DEFAULT_MOST_LOVED, MostLovedConfig } from './compone
 import { BestSellersManager, DEFAULT_BEST_SELLERS, BestSellersConfig } from './components/BestSellersManager'
 import { SweetsThaliManager, DEFAULT_SWEETS, SweetsConfig } from './components/SweetsThaliManager'
 import { SpiceGrinderManager, DEFAULT_SPICE_GRINDER, SpiceGrinderConfig } from './components/SpiceGrinderManager'
+import { FreshPicksManager, DEFAULT_FRESH_PICKS, FreshPicksConfig } from './components/FreshPicksManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -924,6 +925,9 @@ export default function ContentManager() {
   // Spice Grinder Section (SpiceGrinderWebView / spices_grinder) State
   const [spiceGrinder, setSpiceGrinder] = useState<SpiceGrinderConfig>(DEFAULT_SPICE_GRINDER);
 
+  // Fresh Picks from Amma's Kitchen Section (FreshPicksSection / fresh_picks) State
+  const [freshPicks, setFreshPicks] = useState<FreshPicksConfig>(DEFAULT_FRESH_PICKS);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -937,10 +941,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1217,6 +1221,25 @@ export default function ContentManager() {
         });
       } else {
         setSpiceGrinder(DEFAULT_SPICE_GRINDER);
+      }
+      if (freshPicksDoc && Object.keys(freshPicksDoc).length > 0) {
+        const settings = freshPicksDoc.settings || DEFAULT_FRESH_PICKS.settings;
+        const products = Array.isArray(freshPicksDoc.products) && freshPicksDoc.products.length > 0
+          ? freshPicksDoc.products
+          : DEFAULT_FRESH_PICKS.products;
+        setFreshPicks({
+          settings: {
+            enabled: settings.enabled ?? true,
+            kicker: settings.kicker || 'FRESH OFF THE STOVE',
+            title: settings.title || 'Fresh picks,',
+            titleAccent: settings.titleAccent || 'just for you',
+            subtitle: settings.subtitle || "new from Amma's kitchen this week",
+            intervalMs: settings.intervalMs || 3400
+          },
+          products: products
+        });
+      } else {
+        setFreshPicks(DEFAULT_FRESH_PICKS);
       }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
@@ -3177,6 +3200,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Spice Grinder</span>
             </span>
             <span className="text-[9px] bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 font-bold px-1.5 py-0.5 rounded uppercase">Stone Podi</span>
+          </TabsTrigger>
+          {/* FRESH PICKS (AMMA'S KITCHEN) TAB TRIGGER */}
+          <TabsTrigger 
+            value="fresh_picks" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Flame className="h-4 w-4 text-orange-600 fill-orange-500" />
+              <span className="font-semibold text-xs text-left">Fresh Picks</span>
+            </span>
+            <span className="text-[9px] bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 font-bold px-1.5 py-0.5 rounded uppercase">Amma's Kadai</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6645,6 +6679,26 @@ export default function ContentManager() {
                 if (!confirm("Reset Spice Grinder section to authentic defaults?")) return;
                 setSpiceGrinder(DEFAULT_SPICE_GRINDER);
                 toast.success('Restored Authentic Spice Grinder Defaults!');
+              }}
+            />
+          </TabsContent>
+
+          {/* FRESH PICKS (AMMA'S KITCHEN) SECTION */}
+          <TabsContent value="fresh_picks" className="mt-0 space-y-6">
+            <FreshPicksManager
+              config={freshPicks}
+              onChange={setFreshPicks}
+              onSave={async () => {
+                await handleSaveTab('fresh_picks', {
+                  settings: freshPicks.settings,
+                  products: freshPicks.products
+                });
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm("Reset Fresh Picks to authentic defaults?")) return;
+                setFreshPicks(DEFAULT_FRESH_PICKS);
+                toast.success('Restored Authentic Fresh Picks Defaults!');
               }}
             />
           </TabsContent>
