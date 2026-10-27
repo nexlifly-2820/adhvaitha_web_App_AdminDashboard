@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart, Trophy } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart, Trophy, Flame } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -14,6 +14,7 @@ import { VideoUpload } from '@/components/VideoUpload'
 import { MostLovedManager, DEFAULT_MOST_LOVED, MostLovedConfig } from './components/MostLovedManager'
 import { BestSellersManager, DEFAULT_BEST_SELLERS, BestSellersConfig } from './components/BestSellersManager'
 import { SweetsThaliManager, DEFAULT_SWEETS, SweetsConfig } from './components/SweetsThaliManager'
+import { SpiceGrinderManager, DEFAULT_SPICE_GRINDER, SpiceGrinderConfig } from './components/SpiceGrinderManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -949,6 +950,9 @@ export default function ContentManager() {
   // Mithai Thali Sweets Section (SweetsThaliSection / sweets) State
   const [sweetsThali, setSweetsThali] = useState<SweetsConfig>(DEFAULT_SWEETS);
 
+  // Spice Grinder Section (SpiceGrinderWebView / spices_grinder) State
+  const [spiceGrinder, setSpiceGrinder] = useState<SpiceGrinderConfig>(DEFAULT_SPICE_GRINDER);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -962,10 +966,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1224,6 +1228,25 @@ export default function ContentManager() {
       } else {
         setSweetsThali(DEFAULT_SWEETS);
       }
+      if (spicesGrinderDoc && Object.keys(spicesGrinderDoc).length > 0) {
+        const settings = spicesGrinderDoc.settings || DEFAULT_SPICE_GRINDER.settings;
+        const products = Array.isArray(spicesGrinderDoc.products) && spicesGrinderDoc.products.length > 0
+          ? spicesGrinderDoc.products
+          : DEFAULT_SPICE_GRINDER.products;
+        setSpiceGrinder({
+          settings: {
+            enabled: settings.enabled ?? true,
+            kicker: settings.kicker || 'FROM WHOLE SPICE TO PODI',
+            title: settings.title || 'Fresh ground',
+            titleAccent: settings.titleAccent || 'spices',
+            subtitle: settings.subtitle || 'Pounded in stone, the way Ammamma did.',
+            cardTag: settings.cardTag || '🪨 STONE-GROUND TODAY'
+          },
+          products: products
+        });
+      } else {
+        setSpiceGrinder(DEFAULT_SPICE_GRINDER);
+      }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -1444,6 +1467,10 @@ export default function ContentManager() {
         postConfig('sweets', {
           settings: DEFAULT_SWEETS.settings,
           products: DEFAULT_SWEETS.products
+        }),
+        postConfig('spices_grinder', {
+          settings: DEFAULT_SPICE_GRINDER.settings,
+          products: DEFAULT_SPICE_GRINDER.products
         })
       ])
       toast.success('Demo data seeded successfully!')
@@ -3168,6 +3195,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Mithai Thali Sweets</span>
             </span>
             <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">Brass Thali</span>
+          </TabsTrigger>
+          {/* SPICE GRINDER (STONE-GROUND PODI) TAB TRIGGER */}
+          <TabsTrigger 
+            value="spice_grinder" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Flame className="h-4 w-4 text-orange-600" />
+              <span className="font-semibold text-xs text-left">Spice Grinder</span>
+            </span>
+            <span className="text-[9px] bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 font-bold px-1.5 py-0.5 rounded uppercase">Stone Podi</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6616,6 +6654,26 @@ export default function ContentManager() {
                 if (!confirm("Reset Mithai Thali Sweets to authentic defaults?")) return;
                 setSweetsThali(DEFAULT_SWEETS);
                 toast.success('Restored Authentic Mithai Thali Defaults!');
+              }}
+            />
+          </TabsContent>
+
+          {/* SPICE GRINDER SECTION */}
+          <TabsContent value="spice_grinder" className="mt-0 space-y-6">
+            <SpiceGrinderManager
+              config={spiceGrinder}
+              onChange={setSpiceGrinder}
+              onSave={async () => {
+                await handleSaveTab('spices_grinder', {
+                  settings: spiceGrinder.settings,
+                  products: spiceGrinder.products
+                });
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm("Reset Spice Grinder section to authentic defaults?")) return;
+                setSpiceGrinder(DEFAULT_SPICE_GRINDER);
+                toast.success('Restored Authentic Spice Grinder Defaults!');
               }}
             />
           </TabsContent>
