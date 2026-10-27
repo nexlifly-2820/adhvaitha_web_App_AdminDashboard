@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart, Trophy } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageUpload } from '@/components/ImageUpload'
 import { VideoUpload } from '@/components/VideoUpload'
 import { MostLovedManager, DEFAULT_MOST_LOVED, MostLovedConfig } from './components/MostLovedManager'
+import { BestSellersManager, DEFAULT_BEST_SELLERS, BestSellersConfig } from './components/BestSellersManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -941,6 +942,9 @@ export default function ContentManager() {
   // The Love Chart (Most Loved Products / most_loved) State
   const [mostLoved, setMostLoved] = useState<MostLovedConfig>(DEFAULT_MOST_LOVED);
 
+  // Best Sellers Champions Podium (BestSellersSection / best_sellers) State
+  const [bestSellers, setBestSellers] = useState<BestSellersConfig>(DEFAULT_BEST_SELLERS);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -954,10 +958,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1175,6 +1179,26 @@ export default function ContentManager() {
       } else {
         setMostLoved(DEFAULT_MOST_LOVED);
       }
+      if (bestSellersDoc && Object.keys(bestSellersDoc).length > 0) {
+        const settings = bestSellersDoc.settings || DEFAULT_BEST_SELLERS.settings;
+        const categories = Array.isArray(bestSellersDoc.categories) && bestSellersDoc.categories.length > 0
+          ? bestSellersDoc.categories
+          : DEFAULT_BEST_SELLERS.categories;
+        setBestSellers({
+          settings: {
+            enabled: settings.enabled ?? true,
+            kicker: settings.kicker || "THIS MONTH'S CHAMPIONS",
+            title: settings.title || 'Best',
+            titleAccent: settings.titleAccent || 'sellers',
+            subtitle: settings.subtitle || 'Ranked by real orders from 12,000+ homes',
+            intervalMs: settings.intervalMs || 4000,
+            rows: settings.rows || 3
+          },
+          categories: categories
+        });
+      } else {
+        setBestSellers(DEFAULT_BEST_SELLERS);
+      }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -1387,6 +1411,10 @@ export default function ContentManager() {
         postConfig('most_loved', {
           settings: DEFAULT_MOST_LOVED.settings,
           products: DEFAULT_MOST_LOVED.products
+        }),
+        postConfig('best_sellers', {
+          settings: DEFAULT_BEST_SELLERS.settings,
+          categories: DEFAULT_BEST_SELLERS.categories
         })
       ])
       toast.success('Demo data seeded successfully!')
@@ -3089,6 +3117,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">The Love Chart</span>
             </span>
             <span className="text-[9px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded uppercase">Most Loved</span>
+          </TabsTrigger>
+          {/* BEST SELLERS CHAMPIONS PODIUM TAB TRIGGER */}
+          <TabsTrigger 
+            value="best_sellers" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-amber-500 fill-amber-500" />
+              <span className="font-semibold text-xs text-left">Best Sellers Podium</span>
+            </span>
+            <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">Champions</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6497,6 +6536,26 @@ export default function ContentManager() {
                 if (!confirm('Reset The Love Chart to authentic presets (Bellam Avakaya & Idli Karam Podi)?')) return;
                 setMostLoved(DEFAULT_MOST_LOVED);
                 toast.success('Restored Authentic Most Loved Defaults!');
+              }}
+            />
+          </TabsContent>
+
+          {/* BEST SELLERS CHAMPIONS PODIUM */}
+          <TabsContent value="best_sellers" className="mt-0 space-y-6">
+            <BestSellersManager
+              config={bestSellers}
+              onChange={setBestSellers}
+              onSave={async () => {
+                await handleSaveTab('best_sellers', {
+                  settings: bestSellers.settings,
+                  categories: bestSellers.categories
+                });
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm("Reset Best Sellers Champions to authentic defaults?")) return;
+                setBestSellers(DEFAULT_BEST_SELLERS);
+                toast.success('Restored Authentic Best Sellers Defaults!');
               }}
             />
           </TabsContent>
