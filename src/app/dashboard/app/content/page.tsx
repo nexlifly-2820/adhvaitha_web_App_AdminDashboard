@@ -331,9 +331,9 @@ export const DEFAULT_SPECIALS_LIGHT: SpecialLightItem[] = [
     image: "assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg"
   },
   {
-    id: "banana_chips",
-    name: "Banana Chips",
-    image: "assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg"
+    id: "potato_chips",
+    name: "Potato Chips",
+    image: "assets/images/potato_chips.png"
   }
 ];
 
@@ -550,23 +550,18 @@ export default function ContentManager() {
   const getPairingDisplayImg = (imgUrl?: string, fallback: 'powder' | 'pickle' | 'snack' | 'sweet' = 'pickle') => {
     if (!imgUrl) {
       return fallback === 'powder'
-        ? 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80'
-        : 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=400&q=80';
+        ? '/assets/images/special_idli_karam_podi.png'
+        : fallback === 'sweet'
+        ? '/assets/images/sunnundalu.png'
+        : fallback === 'snack'
+        ? '/assets/images/chakralu.png'
+        : '/assets/images/avakaya_pickle.png';
     }
-    if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) return imgUrl;
-    if (imgUrl.includes('karam_podi') || imgUrl.includes('podi') || imgUrl.includes('gun_powder')) {
-      return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
-    }
-    if (imgUrl.includes('avakaya') || imgUrl.includes('pickle') || imgUrl.includes('mango') || imgUrl.includes('bellam')) {
-      return 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=400&q=80';
-    }
-    if (imgUrl.includes('murukku') || imgUrl.includes('janthukalu') || imgUrl.includes('chips') || imgUrl.includes('mixture')) {
-      return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80';
-    }
-    if (imgUrl.includes('laddu') || imgUrl.includes('sunnunda') || imgUrl.includes('sweet') || imgUrl.includes('palli')) {
-      return 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=400&q=80';
-    }
-    return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=400&q=80';
+    if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://') || imgUrl.startsWith('data:')) return imgUrl;
+    if (imgUrl.startsWith('assets/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('images/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('/')) return imgUrl;
+    return `/assets/images/${imgUrl}`;
   };
 
   const updateCombo = (idx: number, field: keyof HeroCombo, val: any) => {
@@ -835,27 +830,12 @@ export default function ContentManager() {
   };
 
   const getStoryDisplayImg = (imgUrl?: string) => {
-    if (!imgUrl) return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80';
+    if (!imgUrl) return '/assets/images/chakralu.png';
     if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://') || imgUrl.startsWith('data:')) return imgUrl;
-    if (imgUrl.includes('murukku') || imgUrl.includes('janthukalu') || imgUrl.includes('spiral')) {
-      return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80';
-    }
-    if (imgUrl.includes('mixture') || imgUrl.includes('boondi') || imgUrl.includes('sev')) {
-      return 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80';
-    }
-    if (imgUrl.includes('rice') || imgUrl.includes('flour') || imgUrl.includes('papad')) {
-      return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
-    }
-    if (imgUrl.includes('dal') || imgUrl.includes('urad') || imgUrl.includes('gram')) {
-      return 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=300&q=80';
-    }
-    if (imgUrl.includes('peanut') || imgUrl.includes('palli')) {
-      return 'https://images.unsplash.com/photo-1567406899671-97576282366f?auto=format&fit=crop&w=300&q=80';
-    }
-    if (imgUrl.includes('curry') || imgUrl.includes('leaves') || imgUrl.includes('spice')) {
-      return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=300&q=80';
-    }
-    return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80';
+    if (imgUrl.startsWith('assets/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('images/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('/')) return imgUrl;
+    return `/assets/images/${imgUrl}`;
   };
 
   // Auto Banner Carousel (AutoBannerCarousel / auto_banners) State & Helpers
@@ -924,21 +904,12 @@ export default function ContentManager() {
   };
 
   const getBannerDisplayImg = (imgUrl?: string, category?: string) => {
-    if (!imgUrl) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+    if (!imgUrl) return '/assets/images/banner_1.jpg';
     if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://') || imgUrl.startsWith('data:')) return imgUrl;
-    if (imgUrl.includes('banner_1') || (category && category.toLowerCase().includes('pickle'))) {
-      return 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=800&q=80';
-    }
-    if (imgUrl.includes('banner_2') || (category && category.toLowerCase().includes('powder'))) {
-      return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&q=80';
-    }
-    if (imgUrl.includes('banner_3') || (category && category.toLowerCase().includes('sweet'))) {
-      return 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=800&q=80';
-    }
-    if (imgUrl.includes('banner_4') || (category && category.toLowerCase().includes('snack'))) {
-      return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=80';
-    }
-    return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=800&q=80';
+    if (imgUrl.startsWith('assets/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('images/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('/')) return imgUrl;
+    return `/assets/images/${imgUrl}`;
   };
 
   // The Love Chart (Most Loved Products / most_loved) State
@@ -4252,7 +4223,7 @@ export default function ContentManager() {
                                         alt={ing.name}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
-                                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=100&q=80';
+                                          (e.target as HTMLImageElement).src = '/assets/images/garlic_0.png';
                                         }}
                                       />
                                     </div>
@@ -4372,7 +4343,7 @@ export default function ContentManager() {
                                 alt={currentSnack.name}
                                 className="absolute inset-0 w-full h-full object-cover"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80';
+                                  (e.target as HTMLImageElement).src = '/assets/images/chakralu.png';
                                 }}
                               />
                               {/* Dark Gradient Overlay for Readability */}
@@ -4458,7 +4429,7 @@ export default function ContentManager() {
                                           alt={ing.name}
                                           className="w-full h-full object-cover"
                                           onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=100&q=80';
+                                            (e.target as HTMLImageElement).src = '/assets/images/curry_leaves_0.png';
                                           }}
                                         />
                                       </div>
@@ -4918,7 +4889,7 @@ export default function ContentManager() {
                                   alt={currentBanner.title || 'Banner'}
                                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+                                    (e.target as HTMLImageElement).src = '/assets/images/avakaya_pickle.png';
                                   }}
                                 />
 
@@ -6137,7 +6108,7 @@ export default function ContentManager() {
                                       className="h-full w-full object-cover"
                                       onError={(e: any) => {
                                         e.target.onerror = null;
-                                        e.target.src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+                                        e.target.src = '/assets/images/kandi_podi.png';
                                       }}
                                     />
                                   </div>
@@ -6155,7 +6126,7 @@ export default function ContentManager() {
                                       className="h-full w-full object-cover"
                                       onError={(e: any) => {
                                         e.target.onerror = null;
-                                        e.target.src = 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=400&q=80';
+                                        e.target.src = '/assets/images/avakaya_pickle.png';
                                       }}
                                     />
                                   </div>
@@ -6197,7 +6168,7 @@ export default function ContentManager() {
                                         className="h-full w-full object-cover" 
                                         onError={(e: any) => {
                                           e.target.onerror = null;
-                                          e.target.src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+                                          e.target.src = '/assets/images/kandi_podi.png';
                                         }}
                                       />
                                     </div>
@@ -6211,7 +6182,7 @@ export default function ContentManager() {
                                         className="h-full w-full object-cover" 
                                         onError={(e: any) => {
                                           e.target.onerror = null;
-                                          e.target.src = 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=400&q=80';
+                                          e.target.src = '/assets/images/avakaya_pickle.png';
                                         }}
                                       />
                                     </div>
@@ -6436,7 +6407,7 @@ export default function ContentManager() {
                                 className="h-full w-full object-cover"
                                 onError={(e: any) => {
                                   e.target.onerror = null;
-                                  e.target.src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+                                  e.target.src = '/assets/images/avakaya_pickle.png';
                                 }}
                               />
                             </div>
@@ -6555,7 +6526,7 @@ export default function ContentManager() {
                               className="h-full w-full object-cover"
                               onError={(e: any) => {
                                 e.target.onerror = null;
-                                e.target.src = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80';
+                                e.target.src = '/assets/images/avakaya_pickle.png';
                               }}
                             />
                           </div>

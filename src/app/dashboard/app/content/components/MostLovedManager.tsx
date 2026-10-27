@@ -137,12 +137,16 @@ const PRESET_BADGES = [
 ];
 
 const IMAGE_PRESETS = [
-  { label: 'Bellam Avakaya Pickle', path: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg' },
-  { label: 'Special Idli Karam Podi', path: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg' },
-  { label: 'Kara Murukku Strings', path: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg' },
-  { label: 'Khara Mixture', path: 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg' },
-  { label: 'Sunnunda Laddu', path: 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg' },
-  { label: 'Kura Karam Podi', path: 'assets/images/special_kura_karam_podi_all-purpose_curry_powder.jpg' }
+  { label: 'Bellam Avakaya Pickle', path: 'assets/images/avakaya_pickle.png' },
+  { label: 'Special Idli Karam Podi', path: 'assets/images/special_idli_karam_podi.png' },
+  { label: 'Kara Murukku Strings', path: 'assets/images/chakralu.png' },
+  { label: 'Khara Mixture', path: 'assets/images/mixture.png' },
+  { label: 'Sunnunda Laddu', path: 'assets/images/sunnundalu.png' },
+  { label: 'Special Kura Karam Podi', path: 'assets/images/special_kura_karam_podi.png' },
+  { label: 'Potato Chips (Allu Chips)', path: 'assets/images/potato_chips.png' },
+  { label: 'Dry Fruits Laddu', path: 'assets/images/dry_fruit_laddu.png' },
+  { label: 'Gondh Laddu', path: 'assets/images/gond_laddu.png' },
+  { label: 'Palli Chikki', path: 'assets/images/palli_chikki.png' }
 ];
 
 interface MostLovedManagerProps {
@@ -198,21 +202,12 @@ export function MostLovedManager({
     : activeProduct;
 
   const getDisplayImage = (imgUrl?: string) => {
-    if (!imgUrl) return 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=500&q=80';
+    if (!imgUrl) return '/assets/images/avakaya_pickle.png';
     if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://') || imgUrl.startsWith('data:')) return imgUrl;
-    if (imgUrl.includes('avakaya') || imgUrl.includes('pickle') || imgUrl.includes('mango') || imgUrl.includes('bellam')) {
-      return 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=500&q=80';
-    }
-    if (imgUrl.includes('karam_podi') || imgUrl.includes('podi') || imgUrl.includes('gun_powder')) {
-      return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=500&q=80';
-    }
-    if (imgUrl.includes('murukku') || imgUrl.includes('janthukalu') || imgUrl.includes('snack')) {
-      return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=500&q=80';
-    }
-    if (imgUrl.includes('laddu') || imgUrl.includes('sunnunda') || imgUrl.includes('sweet') || imgUrl.includes('chikki')) {
-      return 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=500&q=80';
-    }
-    return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=500&q=80';
+    if (imgUrl.startsWith('assets/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('images/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('/')) return imgUrl;
+    return `/assets/images/${imgUrl}`;
   };
 
   const updateSetting = (field: keyof MostLovedSettings, value: any) => {

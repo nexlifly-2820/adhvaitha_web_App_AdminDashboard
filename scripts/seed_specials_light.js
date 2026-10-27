@@ -5,32 +5,32 @@ const specialsData = {
       {
         id: "avakaya",
         name: "Avakaya",
-        image: "assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg"
+        image: "assets/images/avakaya_pickle.png"
       },
       {
         id: "karam_podi",
         name: "Karam Podi",
-        image: "assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg"
+        image: "assets/images/special_idli_karam_podi.png"
       },
       {
         id: "murukku",
         name: "Murukku",
-        image: "assets/images/karam_janthukalu_murukku_strings_snack.jpg"
+        image: "assets/images/chakralu.png"
       },
       {
         id: "sunnunda",
         name: "Sunnunda",
-        image: "assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg"
+        image: "assets/images/sunnundalu.png"
       },
       {
         id: "mixture",
         name: "Mixture",
-        image: "assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg"
+        image: "assets/images/mixture.png"
       },
       {
-        id: "banana_chips",
-        name: "Banana Chips",
-        image: "assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg"
+        id: "potato_chips",
+        name: "Potato Chips",
+        image: "assets/images/potato_chips.png"
       }
     ]
   }

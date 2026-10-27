@@ -244,16 +244,17 @@ export const DEFAULT_SPICE_GRINDER: SpiceGrinderConfig = {
 };
 
 const IMAGE_PRESETS = [
-  { label: 'Moringa Karam Podi', path: 'assets/images/munagaku_karam_podi_moringa_leaves_spice_powder.jpg' },
-  { label: 'Special Idli Karam Podi', path: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg' },
-  { label: 'Karvepaku Karam Podi', path: 'assets/images/karvepaku_karam_podi_curry_leaves_powder.jpg' },
-  { label: 'Special Kura Karam Podi', path: 'assets/images/special_kura_karam_podi_all-purpose_curry_powder.jpg' },
-  { label: 'Kakarakaya Karam Podi', path: 'assets/images/kakarakaya_karam_podi_bitter_gourd_spice_mix.jpg' },
-  { label: 'Kobbari Karam Podi', path: 'assets/images/kobbari_karam_podi_dry_coconut_spice_powder.jpg' },
-  { label: 'Nalla Karam Podi', path: 'assets/images/nalla_karam_podi_traditional_black_curry_powder.jpg' },
-  { label: 'Vellulli Karam Podi', path: 'assets/images/vellulli_karam_podi_garlic_spice_powder.jpg' },
-  { label: 'Dhaniyala Karam Podi', path: 'assets/images/dhaniyala_karam_podi_coriander_seeds_powder.jpg' },
-  { label: 'Putnala Podi', path: 'assets/images/putnala_podi_roasted_chana_dal_powder.jpg' }
+  { label: 'Moringa Karam Podi', path: 'assets/images/moringa_karam_podi.png' },
+  { label: 'Special Idli Karam Podi', path: 'assets/images/special_idli_karam_podi.png' },
+  { label: 'Karvepaku Karam Podi', path: 'assets/images/karivepaku_podi.png' },
+  { label: 'Special Kura Karam Podi', path: 'assets/images/special_kura_karam_podi.png' },
+  { label: 'Nalla Karam Podi', path: 'assets/images/nalla_karam_podi.png' },
+  { label: 'Putnala Podi', path: 'assets/images/putnala_karam_podi.png' },
+  { label: 'Allam Velluli Karam', path: 'assets/images/allam_velluli_karam.png' },
+  { label: 'Dhaniyala Powder', path: 'assets/images/dhaniya_powder.png' },
+  { label: 'Turmeric (Haldi) Powder', path: 'assets/images/turmeric_powder.png' },
+  { label: 'Garam Masala', path: 'assets/images/garam_masala.png' },
+  { label: 'Sambar Podi', path: 'assets/images/sambar_podi.png' }
 ];
 
 const COLOR_THEMES = [
@@ -327,6 +328,15 @@ export function SpiceGrinderManager({
         toast.success(`✨ Freshly stone-ground ${currentProduct.name}!`);
       }
     }, 180);
+  };
+
+  const getDisplayImage = (imgUrl?: string) => {
+    if (!imgUrl) return '/assets/images/moringa_karam_podi.png';
+    if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://') || imgUrl.startsWith('data:')) return imgUrl;
+    if (imgUrl.startsWith('assets/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('images/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('/')) return imgUrl;
+    return `/assets/images/${imgUrl}`;
   };
 
   const updateSettings = (partial: Partial<SpiceGrinderSettings>) => {
@@ -1332,13 +1342,26 @@ export function SpiceGrinderManager({
                 {/* Product Detail Card in Phone */}
                 <div className="rounded-xl bg-white text-slate-900 p-3 space-y-2 shadow-lg mt-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-extrabold text-sm text-slate-900 leading-tight">
-                        {currentProduct?.name}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 leading-tight">
-                        {currentProduct?.tagline}
-                      </p>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-11 h-11 rounded-lg overflow-hidden border border-orange-200 bg-orange-50 shrink-0 shadow-xs">
+                        <img 
+                          src={getDisplayImage(currentProduct?.image)} 
+                          alt={currentProduct?.name} 
+                          className="w-full h-full object-cover"
+                          onError={(e: any) => {
+                            e.target.onerror = null;
+                            e.target.src = '/assets/images/moringa_karam_podi.png';
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-sm text-slate-900 leading-tight">
+                          {currentProduct?.name}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 leading-tight">
+                          {currentProduct?.tagline}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="text-right">

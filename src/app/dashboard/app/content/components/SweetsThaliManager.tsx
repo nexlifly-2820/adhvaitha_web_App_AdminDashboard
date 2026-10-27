@@ -131,12 +131,14 @@ const SUGGESTED_BADGES = [
 ];
 
 const IMAGE_PRESETS = [
-  { label: 'Sunnunda Laddu', path: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg' },
-  { label: 'Dry Fruits Laddu', path: 'assets/images/dry_fruits_laddu_premium_dry_fruits_laddu.jpg' },
-  { label: 'Gondh Laddu', path: 'assets/images/gondh_laddu_edible_gum_laddu.jpg' },
-  { label: 'Palli Patti / Chikki', path: 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg' },
-  { label: 'Khara Mixture', path: 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg' },
-  { label: 'Bellam Avakaya', path: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg' }
+  { label: 'Sunnunda Laddu', path: 'assets/images/sunnundalu.png' },
+  { label: 'Dry Fruits Laddu', path: 'assets/images/dry_fruit_laddu.png' },
+  { label: 'Gondh Laddu', path: 'assets/images/gond_laddu.png' },
+  { label: 'Kova Gulab Jamun', path: 'assets/images/gulab_jamun.png' },
+  { label: 'Millets Laddu', path: 'assets/images/millet_laddu.png' },
+  { label: 'Palli Chikki', path: 'assets/images/palli_chikki.png' },
+  { label: 'Nuvvula Chikki', path: 'assets/images/nuvvula_chikki.png' },
+  { label: 'Dry Fruit Chikki', path: 'assets/images/dry_fruit_chikki.png' }
 ];
 
 interface SweetsThaliManagerProps {
@@ -194,21 +196,12 @@ export function SweetsThaliManager({
     : activeProduct;
 
   const getDisplayImage = (imgUrl?: string) => {
-    if (!imgUrl) return 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=500&q=80';
+    if (!imgUrl) return '/assets/images/sunnundalu.png';
     if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://') || imgUrl.startsWith('data:')) return imgUrl;
-    if (imgUrl.includes('laddu') || imgUrl.includes('sunnunda') || imgUrl.includes('sweet') || imgUrl.includes('mithai')) {
-      return 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=500&q=80';
-    }
-    if (imgUrl.includes('dry_fruits') || imgUrl.includes('nuts') || imgUrl.includes('almond')) {
-      return 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=500&q=80';
-    }
-    if (imgUrl.includes('gondh') || imgUrl.includes('gum') || imgUrl.includes('winter')) {
-      return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80';
-    }
-    if (imgUrl.includes('palli') || imgUrl.includes('chikki') || imgUrl.includes('peanut')) {
-      return 'https://images.unsplash.com/photo-1567406899671-97576282366f?auto=format&fit=crop&w=500&q=80';
-    }
-    return 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=500&q=80';
+    if (imgUrl.startsWith('assets/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('images/')) return `/${imgUrl}`;
+    if (imgUrl.startsWith('/')) return imgUrl;
+    return `/assets/images/${imgUrl}`;
   };
 
   const updateSetting = (field: keyof SweetsSettings, value: any) => {
