@@ -13,6 +13,7 @@ import { ImageUpload } from '@/components/ImageUpload'
 import { VideoUpload } from '@/components/VideoUpload'
 import { MostLovedManager, DEFAULT_MOST_LOVED, MostLovedConfig } from './components/MostLovedManager'
 import { BestSellersManager, DEFAULT_BEST_SELLERS, BestSellersConfig } from './components/BestSellersManager'
+import { SweetsThaliManager, DEFAULT_SWEETS, SweetsConfig } from './components/SweetsThaliManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -945,6 +946,9 @@ export default function ContentManager() {
   // Best Sellers Champions Podium (BestSellersSection / best_sellers) State
   const [bestSellers, setBestSellers] = useState<BestSellersConfig>(DEFAULT_BEST_SELLERS);
 
+  // Mithai Thali Sweets Section (SweetsThaliSection / sweets) State
+  const [sweetsThali, setSweetsThali] = useState<SweetsConfig>(DEFAULT_SWEETS);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -958,10 +962,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1199,6 +1203,27 @@ export default function ContentManager() {
       } else {
         setBestSellers(DEFAULT_BEST_SELLERS);
       }
+      if (sweetsDoc && Object.keys(sweetsDoc).length > 0) {
+        const settings = sweetsDoc.settings || DEFAULT_SWEETS.settings;
+        const products = Array.isArray(sweetsDoc.products) && sweetsDoc.products.length > 0
+          ? sweetsDoc.products
+          : DEFAULT_SWEETS.products;
+        setSweetsThali({
+          settings: {
+            enabled: settings.enabled ?? true,
+            kicker: settings.kicker || "MITHAI THALI",
+            title: settings.title || 'Traditional sweets,',
+            titleAccent: settings.titleAccent || 'timeless joy',
+            subtitle: settings.subtitle || 'Pure ghee. Jaggery. Just like Ammamma made.',
+            intervalMs: settings.intervalMs || 2800,
+            badges: Array.isArray(settings.badges) ? settings.badges : DEFAULT_SWEETS.settings.badges,
+            giftTag: settings.giftTag || '🎁 Gift box available'
+          },
+          products: products
+        });
+      } else {
+        setSweetsThali(DEFAULT_SWEETS);
+      }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -1415,6 +1440,10 @@ export default function ContentManager() {
         postConfig('best_sellers', {
           settings: DEFAULT_BEST_SELLERS.settings,
           categories: DEFAULT_BEST_SELLERS.categories
+        }),
+        postConfig('sweets', {
+          settings: DEFAULT_SWEETS.settings,
+          products: DEFAULT_SWEETS.products
         })
       ])
       toast.success('Demo data seeded successfully!')
@@ -3128,6 +3157,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Best Sellers Podium</span>
             </span>
             <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">Champions</span>
+          </TabsTrigger>
+          {/* MITHAI THALI SWEETS TAB TRIGGER */}
+          <TabsTrigger 
+            value="sweets_thali" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-600 fill-amber-500" />
+              <span className="font-semibold text-xs text-left">Mithai Thali Sweets</span>
+            </span>
+            <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">Brass Thali</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6556,6 +6596,26 @@ export default function ContentManager() {
                 if (!confirm("Reset Best Sellers Champions to authentic defaults?")) return;
                 setBestSellers(DEFAULT_BEST_SELLERS);
                 toast.success('Restored Authentic Best Sellers Defaults!');
+              }}
+            />
+          </TabsContent>
+
+          {/* MITHAI THALI SWEETS SECTION */}
+          <TabsContent value="sweets_thali" className="mt-0 space-y-6">
+            <SweetsThaliManager
+              config={sweetsThali}
+              onChange={setSweetsThali}
+              onSave={async () => {
+                await handleSaveTab('sweets', {
+                  settings: sweetsThali.settings,
+                  products: sweetsThali.products
+                });
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm("Reset Mithai Thali Sweets to authentic defaults?")) return;
+                setSweetsThali(DEFAULT_SWEETS);
+                toast.success('Restored Authentic Mithai Thali Defaults!');
               }}
             />
           </TabsContent>
