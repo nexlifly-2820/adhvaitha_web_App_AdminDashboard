@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageUpload } from '@/components/ImageUpload'
 import { VideoUpload } from '@/components/VideoUpload'
+import { MostLovedManager, DEFAULT_MOST_LOVED, MostLovedConfig } from './components/MostLovedManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -937,6 +938,9 @@ export default function ContentManager() {
     return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=800&q=80';
   };
 
+  // The Love Chart (Most Loved Products / most_loved) State
+  const [mostLoved, setMostLoved] = useState<MostLovedConfig>(DEFAULT_MOST_LOVED);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -950,10 +954,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1151,6 +1155,25 @@ export default function ContentManager() {
           subtitle: 'From Grandmother\'s Kitchen'
         }));
         setAutoBanners(formatted);
+      }
+      if (mostLovedDoc && Object.keys(mostLovedDoc).length > 0) {
+        const settings = mostLovedDoc.settings || DEFAULT_MOST_LOVED.settings;
+        const products = Array.isArray(mostLovedDoc.products) && mostLovedDoc.products.length > 0
+          ? mostLovedDoc.products
+          : DEFAULT_MOST_LOVED.products;
+        setMostLoved({
+          settings: {
+            enabled: settings.enabled ?? true,
+            kicker: settings.kicker || 'THE LOVE CHART',
+            title: settings.title || 'Most loved',
+            titleAccent: settings.titleAccent || 'products',
+            intervalMs: settings.intervalMs || 2500,
+            maxItems: settings.maxItems || 10
+          },
+          products: products
+        });
+      } else {
+        setMostLoved(DEFAULT_MOST_LOVED);
       }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
@@ -1360,6 +1383,10 @@ export default function ContentManager() {
         }),
         postConfig('snacks_with_story', {
           list: DEFAULT_STORY_SNACKS
+        }),
+        postConfig('most_loved', {
+          settings: DEFAULT_MOST_LOVED.settings,
+          products: DEFAULT_MOST_LOVED.products
         })
       ])
       toast.success('Demo data seeded successfully!')
@@ -3051,6 +3078,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Snacks Story Flip</span>
             </span>
             <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">Flip Cards</span>
+          </TabsTrigger>
+          {/* THE LOVE CHART (MOST LOVED PRODUCTS) TAB TRIGGER */}
+          <TabsTrigger 
+            value="most_loved" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Heart className="h-4 w-4 text-rose-500 fill-rose-500" />
+              <span className="font-semibold text-xs text-left">The Love Chart</span>
+            </span>
+            <span className="text-[9px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded uppercase">Most Loved</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6441,6 +6479,26 @@ export default function ContentManager() {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          {/* THE LOVE CHART (MOST LOVED PRODUCTS) */}
+          <TabsContent value="most_loved" className="mt-0 space-y-6">
+            <MostLovedManager
+              config={mostLoved}
+              onChange={setMostLoved}
+              onSave={async () => {
+                await handleSaveTab('most_loved', {
+                  settings: mostLoved.settings,
+                  products: mostLoved.products
+                });
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm('Reset The Love Chart to authentic presets (Bellam Avakaya & Idli Karam Podi)?')) return;
+                setMostLoved(DEFAULT_MOST_LOVED);
+                toast.success('Restored Authentic Most Loved Defaults!');
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="kitchen_story" className="space-y-6 mt-0">

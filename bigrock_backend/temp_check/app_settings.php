@@ -96,9 +96,276 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         echo json_encode([
             'enabled' => true,
             'duration_ms' => 1200,
-            'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1790916130/adhvaitha_foods_videos/mxcycwegghdykjsnilyo.mp4',
+            'video_url' => 'https://res.cloudinary.com/dxynqm0zo/video/upload/v1793005669/adhvaitha_foods_videos/ofnsjz4frs9ur2pzpufe.mp4',
             'caption' => 'Swapping Heritage Kitchens...',
-            'show_spinner' => true
+            'show_spinner' => true,
+            'display_mode' => 'fullscreen',
+            'is_fullscreen' => true
+        ]);
+    } else if ($doc_id === 'pairings') {
+        echo json_encode([
+            'list' => [
+                [
+                    'id' => 'breakfast',
+                    'kicker' => 'BREAKFAST',
+                    'title' => "Dosa's Best Friends",
+                    'desc' => 'Karam Podi + Avakaya',
+                    'price' => 379,
+                    'imageA' => 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+                    'imageB' => 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+                    'colors' => ['#5C0A0D', '#7A0F12', '#9B1D22'],
+                    'pairs' => [
+                        [
+                            'id' => 'br1',
+                            'tag' => 'BESTSELLER',
+                            'imageA' => 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+                            'imageB' => 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+                            'name' => 'Karam Podi + Avakaya',
+                            'bestWith' => 'Dosa · Idli',
+                            'price' => 379
+                        ],
+                        [
+                            'id' => 'br2',
+                            'tag' => 'POPULAR',
+                            'imageA' => 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+                            'imageB' => 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg',
+                            'name' => 'Karam Podi + Masala Peanuts',
+                            'bestWith' => 'Dosa · Idli',
+                            'price' => 299
+                        ],
+                        [
+                            'id' => 'br3',
+                            'tag' => '',
+                            'imageA' => 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+                            'imageB' => 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg',
+                            'name' => 'Avakaya + Masala Peanuts',
+                            'bestWith' => 'Dosa · Upma',
+                            'price' => 329
+                        ]
+                    ]
+                ],
+                [
+                    'id' => 'evening_tea',
+                    'kicker' => 'EVENING TEA',
+                    'title' => "Chai's Crunchy Partners",
+                    'desc' => 'Murukku + Banana Chips',
+                    'price' => 299,
+                    'colors' => ['#18453B', '#235D4E', '#2E7563'],
+                    'pairs' => [
+                        [
+                            'id' => 'et1',
+                            'tag' => 'CRUNCHY',
+                            'imageA' => 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+                            'imageB' => 'assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg',
+                            'name' => 'Murukku + Banana Chips',
+                            'bestWith' => 'Evening tea',
+                            'price' => 299
+                        ],
+                        [
+                            'id' => 'et2',
+                            'tag' => '',
+                            'imageA' => 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg',
+                            'imageB' => 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg',
+                            'name' => 'Spicy Mixture + Masala Peanuts',
+                            'bestWith' => 'Evening tea',
+                            'price' => 279
+                        ],
+                        [
+                            'id' => 'et3',
+                            'tag' => '',
+                            'imageA' => 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+                            'imageB' => 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg',
+                            'name' => 'Murukku + Spicy Mixture',
+                            'bestWith' => 'Evening tea',
+                            'price' => 319
+                        ]
+                    ]
+                ],
+                [
+                    'id' => 'after_meals',
+                    'kicker' => 'AFTER MEALS',
+                    'title' => 'Sweet Endings',
+                    'desc' => 'Sunnunda Laddu + Murukku',
+                    'price' => 399,
+                    'colors' => ['#8B4513', '#A0522D', '#B8860B'],
+                    'pairs' => [
+                        [
+                            'id' => 'am1',
+                            'tag' => 'TRADITIONAL',
+                            'imageA' => 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg',
+                            'imageB' => 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+                            'name' => 'Sunnunda Laddu + Murukku',
+                            'bestWith' => 'After meals · Gifting',
+                            'price' => 399
+                        ],
+                        [
+                            'id' => 'am2',
+                            'tag' => '',
+                            'imageA' => 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg',
+                            'imageB' => 'assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg',
+                            'name' => 'Sunnunda Laddu + Banana Chips',
+                            'bestWith' => 'After meals · Gifting',
+                            'price' => 379
+                        ],
+                        [
+                            'id' => 'am3',
+                            'tag' => '',
+                            'imageA' => 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg',
+                            'imageB' => 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg',
+                            'name' => 'Sunnunda Laddu + Spicy Mixture',
+                            'bestWith' => 'After meals · Gifting',
+                            'price' => 389
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+    } else if ($doc_id === 'specials_light') {
+        echo json_encode([
+            'list' => [
+                [
+                    'id' => 'avakaya',
+                    'name' => 'Avakaya',
+                    'image' => 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg'
+                ],
+                [
+                    'id' => 'karam_podi',
+                    'name' => 'Karam Podi',
+                    'image' => 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg'
+                ],
+                [
+                    'id' => 'murukku',
+                    'name' => 'Murukku',
+                    'image' => 'assets/images/karam_janthukalu_murukku_strings_snack.jpg'
+                ],
+                [
+                    'id' => 'sunnunda',
+                    'name' => 'Sunnunda',
+                    'image' => 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg'
+                ],
+                [
+                    'id' => 'mixture',
+                    'name' => 'Mixture',
+                    'image' => 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg'
+                ],
+                [
+                    'id' => 'banana_chips',
+                    'name' => 'Banana Chips',
+                    'image' => 'assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg'
+                ]
+            ]
+        ]);
+    } else if ($doc_id === 'story_snacks' || $doc_id === 'snacks_with_story') {
+        echo json_encode([
+            'list' => [
+                [
+                    'id' => 'murukku',
+                    'name' => 'Kara Murukku',
+                    'image' => 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+                    'price' => 129,
+                    'story' => 'A crispy spiral snack made from rice flour and urad dal, prepared in our family kitchen for festive evenings.',
+                    'since' => '1985',
+                    'ingredients' => [
+                        [ 'name' => 'Rice Flour', 'image' => 'assets/images/rice_papad_crispy_rice_flour_papadums.jpg' ],
+                        [ 'name' => 'Urad Dal', 'image' => 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg' ],
+                        [ 'name' => 'Spices', 'image' => 'assets/images/special_kura_karam_podi_all-purpose_curry_powder.jpg' ]
+                    ]
+                ],
+                [
+                    'id' => 'mixture',
+                    'name' => 'Khara Mixture',
+                    'image' => 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg',
+                    'price' => 149,
+                    'story' => 'A delicious assortment of spiced boondi, peanuts, and sev tossed with roasted curry leaves in pure oil.',
+                    'since' => '1992',
+                    'ingredients' => [
+                        [ 'name' => 'Gram Flour', 'image' => 'assets/images/bundhi_crispy_spiced_gram_flour_droplets.jpg' ],
+                        [ 'name' => 'Peanuts', 'image' => 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg' ],
+                        [ 'name' => 'Curry Leaves', 'image' => 'assets/images/karvepaku_karam_podi_curry_leaves_powder.jpg' ]
+                    ]
+                ]
+            ]
+        ]);
+    } else if ($doc_id === 'auto_banners') {
+        echo json_encode([
+            'banners' => [
+                [
+                    'id' => 'b1',
+                    'image' => 'assets/images/banner_1.jpg',
+                    'link' => [
+                        'category' => 'Pickles'
+                    ]
+                ],
+                [
+                    'id' => 'b2',
+                    'image' => 'assets/images/banner_2.jpg',
+                    'link' => [
+                        'category' => 'Powders'
+                    ]
+                ],
+                [
+                    'id' => 'b3',
+                    'image' => 'assets/images/banner_3.jpg',
+                    'link' => [
+                        'category' => 'Sweets'
+                    ]
+                ],
+                [
+                    'id' => 'b4',
+                    'image' => 'assets/images/banner_4.jpg',
+                    'link' => [
+                        'category' => 'Snacks'
+                    ]
+                ]
+            ]
+        ]);
+    } else if ($doc_id === 'most_loved') {
+        echo json_encode([
+            'settings' => [
+                'enabled' => true,
+                'kicker' => 'THE LOVE CHART',
+                'title' => 'Most loved',
+                'titleAccent' => 'products',
+                'intervalMs' => 2500,
+                'maxItems' => 10
+            ],
+            'products' => [
+                [
+                    'id' => 'p1',
+                    'name' => 'Bellam Avakaya',
+                    'short' => 'Avakaya',
+                    'tagline' => 'sweet jaggery meets fiery mango',
+                    'image' => 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+                    'colors' => ['#F7B733', '#E2722B'],
+                    'rating' => 4.8,
+                    'soldToday' => 320,
+                    'loves' => '2.1k',
+                    'spice' => 2,
+                    'badge' => '👑 No.1 this week',
+                    'variants' => [
+                        [ 'id' => 'v1', 'label' => '250g', 'price' => 120, 'mrp' => 136, 'inStock' => true ],
+                        [ 'id' => 'v2', 'label' => '500g', 'price' => 230, 'mrp' => 260, 'inStock' => true ],
+                        [ 'id' => 'v3', 'label' => '1kg', 'price' => 440, 'mrp' => 500, 'inStock' => true ]
+                    ]
+                ],
+                [
+                    'id' => 'p2',
+                    'name' => 'Idli Karam Podi',
+                    'short' => 'Karam Podi',
+                    'tagline' => 'authentic gun powder spice blend',
+                    'image' => 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+                    'colors' => ['#8E1B2B', '#5C0A0D'],
+                    'rating' => 4.9,
+                    'soldToday' => 280,
+                    'loves' => '1.8k',
+                    'spice' => 3,
+                    'badge' => '🔥 Bestseller',
+                    'variants' => [
+                        [ 'id' => 'v4', 'label' => '200g', 'price' => 139, 'mrp' => 150, 'inStock' => true ],
+                        [ 'id' => 'v5', 'label' => '500g', 'price' => 320, 'mrp' => 350, 'inStock' => true ]
+                    ]
+                ]
+            ]
         ]);
     } else {
         echo json_encode(new stdClass());
