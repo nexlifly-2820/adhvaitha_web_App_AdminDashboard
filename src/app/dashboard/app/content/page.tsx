@@ -496,16 +496,18 @@ export default function ContentManager() {
       accent: '#E9952C',
     },
     tiles: [
-      { title: 'Pindi\nVantalu', image: 'assets/images/snacks.png', image2: 'assets/images/sweets.png', link: { category: 'Snacks' } },
-      { title: 'Festive\nSweets', image: 'assets/images/sweets.png', image2: 'assets/images/snacks.png', link: { category: 'Sweets' } },
-      { title: 'Gifting\nCorner', image: 'assets/images/combos.png', image2: 'assets/images/pickles.png', link: { category: 'Combos' } },
-      { title: 'Pickles\n& Podis', image: 'assets/images/pickles.png', image2: 'assets/images/spices.png', link: { category: 'Pickles' } }
+      { title: 'Pindi\nVantalu', image: 'assets/images/chakralu.png', image2: 'assets/images/karam_boondi.png', link: { category: 'Snacks' } },
+      { title: 'Festive\nSweets', image: 'assets/images/sunnundalu.png', image2: 'assets/images/dry_fruit_laddu.png', link: { category: 'Sweets' } },
+      { title: 'Gifting\nCorner', image: 'assets/images/gond_laddu.png', image2: 'assets/images/palli_chikki.png', link: { category: 'Combos' } },
+      { title: 'Pickles\n& Podis', image: 'assets/images/avakaya_pickle.png', image2: 'assets/images/special_idli_karam_podi.png', link: { category: 'Pickles' } }
     ],
     strip: ['HOMEMADE', 'STONE-GROUND', 'FRESH BATCHES', 'PAN-INDIA'],
     chips: [
-      { title: 'Sankranti\nEssentials', image: 'assets/images/sweets.png', link: { tag: 'sankranti' } },
-      { title: 'Snacks\n& More', image: 'assets/images/snacks.png', link: { category: 'Snacks' } },
-      { title: 'Under\n₹299', image: 'assets/images/spices.png', link: { maxPrice: 299 } }
+      { title: 'Sankranti\nEssentials', image: 'assets/images/sunnundalu.png', link: { tag: 'sankranti' } },
+      { title: 'Snacks\n& More', image: 'assets/images/chakralu.png', link: { category: 'Snacks' } },
+      { title: 'Under\n₹299', image: 'assets/images/special_idli_karam_podi.png', link: { maxPrice: 299 } },
+      { title: 'Best\nSellers', image: 'assets/images/avakaya_pickle.png', link: { tag: 'bestseller' } },
+      { title: 'Gift\nBoxes', image: 'assets/images/dry_fruit_laddu.png', link: { category: 'Combos' } }
     ],
     products: { tag: 'sankranti-2027', limit: 10 }
   })
@@ -838,6 +840,8 @@ export default function ContentManager() {
     if (imgUrl.startsWith('/')) return imgUrl;
     return `/assets/images/${imgUrl}`;
   };
+
+  const getDisplayImage = getStoryDisplayImg;
 
   // Auto Banner Carousel (AutoBannerCarousel / auto_banners) State & Helpers
   const [autoBanners, setAutoBanners] = useState<AutoBannerItem[]>(DEFAULT_AUTO_BANNERS)
@@ -3546,18 +3550,30 @@ export default function ContentManager() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-[11px] font-semibold text-slate-500">Primary Cutout Image (PNG / URL)</label>
-                              <Input 
-                                value={tile.image} 
-                                onChange={e => {
-                                  const v = e.target.value;
-                                  setFestivalConfig(prev => {
-                                    const next = [...prev.tiles];
-                                    next[tIdx] = { ...next[tIdx], image: v };
-                                    return { ...prev, tiles: next };
-                                  });
-                                }}
-                                className="h-8 text-xs font-mono"
-                              />
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg border border-amber-300 overflow-hidden bg-slate-900 shrink-0">
+                                  <img 
+                                    src={getDisplayImage(tile.image)} 
+                                    alt="" 
+                                    className="w-full h-full object-cover" 
+                                    onError={e => {
+                                      (e.target as HTMLImageElement).src = '/assets/images/chakralu.png';
+                                    }} 
+                                  />
+                                </div>
+                                <Input 
+                                  value={tile.image} 
+                                  onChange={e => {
+                                    const v = e.target.value;
+                                    setFestivalConfig(prev => {
+                                      const next = [...prev.tiles];
+                                      next[tIdx] = { ...next[tIdx], image: v };
+                                      return { ...prev, tiles: next };
+                                    });
+                                  }}
+                                  className="h-8 text-xs font-mono flex-1"
+                                />
+                              </div>
                             </div>
                             <div className="space-y-1">
                               <label className="text-[11px] font-semibold text-slate-500">Target Category</label>
@@ -3657,9 +3673,16 @@ export default function ContentManager() {
                               <div className="self-start z-10">
                                 <span className="text-[9px] font-bold text-amber-200 underline">Explore &rarr;</span>
                               </div>
-                              {/* Product Cutout Mockup Graphic */}
-                              <div className="absolute -right-2 -bottom-2 w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-xl shadow-inner">
-                                {i === 0 ? '🥨' : i === 1 ? '🍬' : i === 2 ? '🎁' : '🫙'}
+                              {/* Product Cutout Mockup Graphic with authentic photo */}
+                              <div className="absolute -right-2 -bottom-2 w-14 h-14 rounded-full bg-white/20 border border-white/40 overflow-hidden flex items-center justify-center shadow-md">
+                                <img
+                                  src={getDisplayImage(t.image)}
+                                  alt={t.title}
+                                  className="w-full h-full object-cover"
+                                  onError={e => {
+                                    (e.target as HTMLImageElement).src = i === 0 ? '/assets/images/chakralu.png' : i === 1 ? '/assets/images/sunnundalu.png' : i === 2 ? '/assets/images/gond_laddu.png' : '/assets/images/avakaya_pickle.png';
+                                  }}
+                                />
                               </div>
                             </div>
                           ))}
@@ -3694,7 +3717,16 @@ export default function ContentManager() {
                               className="shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 border border-slate-200"
                               style={{ backgroundColor: festivalConfig.theme.chipBg }}
                             >
-                              <span>{cIdx === 0 ? '🌾' : cIdx === 1 ? '🥨' : '💰'}</span>
+                              <div className="w-4 h-4 rounded-full overflow-hidden bg-white border border-amber-400/50 shrink-0">
+                                <img
+                                  src={getDisplayImage(chip.image)}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  onError={e => {
+                                    (e.target as HTMLImageElement).src = '/assets/images/sunnundalu.png';
+                                  }}
+                                />
+                              </div>
                               <span className="text-slate-800 whitespace-nowrap">{chip.title.replace('\n', ' ')}</span>
                             </div>
                           ))}
