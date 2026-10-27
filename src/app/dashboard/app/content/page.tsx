@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -332,6 +332,53 @@ export const DEFAULT_SPECIALS_LIGHT: SpecialLightItem[] = [
     image: "assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg"
   }
 ];
+
+export interface AutoBannerLink {
+  category?: string;
+  tag?: string;
+  productId?: string;
+  url?: string;
+}
+
+export interface AutoBannerItem {
+  id: string;
+  image: string;
+  link: AutoBannerLink;
+  title?: string;
+  subtitle?: string;
+}
+
+export const DEFAULT_AUTO_BANNERS: AutoBannerItem[] = [
+  {
+    id: "b1",
+    image: "assets/images/banner_1.jpg",
+    link: { category: "Pickles" },
+    title: "Heritage Pickles",
+    subtitle: "Sun-dried spices & cold-pressed oil"
+  },
+  {
+    id: "b2",
+    image: "assets/images/banner_2.jpg",
+    link: { category: "Powders" },
+    title: "Stone-Ground Podis",
+    subtitle: "Aromatic gun powders & Andhra karams"
+  },
+  {
+    id: "b3",
+    image: "assets/images/banner_3.jpg",
+    link: { category: "Sweets" },
+    title: "Traditional Sweets",
+    subtitle: "Pure ghee, organic jaggery & dry fruits"
+  },
+  {
+    id: "b4",
+    image: "assets/images/banner_4.jpg",
+    link: { category: "Snacks" },
+    title: "Handcrafted Snacks",
+    subtitle: "Crispy murukku, mixture & spiced chips"
+  }
+];
+
 interface DeliveryConfig { free_threshold: number; base_fee: number; packing_fee: number; gst_percentage: number }
 interface CartConfig { freshness_tagline: string; dispatch_reassurance: string; upsell_section_title: string }
 interface BillingConfig { delivery_estimate_text: string; support_chat_text: string; savings_highlight_text: string }
@@ -807,6 +854,89 @@ export default function ContentManager() {
     return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80';
   };
 
+  // Auto Banner Carousel (AutoBannerCarousel / auto_banners) State & Helpers
+  const [autoBanners, setAutoBanners] = useState<AutoBannerItem[]>(DEFAULT_AUTO_BANNERS)
+  const [activeBannerIdx, setActiveBannerIdx] = useState<number>(0)
+  const [bannerSubTab, setBannerSubTab] = useState<'carousel' | 'ad_banners'>('carousel')
+
+  const updateAutoBanner = (idx: number, field: keyof AutoBannerItem, val: any) => {
+    setAutoBanners(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: val };
+      return next;
+    });
+  };
+
+  const updateAutoBannerLink = (idx: number, linkField: keyof AutoBannerLink, val: string) => {
+    setAutoBanners(prev => {
+      const next = [...prev];
+      const curLink = next[idx].link || {};
+      next[idx] = { ...next[idx], link: { ...curLink, [linkField]: val } };
+      return next;
+    });
+  };
+
+  const addAutoBanner = () => {
+    const newBanner: AutoBannerItem = {
+      id: `b${Date.now()}`,
+      image: 'assets/images/banner_1.jpg',
+      link: { category: 'Pickles' },
+      title: 'New Featured Banner',
+      subtitle: 'Limited authentic harvest batches'
+    };
+    setAutoBanners(prev => [...prev, newBanner]);
+    setActiveBannerIdx(autoBanners.length);
+    toast.success('Auto banner added');
+  };
+
+  const removeAutoBanner = (idx: number) => {
+    if (autoBanners.length <= 1) {
+      toast.error('You must keep at least 1 banner in the carousel.');
+      return;
+    }
+    setAutoBanners(prev => prev.filter((_, i) => i !== idx));
+    setActiveBannerIdx(0);
+    toast.success('Banner removed');
+  };
+
+  const moveAutoBanner = (idx: number, direction: 'up' | 'down') => {
+    setAutoBanners(prev => {
+      const next = [...prev];
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= next.length) return prev;
+      const temp = next[idx];
+      next[idx] = next[targetIdx];
+      next[targetIdx] = temp;
+      return next;
+    });
+    setActiveBannerIdx(direction === 'up' ? Math.max(0, idx - 1) : Math.min(autoBanners.length - 1, idx + 1));
+  };
+
+  const restoreDefaultAutoBanners = () => {
+    if (!confirm('Reset Auto Banner Carousel to the 4 authentic presets (Pickles, Powders, Sweets, Snacks)?')) return;
+    setAutoBanners(DEFAULT_AUTO_BANNERS);
+    setActiveBannerIdx(0);
+    toast.success('Restored 4 Authentic Banner Presets!');
+  };
+
+  const getBannerDisplayImg = (imgUrl?: string, category?: string) => {
+    if (!imgUrl) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+    if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://') || imgUrl.startsWith('data:')) return imgUrl;
+    if (imgUrl.includes('banner_1') || (category && category.toLowerCase().includes('pickle'))) {
+      return 'https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=800&q=80';
+    }
+    if (imgUrl.includes('banner_2') || (category && category.toLowerCase().includes('powder'))) {
+      return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&q=80';
+    }
+    if (imgUrl.includes('banner_3') || (category && category.toLowerCase().includes('sweet'))) {
+      return 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=800&q=80';
+    }
+    if (imgUrl.includes('banner_4') || (category && category.toLowerCase().includes('snack'))) {
+      return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=800&q=80';
+  };
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -820,10 +950,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -993,6 +1123,35 @@ export default function ContentManager() {
           setSpecialsLight(DEFAULT_SPECIALS_LIGHT);
         }
       }
+      if (autoBannersDoc && Object.keys(autoBannersDoc).length > 0) {
+        const rawBanners = autoBannersDoc.banners || (Array.isArray(autoBannersDoc) ? autoBannersDoc : []);
+        if (Array.isArray(rawBanners) && rawBanners.length > 0) {
+          const formatted: AutoBannerItem[] = rawBanners.map((b: any, idx: number) => ({
+            id: b.id || `b${idx + 1}`,
+            image: b.image || b.img || 'assets/images/banner_1.jpg',
+            link: {
+              category: b.link?.category || b.category || 'Pickles',
+              tag: b.link?.tag || '',
+              productId: b.link?.productId || b.productId || '',
+              url: b.link?.url || ''
+            },
+            title: b.title || (b.link?.category ? `${b.link.category} Collection` : `Banner #${idx + 1}`),
+            subtitle: b.subtitle || 'Handcrafted & Stone-Ground'
+          }));
+          setAutoBanners(formatted);
+        } else {
+          setAutoBanners(DEFAULT_AUTO_BANNERS);
+        }
+      } else if (bannersDoc && bannersDoc.main_banners && bannersDoc.main_banners.length > 0) {
+        const formatted: AutoBannerItem[] = bannersDoc.main_banners.map((b: any, idx: number) => ({
+          id: `b${idx + 1}`,
+          image: b.image || 'assets/images/banner_1.jpg',
+          link: { category: b.category || 'Pickles' },
+          title: b.title || 'Authentic Heritage',
+          subtitle: 'From Grandmother\'s Kitchen'
+        }));
+        setAutoBanners(formatted);
+      }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
         setProductNames(prods.map((p: any) => p.name))
@@ -1027,7 +1186,13 @@ export default function ContentManager() {
   const saveCurrentTab = () => {
     switch (activeTab) {
       case 'banners':
-        handleSaveTab('banners', { main_banners: mainBanners, ad_banners: adBanners })
+        handleSaveTab('auto_banners', { banners: autoBanners });
+        const legacyMain = autoBanners.map(b => ({
+          title: b.title || '',
+          category: b.link?.category || '',
+          image: b.image || ''
+        }));
+        handleSaveTab('banners', { main_banners: legacyMain, ad_banners: adBanners });
         break
       case 'stories':
         handleSaveTab('stories', { list: stories })
@@ -1124,6 +1289,14 @@ export default function ContentManager() {
       const postConfig = (docId: string, data: any) => fetch('/dashboard/app/api/app-data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ docId, ...data }) })
 
       await Promise.all([
+        postConfig('auto_banners', {
+          banners: [
+            { id: 'b1', image: img1, link: { category: 'Pickles' }, title: 'Heritage Pickles', subtitle: 'Sun-dried spices & cold-pressed oil' },
+            { id: 'b2', image: img3, link: { category: 'Powders' }, title: 'Stone-Ground Podis', subtitle: 'Aromatic gun powders & Andhra karams' },
+            { id: 'b3', image: img2, link: { category: 'Sweets' }, title: 'Traditional Sweets', subtitle: 'Pure ghee, organic jaggery & dry fruits' },
+            { id: 'b4', image: img4, link: { category: 'Snacks' }, title: 'Handcrafted Snacks', subtitle: 'Crispy murukku, mixture & spiced chips' }
+          ]
+        }),
         postConfig('banners', {
           main_banners: [
             { title: 'AUTHENTIC ANDHRA', category: 'Pickles', image: img1 },
@@ -2749,14 +2922,26 @@ export default function ContentManager() {
                               ? 'Publish Specials Live'
                               : activeTab === 'snacks_story'
                                 ? 'Publish Story Snacks Live'
-                                : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
+                                : activeTab === 'banners'
+                                  ? 'Publish Auto Banners Live'
+                                  : `Save ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full flex gap-6 flex-col lg:flex-row items-start lg:h-[calc(100vh-180px)]">
         <TabsList className="flex flex-col justify-start bg-slate-100 dark:bg-slate-900 w-full lg:w-56 items-stretch p-2 gap-2 shrink-0 lg:h-full overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl custom-scrollbar">
-          <TabsTrigger value="banners" className="justify-start data-[state=active]:bg-white">Banners</TabsTrigger>
+          {/* AUTO BANNER CAROUSEL TAB TRIGGER */}
+          <TabsTrigger 
+            value="banners" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-emerald-600" />
+              <span className="font-semibold text-xs text-left">Auto Banner Carousel</span>
+            </span>
+            <span className="text-[9px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded uppercase">Live Sync</span>
+          </TabsTrigger>
           
           {/* FESTIVAL CAMPAIGN TAB TRIGGER */}
           <TabsTrigger 
@@ -4179,48 +4364,598 @@ export default function ContentManager() {
               );
             })()}
           </TabsContent>
-          {/* BANNERS */}
+          {/* AUTO BANNER CAROUSEL (AutoBannerCarousel / auto_banners) */}
           <TabsContent value="banners" className="mt-0 space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div><CardTitle>Main Banners</CardTitle><CardDescription>Hero carousels at the very top</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setMainBanners, { title: '', category: '', image: '' })}>+ Add Main</Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {mainBanners.map((banner, idx) => (
-                  <div key={idx} className="flex gap-4 items-center p-3 border rounded">
-                    <div className="flex-1 space-y-2">
-                      <Input placeholder="Title" value={banner.title} onChange={e => updateArray(setMainBanners, idx, 'title', e.target.value)} />
-                      <Input placeholder="Category" value={banner.category} onChange={e => updateArray(setMainBanners, idx, 'category', e.target.value)} />
-                      <ImageUpload value={banner.image} onChange={url => updateArray(setMainBanners, idx, 'image', url)} folder="app_content" />
-                    </div>
-                    <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setMainBanners, idx)}><Trash2 className="h-4 w-4" /></Button>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            {/* Header / Action Bar */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-amber-500/10 border border-emerald-500/20 shadow-sm backdrop-blur-md">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                    <Layers className="w-5 h-5" />
+                  </span>
+                  <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    Auto Banner Carousel
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      AutoBannerCarousel
+                    </span>
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+                  Manage dynamic rotating hero banners at the very top of the mobile home page. Subscribes live to <code className="text-xs font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">AppConfigRepository().getAutoBannersStream()</code>.
+                </p>
+              </div>
 
-            <Card>
-              <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
-                <div><CardTitle>Ad Banners</CardTitle><CardDescription>Secondary promotional banners</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setAdBanners, { tag: '', title: '', sub: '', img: '' })}>+ Add Ad</Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {adBanners.map((banner, idx) => (
-                  <div key={idx} className="flex gap-4 items-center p-3 border rounded">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex gap-2">
-                        <Input placeholder="Tag (e.g. MEGA DEAL)" value={banner.tag} onChange={e => updateArray(setAdBanners, idx, 'tag', e.target.value)} className="w-1/3" />
-                        <Input placeholder="Title" value={banner.title} onChange={e => updateArray(setAdBanners, idx, 'title', e.target.value)} className="w-2/3" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={restoreDefaultAutoBanners}
+                  className="gap-1.5 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                  Restore Presets
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addAutoBanner}
+                  className="gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  + Add Auto Banner
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleSaveTab('auto_banners', { banners: autoBanners });
+                    const legacyMain = autoBanners.map(b => ({
+                      title: b.title || '',
+                      category: b.link?.category || '',
+                      image: b.image || ''
+                    }));
+                    handleSaveTab('banners', { main_banners: legacyMain, ad_banners: adBanners });
+                  }}
+                  disabled={isSaving}
+                  size="sm"
+                  className="gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Publishing Live...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      Publish Banners Live
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Sub-Tabs: Auto Banner Carousel vs Secondary Ad Banners */}
+            <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-2">
+              <button
+                type="button"
+                onClick={() => setBannerSubTab('carousel')}
+                className={`py-2 px-4 text-xs font-semibold rounded-t-lg transition-colors border-b-2 flex items-center gap-2 ${
+                  bannerSubTab === 'carousel'
+                    ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                Auto Banner Carousel ({autoBanners.length})
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded">
+                  Live Stream
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setBannerSubTab('ad_banners')}
+                className={`py-2 px-4 text-xs font-semibold rounded-t-lg transition-colors border-b-2 flex items-center gap-2 ${
+                  bannerSubTab === 'ad_banners'
+                    ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
+                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Box className="w-4 h-4" />
+                Secondary Ad Banners ({adBanners.length})
+              </button>
+            </div>
+
+            {bannerSubTab === 'carousel' ? (
+              <div className="space-y-6">
+                {/* Horizontal Carousel Pills */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+                    Carousel Slides ({autoBanners.length}):
+                  </span>
+                  {autoBanners.map((banner, idx) => {
+                    const isActive = idx === activeBannerIdx;
+                    return (
+                      <button
+                        key={banner.id || idx}
+                        onClick={() => setActiveBannerIdx(idx)}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all shrink-0 border ${
+                          isActive
+                            ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent shadow-md shadow-emerald-500/20'
+                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        }`}>
+                          {idx + 1}
+                        </span>
+                        <span className="font-semibold">
+                          {banner.link?.category || banner.title || `Banner #${idx + 1}`}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                        }`}>
+                          {banner.id || `b${idx + 1}`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={addAutoBanner}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-emerald-600 dark:text-emerald-400 border border-dashed border-emerald-500/40 hover:bg-emerald-500/5 transition-all shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Banner
+                  </button>
+                </div>
+
+                {/* Two-Column Layout */}
+                {(() => {
+                  const bIdx = Math.min(activeBannerIdx, Math.max(0, autoBanners.length - 1));
+                  const currentBanner = autoBanners[bIdx] || {
+                    id: 'b1',
+                    image: 'assets/images/banner_1.jpg',
+                    link: { category: 'Pickles' },
+                    title: 'Heritage Pickles',
+                    subtitle: 'Sun-dried spices & cold-pressed oil'
+                  };
+
+                  return (
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                      {/* Left Column: Form Editor (xl:col-span-7) */}
+                      <div className="xl:col-span-7 space-y-6">
+                        <Card className="border-emerald-500/20 shadow-sm">
+                          <CardHeader className="pb-3 border-b">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold">
+                                  {bIdx + 1}
+                                </span>
+                                <CardTitle className="text-base font-semibold">
+                                  Banner Configuration
+                                </CardTitle>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => moveAutoBanner(bIdx, 'up')}
+                                  disabled={bIdx === 0}
+                                  className="h-7 px-2 text-xs"
+                                  title="Move Up"
+                                >
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => moveAutoBanner(bIdx, 'down')}
+                                  disabled={bIdx === autoBanners.length - 1}
+                                  className="h-7 px-2 text-xs"
+                                  title="Move Down"
+                                >
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </Button>
+                                <span className="text-xs font-mono text-slate-400 ml-2">
+                                  doc_id: auto_banners → banners[{bIdx}]
+                                </span>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-4 space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                  Banner ID <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                  value={currentBanner.id || ''}
+                                  onChange={e => updateAutoBanner(bIdx, 'id', e.target.value)}
+                                  placeholder="e.g. b1, b2, b3"
+                                  className="font-mono text-xs"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                  Category Navigation Link <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium"
+                                  value={currentBanner.link?.category || 'Pickles'}
+                                  onChange={e => updateAutoBannerLink(bIdx, 'category', e.target.value)}
+                                >
+                                  <option value="Pickles">Pickles (Avakaya & Chutneys)</option>
+                                  <option value="Powders">Powders (Karam Podis & Masalas)</option>
+                                  <option value="Sweets">Sweets (Sunnunda & Traditional)</option>
+                                  <option value="Snacks">Snacks (Murukku & Mixtures)</option>
+                                  <option value="Combos">Combos & Pairings</option>
+                                  <option value="Gifting">Royal Festive Gifting</option>
+                                  <option value="All">All Products</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                  Banner Title / Header Text
+                                </label>
+                                <Input
+                                  value={currentBanner.title || ''}
+                                  onChange={e => updateAutoBanner(bIdx, 'title', e.target.value)}
+                                  placeholder="e.g. Heritage Pickles, Stone-Ground Podis"
+                                  className="font-medium"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                  Banner Subtitle / Tagline
+                                </label>
+                                <Input
+                                  value={currentBanner.subtitle || ''}
+                                  onChange={e => updateAutoBanner(bIdx, 'subtitle', e.target.value)}
+                                  placeholder="e.g. Sun-dried spices & cold-pressed oil"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                  Specific Tag Filter (Optional)
+                                </label>
+                                <Input
+                                  value={currentBanner.link?.tag || ''}
+                                  onChange={e => updateAutoBannerLink(bIdx, 'tag', e.target.value)}
+                                  placeholder="e.g. bestseller, festive, new_harvest"
+                                  className="text-xs font-mono"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                  Custom Target URL / Route (Optional)
+                                </label>
+                                <Input
+                                  value={currentBanner.link?.url || ''}
+                                  onChange={e => updateAutoBannerLink(bIdx, 'url', e.target.value)}
+                                  placeholder="e.g. /category/pickles or https://..."
+                                  className="text-xs font-mono"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Banner Image Upload */}
+                            <div className="space-y-2 pt-2 border-t">
+                              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                <span>Banner Hero Graphic</span>
+                                <span className="text-[11px] text-slate-400 font-normal">
+                                  Direct upload, Cloudinary URL, or local asset (e.g. assets/images/banner_1.jpg)
+                                </span>
+                              </label>
+                              <ImageUpload
+                                value={currentBanner.image || ''}
+                                onChange={url => updateAutoBanner(bIdx, 'image', url)}
+                                folder="auto_banners"
+                              />
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={currentBanner.image || ''}
+                                  onChange={e => updateAutoBanner(bIdx, 'image', e.target.value)}
+                                  placeholder="assets/images/banner_1.jpg or https://..."
+                                  className="text-xs font-mono"
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Bottom Actions Row */}
+                        <div className="flex items-center justify-between pt-2">
+                          {autoBanners.length > 1 ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeAutoBanner(bIdx)}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 gap-1.5 text-xs"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete This Banner
+                            </Button>
+                          ) : (
+                            <div />
+                          )}
+
+                          <Button
+                            onClick={() => {
+                              handleSaveTab('auto_banners', { banners: autoBanners });
+                              const legacyMain = autoBanners.map(b => ({
+                                title: b.title || '',
+                                category: b.link?.category || '',
+                                image: b.image || ''
+                              }));
+                              handleSaveTab('banners', { main_banners: legacyMain, ad_banners: adBanners });
+                            }}
+                            disabled={isSaving}
+                            className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm"
+                          >
+                            {isSaving ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Publishing...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="w-4 h-4" />
+                                Save & Publish Auto Banners
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </div>
-                      <Input placeholder="Subtitle" value={banner.sub} onChange={e => updateArray(setAdBanners, idx, 'sub', e.target.value)} />
-                      <ImageUpload value={banner.img} onChange={url => updateArray(setAdBanners, idx, 'img', url)} folder="app_content" />
+
+                      {/* Right Column: Live Mobile Simulation (xl:col-span-5) */}
+                      <div className="xl:col-span-5 flex flex-col items-center">
+                        <div className="w-full max-w-[370px] bg-slate-950 p-4 rounded-[40px] shadow-2xl border-4 border-slate-800 relative">
+                          {/* Speaker / Camera Notch */}
+                          <div className="w-28 h-4 bg-slate-800 rounded-full mx-auto mb-3" />
+
+                          {/* Screen Container */}
+                          <div className="bg-[#100705] text-slate-100 rounded-[28px] overflow-hidden border border-amber-950/60 p-4 relative min-h-[560px] flex flex-col justify-between select-none">
+                            {/* Status Bar */}
+                            <div className="flex justify-between items-center text-[10px] text-amber-200/60 mb-2 font-mono">
+                              <span>09:41</span>
+                              <span className="flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Live Carousel Stream
+                              </span>
+                            </div>
+
+                            {/* Mobile Header Bar */}
+                            <div className="mb-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <span className="text-[10px] text-amber-400 font-bold tracking-wider uppercase block">
+                                    Adhvaitha Kitchens
+                                  </span>
+                                  <h4 className="text-sm font-serif font-bold text-white">
+                                    Heritage Flavors
+                                  </h4>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="w-6 h-6 rounded-full bg-amber-950/80 border border-amber-500/30 flex items-center justify-center text-[10px]">
+                                    🔍
+                                  </span>
+                                  <span className="w-6 h-6 rounded-full bg-amber-950/80 border border-amber-500/30 flex items-center justify-center text-[10px]">
+                                    🛍️
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Auto Banner Carousel Mobile Component Simulation */}
+                            <div className="my-auto space-y-2">
+                              <div className="relative w-full h-[190px] rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-xl group">
+                                {/* Banner Image */}
+                                <img
+                                  src={getBannerDisplayImg(currentBanner.image, currentBanner.link?.category)}
+                                  alt={currentBanner.title || 'Banner'}
+                                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+                                  }}
+                                />
+
+                                {/* Dark Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
+
+                                {/* Category Tag Pill */}
+                                <div className="absolute top-3 left-3 z-10">
+                                  <span className="bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md">
+                                    {currentBanner.link?.category || 'FEATURED'}
+                                  </span>
+                                </div>
+
+                                {/* Banner ID pill */}
+                                <div className="absolute top-3 right-3 z-10">
+                                  <span className="bg-black/50 backdrop-blur-md text-amber-200 border border-amber-400/30 text-[9px] font-mono px-2 py-0.5 rounded-full">
+                                    {currentBanner.id || `b${bIdx + 1}`}
+                                  </span>
+                                </div>
+
+                                {/* Banner Bottom Content */}
+                                <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1">
+                                  <h4 className="text-base font-serif font-bold text-white drop-shadow-md leading-tight">
+                                    {currentBanner.title || 'Authentic Andhra Heritage'}
+                                  </h4>
+                                  <p className="text-[10px] text-amber-200/90 line-clamp-1 leading-snug">
+                                    {currentBanner.subtitle || 'Handcrafted fresh in small batches'}
+                                  </p>
+                                  <div className="pt-1 flex items-center justify-between">
+                                    <span className="text-[10px] font-semibold text-amber-400 flex items-center gap-1 group-hover:underline">
+                                      Explore {currentBanner.link?.category || 'Collection'} →
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Interactive Navigation Arrows */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveBannerIdx((bIdx - 1 + autoBanners.length) % autoBanners.length);
+                                  }}
+                                  className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-sm text-white flex items-center justify-center transition-all z-20"
+                                  title="Previous Banner"
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveBannerIdx((bIdx + 1) % autoBanners.length);
+                                  }}
+                                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-sm text-white flex items-center justify-center transition-all z-20"
+                                  title="Next Banner"
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </button>
+                              </div>
+
+                              {/* Dot Indicators */}
+                              <div className="flex items-center justify-center gap-1.5 pt-1">
+                                {autoBanners.map((_, dotIdx) => (
+                                  <button
+                                    key={dotIdx}
+                                    type="button"
+                                    onClick={() => setActiveBannerIdx(dotIdx)}
+                                    className={`transition-all duration-300 rounded-full ${
+                                      dotIdx === bIdx
+                                        ? 'w-6 h-1.5 bg-amber-400 shadow-sm shadow-amber-400/50'
+                                        : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/60'
+                                    }`}
+                                    title={`Slide ${dotIdx + 1}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Section below carousel in app preview */}
+                            <div className="mt-auto space-y-2 pt-2 border-t border-amber-950/70">
+                              <span className="text-[10px] uppercase tracking-wider text-amber-400/80 font-bold block">
+                                Quick Heritage Categories
+                              </span>
+                              <div className="grid grid-cols-4 gap-1.5 text-center">
+                                {['Pickles', 'Powders', 'Sweets', 'Snacks'].map((cat, cI) => (
+                                  <div
+                                    key={cI}
+                                    className={`p-1.5 rounded-xl border text-[9px] font-medium transition-all ${
+                                      currentBanner.link?.category?.toLowerCase() === cat.toLowerCase()
+                                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                                        : 'bg-white/5 border-white/10 text-white/70'
+                                    }`}
+                                  >
+                                    {cat}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Live Stream Sync Note */}
+                        <div className="mt-3 text-center space-y-1">
+                          <div className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            Live Stream: AppConfigRepository().getAutoBannersStream()
+                          </div>
+                          <p className="text-[11px] text-slate-500">
+                            Publishing changes updates the hero carousel live across all mobile users.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <Button variant="ghost" className="text-red-500" onClick={() => removeFromArray(setAdBanners, idx)}><Trash2 className="h-4 w-4" /></Button>
+                  );
+                })()}
+              </div>
+            ) : (
+              /* Secondary Ad Banners Editor */
+              <Card>
+                <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
+                  <div>
+                    <CardTitle className="text-base font-semibold">Secondary Promotional Ad Banners</CardTitle>
+                    <CardDescription className="text-xs">
+                      Mid-page promotional cards for campaigns, flash sales, and special offers.
+                    </CardDescription>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addToArray(setAdBanners, { tag: '', title: '', sub: '', img: '' })}
+                    className="gap-1 text-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> + Add Ad Banner
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {adBanners.length === 0 ? (
+                    <div className="text-center py-6 border border-dashed rounded-xl border-slate-200 dark:border-slate-800">
+                      <p className="text-xs text-slate-500 mb-2">No promotional ad banners configured.</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addToArray(setAdBanners, { tag: 'MEGA DEAL', title: 'Summer Festival Sale', sub: 'Up to 25% off heritage gift boxes', img: 'assets/images/banner_2.jpg' })}
+                        className="text-xs"
+                      >
+                        + Add Demo Ad Banner
+                      </Button>
+                    </div>
+                  ) : (
+                    adBanners.map((banner, idx) => (
+                      <div key={idx} className="flex gap-4 items-center p-3 border rounded-xl bg-slate-50/50 dark:bg-slate-900/40">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Tag (e.g. MEGA DEAL)"
+                              value={banner.tag}
+                              onChange={e => updateArray(setAdBanners, idx, 'tag', e.target.value)}
+                              className="w-1/3 text-xs"
+                            />
+                            <Input
+                              placeholder="Title (e.g. Summer Festival Sale)"
+                              value={banner.title}
+                              onChange={e => updateArray(setAdBanners, idx, 'title', e.target.value)}
+                              className="w-2/3 text-xs font-medium"
+                            />
+                          </div>
+                          <Input
+                            placeholder="Subtitle (e.g. Up to 25% off heritage gift boxes)"
+                            value={banner.sub}
+                            onChange={e => updateArray(setAdBanners, idx, 'sub', e.target.value)}
+                            className="text-xs"
+                          />
+                          <ImageUpload
+                            value={banner.img}
+                            onChange={url => updateArray(setAdBanners, idx, 'img', url)}
+                            folder="app_content"
+                          />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2"
+                          onClick={() => removeFromArray(setAdBanners, idx)}
+                          title="Delete Ad Banner"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* STORIES */}

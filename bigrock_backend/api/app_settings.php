@@ -286,6 +286,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 ]
             ]
         ]);
+    } else if ($doc_id === 'auto_banners') {
+        echo json_encode([
+            'banners' => [
+                [
+                    'id' => 'b1',
+                    'image' => 'assets/images/banner_1.jpg',
+                    'link' => [
+                        'category' => 'Pickles'
+                    ]
+                ],
+                [
+                    'id' => 'b2',
+                    'image' => 'assets/images/banner_2.jpg',
+                    'link' => [
+                        'category' => 'Powders'
+                    ]
+                ],
+                [
+                    'id' => 'b3',
+                    'image' => 'assets/images/banner_3.jpg',
+                    'link' => [
+                        'category' => 'Sweets'
+                    ]
+                ],
+                [
+                    'id' => 'b4',
+                    'image' => 'assets/images/banner_4.jpg',
+                    'link' => [
+                        'category' => 'Snacks'
+                    ]
+                ]
+            ]
+        ]);
     } else {
         echo json_encode(new stdClass());
     }
