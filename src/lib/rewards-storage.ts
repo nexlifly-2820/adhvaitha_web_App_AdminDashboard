@@ -1,221 +1,58 @@
 import { fetchApi, postApi } from '@/lib/api-client';
-import fs from 'fs';
-import path from 'path';
+import { 
+  RewardLadderStep, 
+  RewardOffer, 
+  RewardStats, 
+  DEFAULT_LADDER, 
+  DEFAULT_OFFERS 
+} from './rewards-types';
 
-export interface RewardLadderStep {
-  step: number;
-  unlock_after: number;
-  is_big: boolean;
-  active: boolean;
-  title?: string;
-  description?: string;
-}
-
-export interface RewardOffer {
-  id: number;
-  step: number;
-  title: string;
-  subtitle: string;
-  image?: string;
-  discount_type: 'flat' | 'percent' | 'free_item';
-  value: number;
-  max_discount?: number;
-  min_order: number;
-  free_product_id?: number;
-  free_product_name?: string;
-  valid_days: number;
-  weight: number;
-  budget_limit?: number;
-  issued_count: number;
-  starts_at?: string;
-  ends_at?: string;
-  active: boolean;
-  created_at?: string;
-}
-
-export interface RewardStats {
-  cards_issued: number;
-  coupons_used: number;
-  coupons_expired: number;
-  coupons_active: number;
-  redemption_rate: number;
-  total_revenue_generated: number;
-  step_breakdown: {
-    step: number;
-    name: string;
-    issued: number;
-    used: number;
-    rate: number;
-  }[];
-  top_offers: {
-    id: number;
-    title: string;
-    step: number;
-    issued: number;
-    used: number;
-  }[];
-}
-
-export const DEFAULT_LADDER: RewardLadderStep[] = [
-  { step: 1, unlock_after: 0, is_big: false, active: true, title: "Signup Welcome Gift", description: "Free on signup · Instant card" },
-  { step: 2, unlock_after: 1, is_big: false, active: true, title: "1st Order Delivered", description: "Unlocks after 1 delivered order" },
-  { step: 3, unlock_after: 2, is_big: false, active: true, title: "2nd Order Delivered", description: "Unlocks after 2 delivered orders" },
-  { step: 4, unlock_after: 3, is_big: true, active: true, title: "Grand Celebration 🎁", description: "Big Milestone Prize after 3 orders" }
-];
-
-export const DEFAULT_OFFERS: RewardOffer[] = [
-  {
-    id: 1,
-    step: 1,
-    title: "₹50 OFF",
-    subtitle: "Welcome gift on orders above ₹399",
-    discount_type: "flat",
-    value: 50,
-    min_order: 399,
-    valid_days: 7,
-    weight: 50,
-    budget_limit: 1000,
-    issued_count: 245,
-    active: true,
-    created_at: new Date(Date.now() - 30 * 86400000).toISOString()
-  },
-  {
-    id: 2,
-    step: 1,
-    title: "10% OFF",
-    subtitle: "Welcome gift on any royal order",
-    discount_type: "percent",
-    value: 10,
-    max_discount: 75,
-    min_order: 0,
-    valid_days: 7,
-    weight: 50,
-    budget_limit: 1000,
-    issued_count: 198,
-    active: true,
-    created_at: new Date(Date.now() - 28 * 86400000).toISOString()
-  },
-  {
-    id: 3,
-    step: 2,
-    title: "₹100 OFF",
-    subtitle: "on your next order above ₹699",
-    discount_type: "flat",
-    value: 100,
-    min_order: 699,
-    valid_days: 7,
-    weight: 60,
-    budget_limit: 500,
-    issued_count: 132,
-    active: true,
-    created_at: new Date(Date.now() - 25 * 86400000).toISOString()
-  },
-  {
-    id: 4,
-    step: 2,
-    title: "15% OFF",
-    subtitle: "Special repeat order discount",
-    discount_type: "percent",
-    value: 15,
-    max_discount: 150,
-    min_order: 500,
-    valid_days: 7,
-    weight: 40,
-    budget_limit: 500,
-    issued_count: 88,
-    active: true,
-    created_at: new Date(Date.now() - 20 * 86400000).toISOString()
-  },
-  {
-    id: 5,
-    step: 3,
-    title: "₹150 OFF",
-    subtitle: "Loyalty reward on orders above ₹899",
-    discount_type: "flat",
-    value: 150,
-    min_order: 899,
-    valid_days: 10,
-    weight: 70,
-    budget_limit: 300,
-    issued_count: 64,
-    active: true,
-    created_at: new Date(Date.now() - 15 * 86400000).toISOString()
-  },
-  {
-    id: 6,
-    step: 3,
-    title: "FREE PODI PACK",
-    subtitle: "Complimentary Idli Karam Podi",
-    discount_type: "free_item",
-    value: 99,
-    free_product_id: 102,
-    free_product_name: "Special Idli Karam Podi (100g)",
-    min_order: 599,
-    valid_days: 10,
-    weight: 30,
-    budget_limit: 200,
-    issued_count: 42,
-    active: true,
-    created_at: new Date(Date.now() - 12 * 86400000).toISOString()
-  },
-  {
-    id: 7,
-    step: 4,
-    title: "₹300 MEGA OFF",
-    subtitle: "Milestone grand discount on ₹1299+",
-    discount_type: "flat",
-    value: 300,
-    min_order: 1299,
-    valid_days: 14,
-    weight: 40,
-    budget_limit: 100,
-    issued_count: 28,
-    active: true,
-    created_at: new Date(Date.now() - 10 * 86400000).toISOString()
-  },
-  {
-    id: 8,
-    step: 4,
-    title: "FREE SWEET BOX",
-    subtitle: "Grand celebration gift box with Sunnunda Laddus",
-    discount_type: "free_item",
-    value: 349,
-    free_product_id: 105,
-    free_product_name: "Royal Sunnunda Laddu Box (250g)",
-    min_order: 999,
-    valid_days: 14,
-    weight: 60,
-    budget_limit: 100,
-    issued_count: 36,
-    active: true,
-    created_at: new Date(Date.now() - 7 * 86400000).toISOString()
-  }
-];
-
-const LOCAL_STORAGE_FILE = path.join(process.cwd(), 'rewards_data.json');
+export * from './rewards-types';
 
 interface RewardsStore {
   ladder: RewardLadderStep[];
   offers: RewardOffer[];
 }
 
+// In-memory cache to ensure serverless (Vercel) safety
+let memoryStore: RewardsStore = {
+  ladder: [...DEFAULT_LADDER],
+  offers: [...DEFAULT_OFFERS]
+};
+
 function readLocalStore(): RewardsStore {
   try {
-    if (fs.existsSync(LOCAL_STORAGE_FILE)) {
-      const data = fs.readFileSync(LOCAL_STORAGE_FILE, 'utf-8');
-      return JSON.parse(data);
+    // Only attempt node fs if in a standard node environment
+    if (typeof window === 'undefined') {
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(process.cwd(), 'rewards_data.json');
+      if (fs.existsSync(filePath)) {
+        const data = fs.readFileSync(filePath, 'utf-8');
+        const parsed = JSON.parse(data);
+        if (parsed.ladder && parsed.offers) {
+          memoryStore = parsed;
+          return memoryStore;
+        }
+      }
     }
-  } catch (err) {
-    console.error('Error reading local rewards file:', err);
+  } catch {
+    // Fall back safely to memoryStore
   }
-  return { ladder: DEFAULT_LADDER, offers: DEFAULT_OFFERS };
+  return memoryStore;
 }
 
 function writeLocalStore(store: RewardsStore) {
+  memoryStore = store;
   try {
-    fs.writeFileSync(LOCAL_STORAGE_FILE, JSON.stringify(store, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Error writing local rewards file:', err);
+    if (typeof window === 'undefined') {
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(process.cwd(), 'rewards_data.json');
+      fs.writeFileSync(filePath, JSON.stringify(store, null, 2), 'utf-8');
+    }
+  } catch {
+    // In read-only serverless filesystems (e.g. Vercel), memoryStore persists within warm lambda instances
   }
 }
 
@@ -349,7 +186,7 @@ export async function getRewardStats(): Promise<RewardStats> {
     coupons_expired: totalExpired,
     coupons_active: totalActive,
     redemption_rate: rate,
-    total_revenue_generated: totalUsed * 850, // avg order revenue driven
+    total_revenue_generated: totalUsed * 850,
     step_breakdown: stepBreakdown,
     top_offers: topOffers
   };

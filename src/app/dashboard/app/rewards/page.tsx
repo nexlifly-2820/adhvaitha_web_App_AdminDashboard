@@ -40,7 +40,7 @@ import {
   Check
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { RewardLadderStep, RewardOffer, RewardStats, DEFAULT_LADDER, DEFAULT_OFFERS } from '@/lib/rewards-storage'
+import { RewardLadderStep, RewardOffer, RewardStats, DEFAULT_LADDER, DEFAULT_OFFERS } from '@/lib/rewards-types'
 
 export default function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState<'ladder' | 'offers' | 'analytics'>('ladder')
