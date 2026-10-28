@@ -4,10 +4,10 @@ const path = require('path');
 const brainDir = 'C:/Users/DELL/.gemini/antigravity-ide/brain/c7866afa-9c80-4f45-b18a-471e7d0c784e';
 
 const banners = [
-  { source: path.join(brainDir, 'banner_pickles_heritage_1793179533445.jpg'), targetName: 'banner_1.jpg' },
-  { source: path.join(brainDir, 'banner_podis_spices_1793179552745.jpg'), targetName: 'banner_2.jpg' },
-  { source: path.join(brainDir, 'banner_sweets_thali_1793179570732.jpg'), targetName: 'banner_3.jpg' },
-  { source: path.join(brainDir, 'banner_snacks_crispy_1793179604252.jpg'), targetName: 'banner_4.jpg' }
+  { source: path.join(brainDir, 'ad_banner_pickles_zepto_1793179731022.jpg'), targetName: 'banner_1.jpg' },
+  { source: path.join(brainDir, 'ad_banner_podis_zepto_1793179764459.jpg'), targetName: 'banner_2.jpg' },
+  { source: path.join(brainDir, 'ad_banner_sweets_zepto_1793179791540.jpg'), targetName: 'banner_3.jpg' },
+  { source: path.join(brainDir, 'ad_banner_snacks_zepto_1793179824327.jpg'), targetName: 'banner_4.jpg' }
 ];
 
 const targetDirs = [

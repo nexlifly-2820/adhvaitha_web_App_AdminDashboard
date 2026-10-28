@@ -7,8 +7,8 @@ const payload = JSON.stringify({
       {
         id: 'b1',
         image: 'assets/images/banner_1.jpg',
-        title: 'Heritage Pickles',
-        subtitle: 'Sun-dried spices & cold-pressed oil',
+        title: 'Andhra Avakaya Utsav',
+        subtitle: 'Flat 20% Off | Authentic Grandma Recipe',
         link: {
           category: 'Pickles'
         }
@@ -17,7 +17,7 @@ const payload = JSON.stringify({
         id: 'b2',
         image: 'assets/images/banner_2.jpg',
         title: 'Stone-Ground Podis',
-        subtitle: 'Aromatic gun powders & Andhra karams',
+        subtitle: 'Starting at ₹85 | 100% Traditional Hand-Pounded',
         link: {
           category: 'Powders'
         }
@@ -25,8 +25,8 @@ const payload = JSON.stringify({
       {
         id: 'b3',
         image: 'assets/images/banner_3.jpg',
-        title: 'Traditional Sweets',
-        subtitle: 'Pure ghee, organic jaggery & dry fruits',
+        title: 'Royal Mithai Utsav',
+        subtitle: 'Pure Desi Ghee | Traditional Authentic Sweets',
         link: {
           category: 'Sweets'
         }
@@ -34,8 +34,8 @@ const payload = JSON.stringify({
       {
         id: 'b4',
         image: 'assets/images/banner_4.jpg',
-        title: 'Handcrafted Snacks',
-        subtitle: 'Crispy murukku, mixture & spiced chips',
+        title: 'Crunchy Tea-Time Savories',
+        subtitle: 'Under ₹149 | Hot & Crispy Savories',
         link: {
           category: 'Snacks'
         }
