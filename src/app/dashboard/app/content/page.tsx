@@ -151,6 +151,32 @@ export const DEFAULT_STORY_SNACKS: SnackStory[] = [
       { name: "Peanuts", image: "assets/images/palli_patti_peanut_and_jaggery_chikki.jpg" },
       { name: "Curry Leaves", image: "assets/images/karvepaku_karam_podi_curry_leaves_powder.jpg" }
     ]
+  },
+  {
+    id: "sunnunda",
+    name: "Sunnunda Laddu",
+    image: "assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg",
+    price: 199,
+    story: "Traditional roasted urad dal laddus sweetened with organic bellam (jaggery) and rich cow ghee.",
+    since: "1978",
+    ingredients: [
+      { name: "Urad Dal", image: "assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg" },
+      { name: "Pure Ghee", image: "assets/images/good_food_text.png" },
+      { name: "Bellam", image: "assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg" }
+    ]
+  },
+  {
+    id: "chips",
+    name: "Banana Chips",
+    image: "assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg",
+    price: 119,
+    story: "Thinly sliced raw bananas fried in cold-pressed coconut oil and sprinkled with sea salt & black pepper.",
+    since: "1998",
+    ingredients: [
+      { name: "Raw Banana", image: "assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg" },
+      { name: "Coconut Oil", image: "assets/images/good_food_text.png" },
+      { name: "Sea Salt", image: "assets/images/uppava_traditional_salted_pickle.jpg" }
+    ]
   }
 ];
 interface TasteOption { title: string; sub: string; icon: string; color: string }
