@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart, Trophy, Flame, Mail } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart, Trophy, Flame, Mail, ShieldCheck } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -17,6 +17,7 @@ import { SweetsThaliManager, DEFAULT_SWEETS, SweetsConfig } from './components/S
 import { SpiceGrinderManager, DEFAULT_SPICE_GRINDER, SpiceGrinderConfig } from './components/SpiceGrinderManager'
 import { FreshPicksManager, DEFAULT_FRESH_PICKS, FreshPicksConfig } from './components/FreshPicksManager'
 import { LettersFromHomeManager, DEFAULT_REVIEWS, ReviewsConfig } from './components/LettersFromHomeManager'
+import { TrustPromiseManager, DEFAULT_TRUST, TrustConfig } from './components/TrustPromiseManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -962,6 +963,9 @@ export default function ContentManager() {
   // Letters from Home (Customer Reviews / reviews) State
   const [reviewsConfig, setReviewsConfig] = useState<ReviewsConfig>(DEFAULT_REVIEWS);
 
+  // The AmbhuJakshi Promise (Trust Section / trust) State
+  const [trustConfig, setTrustConfig] = useState<TrustConfig>(DEFAULT_TRUST);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -975,10 +979,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, reviewsDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, reviewsDoc, trustDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'), getDocData('reviews'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'), getDocData('reviews'), getDocData('trust'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1306,6 +1310,26 @@ export default function ContentManager() {
         });
       } else {
         setReviewsConfig(DEFAULT_REVIEWS);
+      }
+      if (trustDoc && Object.keys(trustDoc).length > 0) {
+        setTrustConfig({
+          enabled: trustDoc.enabled ?? true,
+          eyebrow: trustDoc.eyebrow || 'THE AMBHUJAKSHI PROMISE',
+          heading: trustDoc.heading || 'Everything we make comes',
+          headingAccent: trustDoc.headingAccent || 'four promises',
+          ribbon: trustDoc.ribbon || 'SINCE 1982',
+          logo: trustDoc.logo || 'assets/images/AMBHUJAKSHI  logo.png',
+          rating: trustDoc.rating || '4.9',
+          footer: trustDoc.footer || 'Loved by 12,000+ families',
+          tags: (Array.isArray(trustDoc.tags) && trustDoc.tags.length === 4)
+            ? trustDoc.tags
+            : DEFAULT_TRUST.tags,
+          shelf: (Array.isArray(trustDoc.shelf) && trustDoc.shelf.length > 0)
+            ? trustDoc.shelf
+            : DEFAULT_TRUST.shelf
+        });
+      } else {
+        setTrustConfig(DEFAULT_TRUST);
       }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
@@ -3288,6 +3312,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Letters from Home</span>
             </span>
             <span className="text-[9px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded uppercase">Reviews</span>
+          </TabsTrigger>
+          {/* THE AMBHUJAKSHI PROMISE (TRUST SECTION) TAB TRIGGER */}
+          <TabsTrigger 
+            value="trust" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-amber-600 fill-amber-500/20" />
+              <span className="font-semibold text-xs text-left">The Promise</span>
+            </span>
+            <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">Trust</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6827,6 +6862,23 @@ export default function ContentManager() {
                 toast.success('Restored Authentic Reviews Defaults!');
               }}
               allProducts={allProducts}
+            />
+          </TabsContent>
+
+          {/* THE AMBHUJAKSHI PROMISE (TRUST SECTION) */}
+          <TabsContent value="trust" className="mt-0 space-y-6">
+            <TrustPromiseManager
+              config={trustConfig}
+              onChange={setTrustConfig}
+              onSave={async () => {
+                await handleSaveTab('trust', trustConfig);
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm("Reset The AmbhuJakshi Promise to authentic defaults?")) return;
+                setTrustConfig(DEFAULT_TRUST);
+                toast.success('Restored Authentic Trust Defaults!');
+              }}
             />
           </TabsContent>
 
