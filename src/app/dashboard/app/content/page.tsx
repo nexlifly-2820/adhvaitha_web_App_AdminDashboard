@@ -19,6 +19,7 @@ import { FreshPicksManager, DEFAULT_FRESH_PICKS, FreshPicksConfig } from './comp
 import { LettersFromHomeManager, DEFAULT_REVIEWS, ReviewsConfig } from './components/LettersFromHomeManager'
 import { TrustPromiseManager, DEFAULT_TRUST, TrustConfig } from './components/TrustPromiseManager'
 import { PicklesShowcaseManager, DEFAULT_PICKLES_CONFIG, PicklesConfig } from './components/PicklesShowcaseManager'
+import { WishlistPantryManager, DEFAULT_WISHLIST_CONFIG, WishlistConfig } from './components/WishlistPantryManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -970,6 +971,9 @@ export default function ContentManager() {
   // Amma's Pickles Showcase (PicklesShowcaseSection / pickles) State
   const [picklesConfig, setPicklesConfig] = useState<PicklesConfig>(DEFAULT_PICKLES_CONFIG);
 
+  // Amma's Pantry (Wishlist / wishlist) State
+  const [wishlistConfig, setWishlistConfig] = useState<WishlistConfig>(DEFAULT_WISHLIST_CONFIG);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -983,10 +987,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, reviewsDoc, trustDoc, picklesDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, reviewsDoc, trustDoc, picklesDoc, wishlistDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'), getDocData('reviews'), getDocData('trust'), getDocData('pickles'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'), getDocData('reviews'), getDocData('trust'), getDocData('pickles'), getDocData('wishlist'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1353,6 +1357,28 @@ export default function ContentManager() {
         });
       } else {
         setPicklesConfig(DEFAULT_PICKLES_CONFIG);
+      }
+      if (wishlistDoc && Object.keys(wishlistDoc).length > 0) {
+        const settings = wishlistDoc.settings || DEFAULT_WISHLIST_CONFIG.settings;
+        const items = Array.isArray(wishlistDoc.items) && wishlistDoc.items.length > 0
+          ? wishlistDoc.items
+          : DEFAULT_WISHLIST_CONFIG.items;
+        setWishlistConfig({
+          settings: {
+            enabled: settings.enabled ?? true,
+            eyebrow: settings.eyebrow || 'MY WISHLIST',
+            titleStart: settings.titleStart || "Amma's",
+            titleAccent: settings.titleAccent || 'pantry',
+            titleEnd: settings.titleEnd || 'for you',
+            shareLabel: settings.shareLabel || '↗ Share my shelf',
+            fillLabel: settings.fillLabel || 'Fill my basket',
+            fairyLights: settings.fairyLights ?? true,
+            shareBase: settings.shareBase || 'https://ambhujakshi.com/wishlist/'
+          },
+          items
+        });
+      } else {
+        setWishlistConfig(DEFAULT_WISHLIST_CONFIG);
       }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
@@ -3357,6 +3383,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Amma's Pickles</span>
             </span>
             <span className="text-[9px] bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 font-bold px-1.5 py-0.5 rounded uppercase">Showcase</span>
+          </TabsTrigger>
+          {/* AMMA'S PANTRY (WISHLIST) TAB TRIGGER */}
+          <TabsTrigger 
+            value="wishlist" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Heart className="h-4 w-4 text-pink-600 fill-pink-500/20" />
+              <span className="font-semibold text-xs text-left">Amma's Pantry</span>
+            </span>
+            <span className="text-[9px] bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300 font-bold px-1.5 py-0.5 rounded uppercase">Wishlist</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6932,6 +6969,27 @@ export default function ContentManager() {
                 if (!confirm("Reset Amma's Pickles showcase to authentic defaults?")) return;
                 setPicklesConfig(DEFAULT_PICKLES_CONFIG);
                 toast.success('Restored Authentic Pickles Showcase Defaults!');
+              }}
+              allProducts={allProducts}
+            />
+          </TabsContent>
+
+          {/* AMMA'S PANTRY (WISHLIST) SECTION */}
+          <TabsContent value="wishlist" className="mt-0 space-y-6">
+            <WishlistPantryManager
+              config={wishlistConfig}
+              onChange={setWishlistConfig}
+              onSave={async () => {
+                await handleSaveTab('wishlist', {
+                  settings: wishlistConfig.settings,
+                  items: wishlistConfig.items
+                });
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm("Reset Amma's Pantry Wishlist to authentic defaults?")) return;
+                setWishlistConfig(DEFAULT_WISHLIST_CONFIG);
+                toast.success('Restored Authentic Wishlist Defaults!');
               }}
               allProducts={allProducts}
             />
