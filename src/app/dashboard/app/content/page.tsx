@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart, Trophy, Flame, Mail, ShieldCheck } from 'lucide-react'
+import { Plus, Trash2, Save, Image as ImageIcon, Box, AlertCircle, Video, ExternalLink, Copy, Smartphone, Sparkles, Palette, Loader2, Layers, Clock, UtensilsCrossed, ArrowRightLeft, RefreshCw, Check, Crown, ArrowUp, ArrowDown, BookOpen, RotateCcw, ShoppingBag, ChevronLeft, ChevronRight, Heart, Trophy, Flame, Mail, ShieldCheck, Disc } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase-app'
 import { toast } from 'sonner'
@@ -20,6 +20,7 @@ import { LettersFromHomeManager, DEFAULT_REVIEWS, ReviewsConfig } from './compon
 import { TrustPromiseManager, DEFAULT_TRUST, TrustConfig } from './components/TrustPromiseManager'
 import { PicklesShowcaseManager, DEFAULT_PICKLES_CONFIG, PicklesConfig } from './components/PicklesShowcaseManager'
 import { WishlistPantryManager, DEFAULT_WISHLIST_CONFIG, WishlistConfig } from './components/WishlistPantryManager'
+import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -974,6 +975,9 @@ export default function ContentManager() {
   // Amma's Pantry (Wishlist / wishlist) State
   const [wishlistConfig, setWishlistConfig] = useState<WishlistConfig>(DEFAULT_WISHLIST_CONFIG);
 
+  // 3D Category Turntable (Lazy Susan / shop_categories) State
+  const [turntableConfig, setTurntableConfig] = useState<CategoryTurntableConfig>(DEFAULT_TURNTABLE_CONFIG);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -987,10 +991,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, reviewsDoc, trustDoc, picklesDoc, wishlistDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, reviewsDoc, trustDoc, picklesDoc, wishlistDoc, turntableDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'), getDocData('reviews'), getDocData('trust'), getDocData('pickles'), getDocData('wishlist'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'), getDocData('reviews'), getDocData('trust'), getDocData('pickles'), getDocData('wishlist'), getDocData('shop_categories'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1379,6 +1383,25 @@ export default function ContentManager() {
         });
       } else {
         setWishlistConfig(DEFAULT_WISHLIST_CONFIG);
+      }
+      if (turntableDoc && Object.keys(turntableDoc).length > 0) {
+        const settings = turntableDoc.settings || DEFAULT_TURNTABLE_CONFIG.settings;
+        const categories = Array.isArray(turntableDoc.categories) && turntableDoc.categories.length > 0
+          ? turntableDoc.categories
+          : DEFAULT_TURNTABLE_CONFIG.categories;
+        setTurntableConfig({
+          settings: {
+            enabled: settings.enabled ?? true,
+            eyebrow: settings.eyebrow || 'SHOP BY CATEGORY',
+            titleStart: settings.titleStart || "Spin Amma's",
+            titleAccent: settings.titleAccent || 'lazy susan',
+            hint: settings.hint || '👆 Tap a bowl, a name or swipe to choose',
+            products: settings.products ?? true
+          },
+          categories
+        });
+      } else {
+        setTurntableConfig(DEFAULT_TURNTABLE_CONFIG);
       }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
@@ -3394,6 +3417,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Amma's Pantry</span>
             </span>
             <span className="text-[9px] bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300 font-bold px-1.5 py-0.5 rounded uppercase">Wishlist</span>
+          </TabsTrigger>
+          {/* 3D CATEGORY TURNTABLE (LAZY SUSAN) TAB TRIGGER */}
+          <TabsTrigger 
+            value="turntable" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Disc className="h-4 w-4 text-amber-600 fill-amber-500/20" />
+              <span className="font-semibold text-xs text-left">Lazy Susan</span>
+            </span>
+            <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">3D Wheel</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6992,6 +7026,26 @@ export default function ContentManager() {
                 toast.success('Restored Authentic Wishlist Defaults!');
               }}
               allProducts={allProducts}
+            />
+          </TabsContent>
+
+          {/* 3D CATEGORY TURNTABLE (LAZY SUSAN) SECTION */}
+          <TabsContent value="turntable" className="mt-0 space-y-6">
+            <CategoryTurntableManager
+              config={turntableConfig}
+              onChange={setTurntableConfig}
+              onSave={async () => {
+                await handleSaveTab('shop_categories', {
+                  settings: turntableConfig.settings,
+                  categories: turntableConfig.categories
+                });
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm("Reset 3D Lazy Susan turntable to authentic defaults?")) return;
+                setTurntableConfig(DEFAULT_TURNTABLE_CONFIG);
+                toast.success('Restored Authentic Lazy Susan Defaults!');
+              }}
             />
           </TabsContent>
 
