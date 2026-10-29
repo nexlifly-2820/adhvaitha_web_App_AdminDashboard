@@ -17,5 +17,20 @@
 
     # Route /api/category/:slug/products to category_products.php
     RewriteRule ^category/([^/]+)/products/?$ category_products.php?slug=$1 [L,QSA]
+
+    # Route /api/products/:id/detail to product_detail.php
+    RewriteRule ^products/([^/]+)/detail/?$ product_detail.php?action=app_detail&id=$1 [L,QSA]
+
+    # Route /api/admin/products/:id/detail to product_detail.php
+    RewriteRule ^admin/products/([^/]+)/detail/?$ product_detail.php?action=admin_detail&id=$1 [L,QSA]
+
+    # Route /api/admin/products/:id/photos to product_detail.php
+    RewriteRule ^admin/products/([^/]+)/photos/?$ product_detail.php?action=admin_photos&id=$1 [L,QSA]
+
+    # Route /api/admin/products/:id/photos/:photoId to product_detail.php
+    RewriteRule ^admin/products/([^/]+)/photos/([^/]+)/?$ product_detail.php?action=admin_photo_item&id=$1&photoId=$2 [L,QSA]
+
+    # Route /api/admin/products/analytics/views to product_detail.php
+    RewriteRule ^admin/products/analytics/views/?$ product_detail.php?action=analytics_views [L,QSA]
 </IfModule>
 

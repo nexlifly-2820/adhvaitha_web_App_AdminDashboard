@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 
 import { ImageUpload } from '@/components/ImageUpload'
 import { Badge } from '@/components/ui/badge'
-import { Search, Plus, MoreHorizontal, Image as ImageIcon, X, Upload, Trash2, Flame } from 'lucide-react'
+import { Search, Plus, MoreHorizontal, Image as ImageIcon, X, Upload, Trash2, Flame, Sparkles } from 'lucide-react'
+import { ProductDetailManager } from './components/ProductDetailManager'
 import {
   Table,
   TableBody,
@@ -33,6 +34,10 @@ export default function ProductsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [dynamicCategories, setDynamicCategories] = useState<{label: string}[]>([])
+  
+  // Cinematic Living Photos & Glints Detail Modal
+  const [detailProduct, setDetailProduct] = useState<any | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
   
   // Basic Info
   const [productName, setProductName] = useState('')
@@ -490,18 +495,44 @@ export default function ProductsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(product)}>Edit Product</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(product.id)}>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setDetailProduct(product);
+                            setIsDetailOpen(true);
+                          }}
+                          className="h-8 px-2 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 text-xs font-bold flex items-center gap-1 shadow-sm"
+                          title="Open Living Photos, Oil Glints & Cinematic Product Detail"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                          <span>Glints</span>
+                        </Button>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(product)}>Edit Product</DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setDetailProduct(product);
+                                setIsDetailOpen(true);
+                              }}
+                              className="text-amber-600 font-semibold flex items-center gap-1.5"
+                            >
+                              <Sparkles className="h-3.5 w-3.5" />
+                              Living Photos & Glints
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(product.id)}>Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )))}
@@ -581,178 +612,112 @@ export default function ProductsPage() {
                       </div>
                     </div>
                     <div className="space-y-2 flex flex-col justify-center pt-6">
-                      <label className="flex items-center space-x-2">
-                        <input type="checkbox" checked={canRequestTempering} onChange={e => setCanRequestTempering(e.target.checked)} className="w-4 h-4 accent-orange-600" />
-                        <span className="text-sm font-medium">Allow "Request Tempering" (Tadka)</span>
-                      </label>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="tempering" checked={canRequestTempering} onChange={e => setCanRequestTempering(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                        <label htmlFor="tempering" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Allow Tempering Request (Tadkam)</label>
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Description</label>
-                    <textarea 
-                      value={productDesc}
-                      onChange={(e) => setProductDesc(e.target.value)}
-                      className={`w-full min-h-[80px] rounded-md border ${errors.productDesc ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300`}
-                      placeholder="Describe your product..."
-                    />
+                    <textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} rows={3} placeholder="Full mouth-watering description..." className={`w-full rounded-md border border-slate-200 dark:border-slate-800 bg-transparent p-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300 ${errors.productDesc ? 'border-red-500' : ''}`} />
                     {errors.productDesc && <p className="text-xs text-red-500">{errors.productDesc}</p>}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="space-y-2 flex flex-col justify-center border rounded-md p-3">
-                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
-                        <input type="checkbox" checked={isBestSeller} onChange={(e) => setIsBestSeller(e.target.checked)} className="rounded border-slate-300" />
-                        <span>Best Seller</span>
-                      </label>
-                    </div>
-                    <div className="space-y-2 flex flex-col justify-center border rounded-md p-3">
-                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
-                        <input type="checkbox" checked={isMostLoved} onChange={(e) => setIsMostLoved(e.target.checked)} className="rounded border-slate-300 text-pink-500 focus:ring-pink-500" />
-                        <span className="text-pink-600">Most Loved Product</span>
-                      </label>
-                    </div>
-                    <div className="space-y-2 flex flex-col justify-center border rounded-md p-3">
-                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
-                        <input type="checkbox" checked={isFreshPick} onChange={(e) => setIsFreshPick(e.target.checked)} className="rounded border-slate-300 text-blue-500 focus:ring-blue-500" />
-                        <span className="text-blue-600">Fresh Pick</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2 flex flex-col justify-center">
-                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
-                        <input type="checkbox" checked={isVeg} onChange={(e) => setIsVeg(e.target.checked)} className="rounded border-slate-300 text-green-600 focus:ring-green-600" />
-                        <span className="text-green-600">Pure Veg</span>
-                      </label>
-                    </div>
-                    <div className="space-y-2 flex flex-col justify-center">
-                      <label className="flex items-center space-x-2 text-sm font-medium cursor-pointer">
-                        <input type="checkbox" checked={isOutOfStock} onChange={(e) => setIsOutOfStock(e.target.checked)} className="rounded border-slate-300" />
-                        <span className="text-red-500">Out of Stock</span>
-                      </label>
+                  <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Primary Product Image</label>
+                      <ImageUpload value={images[0] || ''} onChange={(url) => setImages([url])} folder="products" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Initial Rating</label>
-                      <Input type="number" step="0.1" min="0" max="5" value={rating} onChange={(e) => setRating(e.target.value)} placeholder="4.9" />
+                      <label className="text-sm font-medium">Story / Process Image (Optional)</label>
+                      <ImageUpload value={storyImage} onChange={(url) => setStoryImage(url)} folder="products" />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Upload Main Image</label>
-                    <ImageUpload 
-                      value={images[0] || ''} 
-                      onChange={(url) => { setImages([url]); setErrors({...errors, images: ''}); }} 
-                      folder="products" 
-                    />
-                    {errors.images && <p className="text-xs text-red-500">{errors.images}</p>}
+                  <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <label className="text-sm font-medium">Rating (0 - 5)</label>
+                    <Input type="number" step="0.1" max="5" min="0" value={rating} onChange={(e) => setRating(e.target.value)} />
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <label className="text-sm font-medium">Snack Story Artwork Image (Optional)</label>
-                    <p className="text-xs text-slate-500">Wavy artwork displayed directly above the snack product card.</p>
-                    <ImageUpload 
-                      value={storyImage} 
-                      onChange={(url) => setStoryImage(url)} 
-                      folder="products/story" 
-                    />
-                  </div>
-
-                  <div className="space-y-2 pt-2">
-                    <label className="text-sm font-medium">Gallery Thumbnails (Max 4)</label>
-                    <p className="text-xs text-slate-500">Add up to 4 additional images for the product page.</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {[0, 1, 2, 3].map((idx) => (
-                        <ImageUpload 
-                          key={idx}
-                          value={gallery[idx] || ''} 
-                          onChange={(url) => { 
-                            const newGallery = [...gallery];
-                            if (url) {
-                              newGallery[idx] = url;
-                            } else {
-                              newGallery.splice(idx, 1);
-                            }
-                            setGallery(newGallery.filter(Boolean)); 
-                          }} 
-                          folder="products/gallery" 
-                        />
-                      ))}
+                  <div className="flex flex-wrap gap-6 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="bestseller" checked={isBestSeller} onChange={(e) => setIsBestSeller(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      <label htmlFor="bestseller" className="text-sm font-medium leading-none">Best Seller</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="mostloved" checked={isMostLoved} onChange={(e) => setIsMostLoved(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      <label htmlFor="mostloved" className="text-sm font-medium leading-none">Most Loved</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="freshpick" checked={isFreshPick} onChange={(e) => setIsFreshPick(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      <label htmlFor="freshpick" className="text-sm font-medium leading-none">Fresh Pick</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="outofstock" checked={isOutOfStock} onChange={(e) => setIsOutOfStock(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      <label htmlFor="outofstock" className="text-sm font-medium leading-none">Out of Stock</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="isveg" checked={isVeg} onChange={(e) => setIsVeg(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      <label htmlFor="isveg" className="text-sm font-medium leading-none">Vegetarian</label>
                     </div>
                   </div>
                 </TabsContent>
 
-                {/* TAB 2: INVENTORY & PRICING */}
-                <TabsContent value="inventory" className="space-y-8">
-                  <div className="space-y-4 border-b border-slate-100 dark:border-slate-800 pb-6">
-                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Current Stock Level</h4>
-                    <div className="space-y-2 max-w-xs">
-                      <label className="text-sm font-medium">Stock Count</label>
-                      <Input 
-                        type="number" 
-                        value={stockCount} 
-                        onChange={(e) => setStockCount(Number(e.target.value))} 
-                      />
-                      <p className="text-xs text-slate-500">Controls the "ONLY X LEFT!" badge on the app.</p>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium text-slate-900 dark:text-slate-100">Weights & Prices</h4>
-                      <p className="text-xs text-slate-500">Set the variants and their prices.</p>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={handleAddWeightPrice}>
-                      <Plus className="h-4 w-4 mr-1" /> Add Option
-                    </Button>
-                  </div>
-                  {errors.weightPriceMap && <p className="text-xs text-red-500">{errors.weightPriceMap}</p>}
-                  
-                  {weightPriceEntries.map((entry, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
-                      <Input placeholder="e.g. 250g" value={entry.weight} onChange={(e) => updateWeightPrice(idx, 'weight', e.target.value)} className="w-1/3" />
-                      <Input placeholder="Price (₹)" type="number" value={entry.price} onChange={(e) => updateWeightPrice(idx, 'price', e.target.value)} className="w-1/3" />
-                      <Button variant="ghost" size="icon" onClick={() => handleRemoveWeightPrice(idx)} disabled={weightPriceEntries.length === 1}>
-                        <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
-                      </Button>
-                    </div>
-                  ))}
-                </TabsContent>
-
-                {/* TAB 3: BEHIND THE JAR */}
-                <TabsContent value="details" className="space-y-4">
+                {/* TAB 2: PRICING & INVENTORY */}
+                <TabsContent value="inventory" className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Origin</label>
-                    <Input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="e.g. Bhimavaram, Andhra Pradesh" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Preparation Method</label>
-                    <textarea value={preparationMethod} onChange={(e) => setPreparationMethod(e.target.value)} className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300" placeholder="Describe the process..." />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Storage Instructions</label>
-                    <Input value={storageInstructions} onChange={(e) => setStorageInstructions(e.target.value)} placeholder="e.g. Store in a cool, dry place" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Serving Suggestion</label>
-                    <Input value={servingSuggestion} onChange={(e) => setServingSuggestion(e.target.value)} placeholder="e.g. Serve hot with rice and ghee" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Shelf Life</label>
-                    <Input value={shelfLife} onChange={(e) => setShelfLife(e.target.value)} placeholder="e.g. 6 Months" />
+                    <label className="text-sm font-medium">Stock Inventory Count</label>
+                    <Input type="number" value={stockCount} onChange={(e) => setStockCount(Number(e.target.value))} placeholder="100" />
+                    <p className="text-xs text-slate-500">Total units available before marked as Out of Stock automatically.</p>
                   </div>
 
                   <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Timeline Events (Behind The Jar)</h4>
-                    <p className="text-xs text-slate-500">Customize the 5 points in the heritage timeline. Leave blank to use app defaults.</p>
-                    <div className="space-y-4">
-                      {behindTheJar.map((item, idx) => (
-                        <div key={idx} className="p-3 border rounded-md space-y-2">
-                          <label className="text-sm font-medium">{item.title}</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Weights & Prices (e.g. 250g, 500g, 1kg)</label>
+                      <Button variant="outline" size="sm" onClick={handleAddWeightPrice}>+ Add Weight Variant</Button>
+                    </div>
+                    {errors.weightPriceMap && <p className="text-xs text-red-500">{errors.weightPriceMap}</p>}
+
+                    {weightPriceEntries.map((entry, idx) => (
+                      <div key={idx} className="flex items-center gap-4">
+                        <Input 
+                          placeholder="Weight (e.g. 250g)" 
+                          value={entry.weight} 
+                          onChange={(e) => updateWeightPrice(idx, 'weight', e.target.value)} 
+                          className="w-1/2"
+                        />
+                        <Input 
+                          type="number" 
+                          placeholder="Price (₹)" 
+                          value={entry.price} 
+                          onChange={(e) => updateWeightPrice(idx, 'price', e.target.value)} 
+                          className="w-1/2"
+                        />
+                        {weightPriceEntries.length > 1 && (
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveWeightPrice(idx)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                {/* TAB 3: BEHIND THE JAR */}
+                <TabsContent value="details" className="space-y-6">
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">5-Step Behind The Jar Timeline</h4>
+                    <p className="text-xs text-slate-500">Fixed heritage steps shown to customers inside the app details page.</p>
+
+                    {behindTheJar.map((step, idx) => (
+                      <div key={idx} className="p-3 border rounded-md space-y-2">
+                        <span className="font-semibold text-xs text-primary">{idx + 1}. {step.title}</span>
+                        <div className="grid grid-cols-2 gap-2">
                           <Input 
-                            placeholder={`${item.title} Subtitle (e.g. Bhimavaram, AP)`} 
-                            value={item.subtitle} 
+                            placeholder="Subtitle (e.g. Traditional Handcraft)" 
+                            value={step.subtitle} 
                             onChange={(e) => {
                               const newArr = [...behindTheJar];
                               newArr[idx].subtitle = e.target.value;
@@ -760,8 +725,8 @@ export default function ProductsPage() {
                             }} 
                           />
                           <Input 
-                            placeholder={`${item.title} Description`} 
-                            value={item.description} 
+                            placeholder="Description" 
+                            value={step.description} 
                             onChange={(e) => {
                               const newArr = [...behindTheJar];
                               newArr[idx].description = e.target.value;
@@ -769,97 +734,69 @@ export default function ProductsPage() {
                             }} 
                           />
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
 
-                  <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Master Artisan</h4>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-500">Artisan Name</label>
-                        <Input value={artisanName} onChange={(e) => setArtisanName(e.target.value)} placeholder="e.g. Smt. Annapurna" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-500">Artisan Image</label>
-                        <ImageUpload value={artisanImage} onChange={(url) => setArtisanImage(url)} folder="products/artisan" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-500">Artisan Description</label>
-                        <textarea value={artisanDescription} onChange={(e) => setArtisanDescription(e.target.value)} className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:focus-visible:ring-slate-300" placeholder="e.g. 40 years of experience..." />
-                      </div>
-                    </div>
-                  </div>
-
+                  {/* Trust Badges */}
                   <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <label className="text-sm font-medium">Purity & Trust Badges</label>
-                    <p className="text-xs text-slate-500">Highlights shown in a horizontal row of icons.</p>
+                    <label className="text-sm font-medium">Trust Badges (e.g. Zero Preservatives, Stone Ground)</label>
                     {trustBadges.map((badge, idx) => (
                       <div key={idx} className="flex gap-2 mb-2">
-                        <Input value={badge} onChange={(e) => { const n = [...trustBadges]; n[idx] = e.target.value; setTrustBadges(n) }} placeholder="e.g. Zero Preservatives" />
+                        <Input value={badge} onChange={(e) => { const n = [...trustBadges]; n[idx] = e.target.value; setTrustBadges(n) }} />
                         <Button variant="ghost" size="icon" onClick={() => setTrustBadges(trustBadges.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
                       </div>
                     ))}
                     <Button variant="outline" size="sm" onClick={() => setTrustBadges([...trustBadges, ''])}>+ Add Trust Badge</Button>
                   </div>
 
-                  <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <label className="text-sm font-medium">Royal Recipes (Serving Suggestions)</label>
-                    <p className="text-xs text-slate-500">Quick recipes to help users imagine how they will use the product.</p>
-                    {recipes.map((recipe, idx) => (
-                      <div key={idx} className="flex flex-col gap-2 mb-4 p-3 border rounded">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs font-medium text-slate-500">Recipe {idx + 1}</label>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setRecipes(recipes.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
-                        </div>
-                        <Input value={recipe.title} onChange={(e) => { const n = [...recipes]; n[idx].title = e.target.value; setRecipes(n) }} placeholder="Recipe Title (e.g. Avakaya with Hot Rice)" />
-                        <Input value={recipe.instruction} onChange={(e) => { const n = [...recipes]; n[idx].instruction = e.target.value; setRecipes(n) }} placeholder="Subtitle/Instruction (e.g. A timeless classic.)" />
-                        <div className="mt-2">
-                          <label className="text-xs font-medium text-slate-500 mb-1 block">Recipe Image</label>
-                          <ImageUpload value={recipe.image || ''} onChange={(url) => { const n = [...recipes]; n[idx].image = url; setRecipes(n) }} folder="products/recipes" />
-                        </div>
-                      </div>
-                    ))}
-                    <Button variant="outline" size="sm" onClick={() => setRecipes([...recipes, {image: '', title: '', instruction: ''}])}>+ Add Recipe</Button>
+                  {/* Master Artisan */}
+                  <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Master Artisan Details</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input placeholder="Artisan Name" value={artisanName} onChange={(e) => setArtisanName(e.target.value)} />
+                      <Input placeholder="Artisan Image URL" value={artisanImage} onChange={(e) => setArtisanImage(e.target.value)} />
+                    </div>
+                    <textarea placeholder="Artisan Short Story / Description" value={artisanDescription} onChange={(e) => setArtisanDescription(e.target.value)} rows={2} className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-transparent p-2 text-sm" />
                   </div>
 
+                  {/* Recipes */}
+                  <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Signature Recipes</h4>
+                    {recipes.map((rec, idx) => (
+                      <div key={idx} className="flex flex-col gap-2 p-3 border rounded-md">
+                        <Input placeholder="Recipe Title" value={rec.title} onChange={(e) => { const n = [...recipes]; n[idx].title = e.target.value; setRecipes(n) }} />
+                        <textarea placeholder="Recipe Instruction" value={rec.instruction} onChange={(e) => { const n = [...recipes]; n[idx].instruction = e.target.value; setRecipes(n) }} rows={2} className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-transparent p-2 text-sm" />
+                        <Button variant="destructive" size="sm" onClick={() => setRecipes(recipes.filter((_, i) => i !== idx))}>Remove Recipe</Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => setRecipes([...recipes, {title: '', instruction: ''}])}>+ Add Recipe</Button>
+                  </div>
                 </TabsContent>
 
                 {/* TAB 4: INGREDIENTS & PAIRINGS */}
                 <TabsContent value="pairings" className="space-y-6">
-                  {/* Ingredients List */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Ingredients (Name & Image Grid)</label>
-                    <p className="text-xs text-slate-500">Add the product ingredients along with their images. They will be displayed in a circular grid on the product page.</p>
+                  {/* Ingredients with Images */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Visual Ingredients List</h4>
+                    <p className="text-xs text-slate-500">Ingredient names and circular image icons displayed on the detail sheet.</p>
+
                     {ingredients.map((ing, idx) => (
-                      <div key={idx} className="flex flex-col gap-2 mb-4 p-3 border rounded border-slate-200 dark:border-slate-800">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs font-medium text-slate-500">Ingredient {idx + 1}</label>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIngredients(ingredients.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
-                        </div>
-                        <Input value={ing.name} onChange={(e) => { const n = [...ingredients]; n[idx].name = e.target.value; setIngredients(n) }} placeholder="Ingredient Name (e.g. Raw Mangoes)" />
-                        <div className="mt-2">
-                          <label className="text-xs font-medium text-slate-500 mb-1 block">Ingredient Image</label>
-                          <ImageUpload value={ing.image} onChange={(url) => { const n = [...ingredients]; n[idx].image = url; setIngredients(n) }} folder="products/ingredients" />
-                        </div>
+                      <div key={idx} className="flex items-center gap-3">
+                        <Input placeholder="Ingredient Name (e.g. Raw Mango)" value={ing.name} onChange={(e) => { const n = [...ingredients]; n[idx].name = e.target.value; setIngredients(n) }} className="w-1/2" />
+                        <Input placeholder="Image URL (Icon)" value={ing.image} onChange={(e) => { const n = [...ingredients]; n[idx].image = e.target.value; setIngredients(n) }} className="w-1/2" />
+                        <Button variant="ghost" size="icon" onClick={() => setIngredients(ingredients.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-red-500"/></Button>
                       </div>
                     ))}
-                    <Button variant="outline" size="sm" onClick={() => setIngredients([...ingredients, {name: '', image: ''}])}>+ Add Ingredient</Button>
+                    <Button variant="outline" size="sm" onClick={() => setIngredients([...ingredients, {name:'', image:''}])}>+ Add Ingredient</Button>
                   </div>
 
                   {/* Secret Ingredient */}
-                  <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Secret Ingredient (Optional)</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-500">Ingredient Name</label>
-                        <Input value={secretIngredient.name} onChange={(e) => setSecretIngredient({...secretIngredient, name: e.target.value})} placeholder="e.g. Guntur Chilli" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-500">Short Description</label>
-                        <Input value={secretIngredient.description} onChange={(e) => setSecretIngredient({...secretIngredient, description: e.target.value})} placeholder="Locally sourced..." />
-                      </div>
-                    </div>
+                  <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Secret Ingredient (Golden Star Element)</h4>
+                    <Input placeholder="Ingredient Name" value={secretIngredient.name} onChange={(e) => setSecretIngredient({...secretIngredient, name: e.target.value})} />
+                    <Input placeholder="Special Story / Description" value={secretIngredient.description} onChange={(e) => setSecretIngredient({...secretIngredient, description: e.target.value})} />
+                    <Input placeholder="Image URL" value={secretIngredient.image} onChange={(e) => setSecretIngredient({...secretIngredient, image: e.target.value})} />
                   </div>
 
                   {/* Exquisite Pairings */}
@@ -1149,6 +1086,16 @@ export default function ProductsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* CINEMATIC PRODUCT DETAIL & LIVING PHOTOS GLINTS MODAL */}
+      {isDetailOpen && detailProduct && (
+        <ProductDetailManager
+          product={detailProduct}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          onSaved={fetchProducts}
+        />
       )}
     </div>
   )
