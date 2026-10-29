@@ -32,5 +32,9 @@
 
     # Route /api/admin/products/analytics/views to product_detail.php
     RewriteRule ^admin/products/analytics/views/?$ product_detail.php?action=analytics_views [L,QSA]
+
+    # Route /api/profile/me to profile.php
+    RewriteRule ^profile/me/?$ profile.php [L,QSA]
+    RewriteRule ^profile/?$ profile.php [L,QSA]
 </IfModule>
 
