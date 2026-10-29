@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 
 import { toast } from 'sonner'
-import { Settings, ShieldAlert, Smartphone, Save, AlertTriangle, Truck } from 'lucide-react'
+import { Settings, ShieldAlert, Smartphone, Save, AlertTriangle, Truck, Sparkles } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { LoginScreenManager } from './components/LoginScreenManager'
 
 export default function SystemSettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -108,24 +110,37 @@ export default function SystemSettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Settings className="h-6 w-6 text-slate-600 dark:text-slate-400" />
-            Global App Control
-          </h2>
-          <p className="text-slate-500">Manage the core `app_data/config` settings.</p>
-        </div>
-        <Button onClick={handleSave} disabled={isSaving} className="bg-slate-900 text-white hover:bg-slate-800">
-          <Save className="h-4 w-4 mr-2" />
-          {isSaving ? 'Saving...' : 'Save Config'}
-        </Button>
-      </div>
+    <div className="space-y-6 max-w-5xl mx-auto p-4 sm:p-6">
+      <Tabs defaultValue="global" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+          <TabsTrigger value="global" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Global App Config
+          </TabsTrigger>
+          <TabsTrigger value="login" className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-amber-500" />
+            Login & Moving Wall
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Maintenance Mode Card */}
-        <Card className={`border-2 transition-colors ${maintenanceMode ? 'border-red-400 bg-red-50/30' : 'border-transparent shadow-md'}`}>
+        <TabsContent value="global" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                <Settings className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+                Global App Control
+              </h2>
+              <p className="text-slate-500">Manage the core `app_data/config` settings.</p>
+            </div>
+            <Button onClick={handleSave} disabled={isSaving} className="bg-slate-900 text-white hover:bg-slate-800">
+              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? 'Saving...' : 'Save Config'}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Maintenance Mode Card */}
+            <Card className={`border-2 transition-colors ${maintenanceMode ? 'border-red-400 bg-red-50/30' : 'border-transparent shadow-md'}`}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
               <ShieldAlert className="h-5 w-5" />
@@ -283,6 +298,12 @@ export default function SystemSettingsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </TabsContent>
+
+    <TabsContent value="login">
+      <LoginScreenManager />
+    </TabsContent>
+  </Tabs>
+</div>
   )
 }

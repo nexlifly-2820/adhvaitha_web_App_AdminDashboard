@@ -36,5 +36,13 @@
     # Route /api/profile/me to profile.php
     RewriteRule ^profile/me/?$ profile.php [L,QSA]
     RewriteRule ^profile/?$ profile.php [L,QSA]
+
+    # Route Auth & Login endpoints to auth.php
+    RewriteRule ^auth/login-config/?$ auth.php?action=login_config [L,QSA]
+    RewriteRule ^auth/send-otp/?$ auth.php?action=send_otp [L,QSA]
+    RewriteRule ^auth/verify-otp/?$ auth.php?action=verify_otp [L,QSA]
+    RewriteRule ^admin/login-settings/?$ auth.php?action=admin_login_settings [L,QSA]
+    RewriteRule ^admin/login-wall/([0-9]+)/?$ auth.php?action=admin_login_wall_item&id=$1 [L,QSA]
+    RewriteRule ^admin/login-wall/?$ auth.php?action=admin_login_wall [L,QSA]
 </IfModule>
 
