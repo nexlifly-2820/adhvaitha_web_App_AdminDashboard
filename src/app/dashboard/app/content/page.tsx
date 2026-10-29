@@ -18,6 +18,7 @@ import { SpiceGrinderManager, DEFAULT_SPICE_GRINDER, SpiceGrinderConfig } from '
 import { FreshPicksManager, DEFAULT_FRESH_PICKS, FreshPicksConfig } from './components/FreshPicksManager'
 import { LettersFromHomeManager, DEFAULT_REVIEWS, ReviewsConfig } from './components/LettersFromHomeManager'
 import { TrustPromiseManager, DEFAULT_TRUST, TrustConfig } from './components/TrustPromiseManager'
+import { PicklesShowcaseManager, DEFAULT_PICKLES_CONFIG, PicklesConfig } from './components/PicklesShowcaseManager'
 
 // Schemas based on Data Guide
 interface MainBanner { title: string; category: string; image: string }
@@ -966,6 +967,9 @@ export default function ContentManager() {
   // The AmbhuJakshi Promise (Trust Section / trust) State
   const [trustConfig, setTrustConfig] = useState<TrustConfig>(DEFAULT_TRUST);
 
+  // Amma's Pickles Showcase (PicklesShowcaseSection / pickles) State
+  const [picklesConfig, setPicklesConfig] = useState<PicklesConfig>(DEFAULT_PICKLES_CONFIG);
+
   useEffect(() => {
     fetchAllContent()
   }, [])
@@ -979,10 +983,10 @@ export default function ContentManager() {
         return (json.success && json.data) ? json.data : null
       }
 
-      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, reviewsDoc, trustDoc, productsRes] = await Promise.all([
+      const [bannersDoc, storiesDoc, bentoDoc, catParentDoc, catDoc, dealsDoc, couponsDoc, pkgDoc, onboardDoc, pairingsDoc, kitchenStoryDoc, searchConfigDoc, catPageConfigDoc, deliveryConfigDoc, cartConfigDoc, billingConfigDoc, homeVideoDoc, splashVideoDoc, snackStoryDoc, festivalDoc, heritageVideoDoc, tabTransitionDoc, specialsLightDoc, storySnacksDoc, autoBannersDoc, mostLovedDoc, bestSellersDoc, sweetsDoc, spicesGrinderDoc, freshPicksDoc, reviewsDoc, trustDoc, picklesDoc, productsRes] = await Promise.all([
         getDocData('banners'), getDocData('stories'), getDocData('bento_selection'),
         getDocData('category_parent_cards'), getDocData('categories'), getDocData('deals'), getDocData('coupons'), getDocData('packaging'), getDocData('onboarding'), getDocData('pairings'), getDocData('kitchen_story'), getDocData('search_config'), getDocData('category_page_config'),
-        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'), getDocData('reviews'), getDocData('trust'),
+        getDocData('delivery_config'), getDocData('cart_config'), getDocData('billing_config'), getDocData('home_video'), getDocData('splash_video'), getDocData('snacks_with_story'), getDocData('festival_config'), getDocData('featured_video_section'), getDocData('tab_transition_video'), getDocData('specials_light'), getDocData('story_snacks'), getDocData('auto_banners'), getDocData('most_loved'), getDocData('best_sellers'), getDocData('sweets'), getDocData('spices_grinder'), getDocData('fresh_picks'), getDocData('reviews'), getDocData('trust'), getDocData('pickles'),
         fetch('/dashboard/app/api/products').then(res => res.json()).catch(() => null)
       ])
 
@@ -1330,6 +1334,25 @@ export default function ContentManager() {
         });
       } else {
         setTrustConfig(DEFAULT_TRUST);
+      }
+      if (picklesDoc && Object.keys(picklesDoc).length > 0) {
+        const settings = picklesDoc.settings || DEFAULT_PICKLES_CONFIG.settings;
+        const picklesList = Array.isArray(picklesDoc.pickles) && picklesDoc.pickles.length > 0
+          ? picklesDoc.pickles
+          : DEFAULT_PICKLES_CONFIG.pickles;
+        setPicklesConfig({
+          settings: {
+            enabled: settings.enabled ?? true,
+            eyebrow: settings.eyebrow || 'HAND-MIXED · SUN-CURED',
+            title: settings.title || "Amma's Pickles",
+            viewAllLabel: settings.viewAllLabel || 'View all →',
+            addLabel: settings.addLabel || 'Add to cart',
+            chilliIcon: settings.chilliIcon || 'assets/images/chilli.png'
+          },
+          pickles: picklesList
+        });
+      } else {
+        setPicklesConfig(DEFAULT_PICKLES_CONFIG);
       }
       if (productsRes && productsRes.success && productsRes.data) {
         const prods = Object.values(productsRes.data)
@@ -3323,6 +3346,17 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">The Promise</span>
             </span>
             <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">Trust</span>
+          </TabsTrigger>
+          {/* AMMA'S PICKLES (PICKLES SHOWCASE) TAB TRIGGER */}
+          <TabsTrigger 
+            value="pickles_showcase" 
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Flame className="h-4 w-4 text-red-600 fill-red-500/20" />
+              <span className="font-semibold text-xs text-left">Amma's Pickles</span>
+            </span>
+            <span className="text-[9px] bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 font-bold px-1.5 py-0.5 rounded uppercase">Showcase</span>
           </TabsTrigger>
         </TabsList>
         
@@ -6879,6 +6913,27 @@ export default function ContentManager() {
                 setTrustConfig(DEFAULT_TRUST);
                 toast.success('Restored Authentic Trust Defaults!');
               }}
+            />
+          </TabsContent>
+
+          {/* AMMA'S PICKLES (PICKLES SHOWCASE) SECTION */}
+          <TabsContent value="pickles_showcase" className="mt-0 space-y-6">
+            <PicklesShowcaseManager
+              config={picklesConfig}
+              onChange={setPicklesConfig}
+              onSave={async () => {
+                await handleSaveTab('pickles', {
+                  settings: picklesConfig.settings,
+                  pickles: picklesConfig.pickles
+                });
+              }}
+              isSaving={isSaving}
+              onResetDefaults={() => {
+                if (!confirm("Reset Amma's Pickles showcase to authentic defaults?")) return;
+                setPicklesConfig(DEFAULT_PICKLES_CONFIG);
+                toast.success('Restored Authentic Pickles Showcase Defaults!');
+              }}
+              allProducts={allProducts}
             />
           </TabsContent>
 
