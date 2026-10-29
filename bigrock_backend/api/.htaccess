@@ -14,4 +14,8 @@
 
     # Route /api/wishlist to wishlist.php
     RewriteRule ^wishlist/?$ wishlist.php [L,QSA]
+
+    # Route /api/category/:slug/products to category_products.php
+    RewriteRule ^category/([^/]+)/products/?$ category_products.php?slug=$1 [L,QSA]
 </IfModule>
+

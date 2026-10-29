@@ -36,7 +36,16 @@ if (isset($_GET['setup'])) {
         'gallery_json TEXT DEFAULT NULL',
         'behind_the_jar_json TEXT DEFAULT NULL',
         'artisanImage VARCHAR(255) DEFAULT NULL',
-        'story_image VARCHAR(512) DEFAULT NULL'
+        'story_image VARCHAR(512) DEFAULT NULL',
+        'tag VARCHAR(255) DEFAULT NULL',
+        'deck_description TEXT DEFAULT NULL',
+        'spice INT DEFAULT 0',
+        'cure_note VARCHAR(255) DEFAULT NULL',
+        'color1 VARCHAR(20) DEFAULT "#8A1A10"',
+        'color2 VARCHAR(20) DEFAULT "#2A0806"',
+        'deck_photos TEXT DEFAULT NULL',
+        'deck_sort INT DEFAULT 0',
+        'deck_hidden TINYINT(1) DEFAULT 0'
     ];
     
     try {
@@ -93,6 +102,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Map legacy image_url to image
         $p['image'] = $p['image_url'] ?? '';
 
+        // Taste Deck fields
+        $p['tag'] = $p['tag'] ?? '';
+        $p['deck_description'] = $p['deck_description'] ?? '';
+        $p['deckDescription'] = $p['deck_description'];
+        $p['spice'] = (int)($p['spice'] ?? 0);
+        $p['cure_note'] = $p['cure_note'] ?? '';
+        $p['cureNote'] = $p['cure_note'];
+        $p['color1'] = $p['color1'] ?? '#8A1A10';
+        $p['color2'] = $p['color2'] ?? '#2A0806';
+        $p['deck_photos'] = json_decode($p['deck_photos'] ?? '[]', true) ?? [];
+        $p['deckPhotos'] = $p['deck_photos'];
+        $p['deck_sort'] = (int)($p['deck_sort'] ?? 0);
+        $p['deck_hidden'] = (bool)($p['deck_hidden'] ?? false);
+        $p['deckHidden'] = $p['deck_hidden'];
+
         // Remove raw database columns from response to match schema perfectly
         unset($p['weight_price_json'], $p['trust_badges_json'], $p['ingredients_json'], $p['recipes_json'], $p['secret_ingredient_json'], $p['pairings_json'], $p['sommelier_pairings_json'], $p['gallery_json'], $p['behind_the_jar_json'], $p['story_image'], $p['is_bestseller'], $p['is_most_loved'], $p['is_fresh_pick'], $p['is_out_of_stock'], $p['is_veg'], $p['stock'], $p['image_url']);
         
@@ -147,6 +171,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $viewCount = $data['viewCount'] ?? 0;
     $purchaseCount = $data['purchaseCount'] ?? 0;
 
+    // Taste Deck Fields
+    $tag = $data['tag'] ?? $data['deckTag'] ?? '';
+    $deck_description = $data['deck_description'] ?? $data['deckDescription'] ?? '';
+    $spice = isset($data['spice']) ? (int)$data['spice'] : 0;
+    $cure_note = $data['cure_note'] ?? $data['cureNote'] ?? '';
+    $color1 = $data['color1'] ?? $data['deckColor1'] ?? '#8A1A10';
+    $color2 = $data['color2'] ?? $data['deckColor2'] ?? '#2A0806';
+    $deck_photos_raw = $data['deck_photos'] ?? $data['deckPhotos'] ?? [];
+    $deck_photos = is_array($deck_photos_raw) ? json_encode($deck_photos_raw) : $deck_photos_raw;
+    $deck_sort = isset($data['deck_sort']) ? (int)$data['deck_sort'] : (isset($data['deckSort']) ? (int)$data['deckSort'] : 0);
+    $deck_hidden = isset($data['deck_hidden']) ? (int)$data['deck_hidden'] : (isset($data['deckHidden']) ? (int)$data['deckHidden'] : 0);
+
     // JSON Encoding for complex objects
     $weight_price_json = isset($data['weightPriceMap']) ? json_encode($data['weightPriceMap']) : null;
     $trust_badges_json = isset($data['trustBadges']) ? json_encode($data['trustBadges']) : null;
@@ -165,7 +201,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 origin, preparationMethod, shelfLife, storageInstructions, servingSuggestion,
                 artisanName, artisanDescription, viewCount, purchaseCount,
                 weight_price_json, trust_badges_json, ingredients_json, recipes_json,
-                secret_ingredient_json, pairings_json, sommelier_pairings_json, gallery_json, behind_the_jar_json, artisanImage, story_image
+                secret_ingredient_json, pairings_json, sommelier_pairings_json, gallery_json, behind_the_jar_json, artisanImage, story_image,
+                tag, deck_description, spice, cure_note, color1, color2, deck_photos, deck_sort, deck_hidden
             ) 
             VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?,
@@ -173,7 +210,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ?, ?, ?, ?, ?,
                 ?, ?, ?, ?,
                 ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?
             ) 
             ON DUPLICATE KEY UPDATE 
                 name=VALUES(name), description=VALUES(description), price=VALUES(price), stock=VALUES(stock), 
@@ -190,7 +228,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ingredients_json=VALUES(ingredients_json), recipes_json=VALUES(recipes_json),
                 secret_ingredient_json=VALUES(secret_ingredient_json), pairings_json=VALUES(pairings_json), 
                 sommelier_pairings_json=VALUES(sommelier_pairings_json), gallery_json=VALUES(gallery_json), 
-                behind_the_jar_json=VALUES(behind_the_jar_json), artisanImage=VALUES(artisanImage), story_image=VALUES(story_image)";
+                behind_the_jar_json=VALUES(behind_the_jar_json), artisanImage=VALUES(artisanImage), story_image=VALUES(story_image),
+                tag=VALUES(tag), deck_description=VALUES(deck_description), spice=VALUES(spice), 
+                cure_note=VALUES(cure_note), color1=VALUES(color1), color2=VALUES(color2), 
+                deck_photos=VALUES(deck_photos), deck_sort=VALUES(deck_sort), deck_hidden=VALUES(deck_hidden)";
             
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -199,7 +240,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $origin, $preparationMethod, $shelfLife, $storageInstructions, $servingSuggestion,
         $artisanName, $artisanDescription, $viewCount, $purchaseCount,
         $weight_price_json, $trust_badges_json, $ingredients_json, $recipes_json,
-        $secret_ingredient_json, $pairings_json, $sommelier_pairings_json, $gallery_json, $behind_the_jar_json, $artisanImage, $storyImage
+        $secret_ingredient_json, $pairings_json, $sommelier_pairings_json, $gallery_json, $behind_the_jar_json, $artisanImage, $storyImage,
+        $tag, $deck_description, $spice, $cure_note, $color1, $color2, $deck_photos, $deck_sort, $deck_hidden
     ]);
 
     echo json_encode(["success" => true, "message" => "Product saved successfully", "id" => $id]);

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 
 import { ImageUpload } from '@/components/ImageUpload'
 import { Badge } from '@/components/ui/badge'
-import { Search, Plus, MoreHorizontal, Image as ImageIcon, X, Upload, Trash2 } from 'lucide-react'
+import { Search, Plus, MoreHorizontal, Image as ImageIcon, X, Upload, Trash2, Flame } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -81,6 +81,17 @@ export default function ProductsPage() {
   const [secretIngredient, setSecretIngredient] = useState({ name: '', description: '', image: '' })
   const [pairings, setPairings] = useState<string[]>([])
   const [sommelierPairings, setSommelierPairings] = useState<{title: string, description: string, icon: string}[]>([])
+
+  // Taste Deck (Swipe Cards) Fields
+  const [deckTag, setDeckTag] = useState('')
+  const [deckDescription, setDeckDescription] = useState('')
+  const [spiceLevel, setSpiceLevel] = useState<number>(3)
+  const [cureNote, setCureNote] = useState('')
+  const [deckColor1, setDeckColor1] = useState('#8A1A10')
+  const [deckColor2, setDeckColor2] = useState('#2A0806')
+  const [deckPhotos, setDeckPhotos] = useState<string[]>([])
+  const [deckSort, setDeckSort] = useState<number>(0)
+  const [deckHidden, setDeckHidden] = useState<boolean>(false)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -166,6 +177,17 @@ export default function ProductsPage() {
     setPairings([])
     setSommelierPairings([])
 
+    // Reset Taste Deck
+    setDeckTag('')
+    setDeckDescription('')
+    setSpiceLevel(3)
+    setCureNote('')
+    setDeckColor1('#8A1A10')
+    setDeckColor2('#2A0806')
+    setDeckPhotos([])
+    setDeckSort(0)
+    setDeckHidden(false)
+
     setErrors({})
     setEditingProductId(null)
   }
@@ -224,6 +246,17 @@ export default function ProductsPage() {
     }
     setPairings(product.pairings || [])
     setSommelierPairings(product.sommelierPairings || [])
+
+    // Load Taste Deck Fields
+    setDeckTag(product.tag || product.deckTag || '')
+    setDeckDescription(product.deck_description || product.deckDescription || '')
+    setSpiceLevel(product.spice !== undefined ? Number(product.spice) : 3)
+    setCureNote(product.cure_note || product.cureNote || '')
+    setDeckColor1(product.color1 || product.deckColor1 || '#8A1A10')
+    setDeckColor2(product.color2 || product.deckColor2 || '#2A0806')
+    setDeckPhotos(Array.isArray(product.deck_photos) ? product.deck_photos : (Array.isArray(product.deckPhotos) ? product.deckPhotos : []))
+    setDeckSort(product.deck_sort !== undefined ? Number(product.deck_sort) : 0)
+    setDeckHidden(product.deck_hidden || product.deckHidden || false)
     
     setIsAddDialogOpen(true)
   }
@@ -320,7 +353,26 @@ export default function ProductsPage() {
           gallery: gallery.filter(g => g.trim() !== ''),
           secretIngredient: secretIngredient.name ? secretIngredient : null,
           pairings: pairings.filter(p => p.trim() !== ''),
-          sommelierPairings: sommelierPairings.filter(s => s.title.trim() !== '')
+          sommelierPairings: sommelierPairings.filter(s => s.title.trim() !== ''),
+
+          // Taste Deck Fields
+          tag: deckTag,
+          deckTag: deckTag,
+          deck_description: deckDescription,
+          deckDescription: deckDescription,
+          spice: Number(spiceLevel),
+          cure_note: cureNote,
+          cureNote: cureNote,
+          color1: deckColor1,
+          deckColor1: deckColor1,
+          color2: deckColor2,
+          deckColor2: deckColor2,
+          deck_photos: deckPhotos.filter(p => p && p.trim() !== ''),
+          deckPhotos: deckPhotos.filter(p => p && p.trim() !== ''),
+          deck_sort: Number(deckSort),
+          deckSort: Number(deckSort),
+          deck_hidden: deckHidden,
+          deckHidden: deckHidden
         })
       })
       if (res.ok) {
@@ -471,11 +523,12 @@ export default function ProductsPage() {
             
             <div className="flex-1 overflow-y-auto p-6">
               <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsList className="grid w-full grid-cols-5 mb-6">
                   <TabsTrigger value="basic">Basic Info</TabsTrigger>
                   <TabsTrigger value="inventory">Pricing</TabsTrigger>
                   <TabsTrigger value="details">Behind the Jar</TabsTrigger>
                   <TabsTrigger value="pairings">Ingredients</TabsTrigger>
+                  <TabsTrigger value="deck">Taste Deck</TabsTrigger>
                 </TabsList>
                 
                 {/* TAB 1: BASIC INFO */}
@@ -836,6 +889,254 @@ export default function ProductsPage() {
                     <Button variant="outline" size="sm" onClick={() => setSommelierPairings([...sommelierPairings, {title:'', description:'', icon:''}])}>+ Add Guide Entry</Button>
                   </div>
 
+                </TabsContent>
+
+                {/* TAB 5: TASTE DECK (SWIPE CARDS) */}
+                <TabsContent value="deck" className="space-y-6">
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-red-950/40 via-stone-900 to-amber-950/40 border border-red-500/30 flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
+                      <Flame className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                        <span>Taste Deck Swipe Cards</span>
+                        <span className="text-[10px] font-mono uppercase bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full border border-red-500/30">
+                          GET /api/category/:slug/products
+                        </span>
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Configure the full-screen vertical swipe cards for this product when viewed in the Category Deck screen.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left Column: Deck Info & Chilli Meter */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Card Tag / Badge</label>
+                        <Input 
+                          value={deckTag} 
+                          onChange={(e) => setDeckTag(e.target.value)} 
+                          placeholder="e.g. Best Seller, Amma's Special, Spicy Classic" 
+                        />
+                        <p className="text-xs text-slate-500">Displays on the top-right pill badge of the swipe card.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Deck Short Description (1 Line)</label>
+                        <Input 
+                          value={deckDescription} 
+                          onChange={(e) => setDeckDescription(e.target.value)} 
+                          placeholder="e.g. Sweet & Spicy Mango Pickle sun-cured in jaadis" 
+                          maxLength={90}
+                        />
+                        <p className="text-xs text-slate-500">Short, punchy line displayed prominently under the product name.</p>
+                      </div>
+
+                      {/* Chilli Spice Meter (0-5) */}
+                      <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium">Chilli Meter (Spice Level)</label>
+                          <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300">
+                            {spiceLevel === 0 ? 'Mild / No Spice' : `Level ${spiceLevel} of 5`}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 pt-1">
+                          {[1, 2, 3, 4, 5].map((lvl) => (
+                            <button
+                              key={lvl}
+                              type="button"
+                              onClick={() => setSpiceLevel(lvl === spiceLevel ? 0 : lvl)}
+                              className={`text-2xl transition-transform hover:scale-125 ${
+                                lvl <= spiceLevel ? 'opacity-100 scale-110 filter drop-shadow' : 'opacity-25 grayscale'
+                              }`}
+                              title={`Set Spice Level ${lvl}`}
+                            >
+                              🌶️
+                            </button>
+                          ))}
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setSpiceLevel(0)}
+                            className="text-[11px] h-7 px-2 ml-2 text-slate-500"
+                          >
+                            Clear (0)
+                          </Button>
+                        </div>
+                        <p className="text-[11px] text-slate-500">Tapping sets the flame indicators on the customer's swipe card.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Cure Note</label>
+                        <Input 
+                          value={cureNote} 
+                          onChange={(e) => setCureNote(e.target.value)} 
+                          placeholder="e.g. ☀️ 21 days sun-cured, Wood-fired, Freshly ground" 
+                        />
+                        <p className="text-xs text-slate-500">Heritage preparation note displayed alongside the spice meter.</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 pt-2">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-medium">Deck Sort Order</label>
+                          <Input 
+                            type="number"
+                            value={deckSort} 
+                            onChange={(e) => setDeckSort(parseInt(e.target.value) || 0)} 
+                            placeholder="0" 
+                            className="h-8 text-xs font-mono"
+                          />
+                          <p className="text-[10px] text-slate-500">Lower numbers appear first in the deck.</p>
+                        </div>
+
+                        <div className="space-y-1.5 flex flex-col justify-end">
+                          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer p-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                            <input 
+                              type="checkbox"
+                              checked={deckHidden}
+                              onChange={(e) => setDeckHidden(e.target.checked)}
+                              className="w-4 h-4 accent-red-600 rounded cursor-pointer"
+                            />
+                            <span>Hide from Taste Deck</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Card Colors & Tall Photos */}
+                    <div className="space-y-4">
+                      <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                        <label className="text-sm font-medium">Card Gradient Colors</label>
+                        <div className="grid grid-cols-2 gap-3 mt-1">
+                          <div>
+                            <span className="text-[11px] text-slate-500 block mb-1">Color 1 (Light Accent)</span>
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="color" 
+                                value={deckColor1} 
+                                onChange={(e) => setDeckColor1(e.target.value)} 
+                                className="w-8 h-8 rounded border cursor-pointer"
+                              />
+                              <Input 
+                                value={deckColor1} 
+                                onChange={(e) => setDeckColor1(e.target.value)} 
+                                className="h-8 text-xs font-mono"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-[11px] text-slate-500 block mb-1">Color 2 (Dark Shade)</span>
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="color" 
+                                value={deckColor2} 
+                                onChange={(e) => setDeckColor2(e.target.value)} 
+                                className="w-8 h-8 rounded border cursor-pointer"
+                              />
+                              <Input 
+                                value={deckColor2} 
+                                onChange={(e) => setDeckColor2(e.target.value)} 
+                                className="h-8 text-xs font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Color Presets:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[
+                              { name: 'Avakaya Crimson', c1: '#8A1A10', c2: '#2A0806' },
+                              { name: 'Podi Emerald', c1: '#1B5E20', c2: '#0A290E' },
+                              { name: 'Murukku Amber', c1: '#C2410C', c2: '#4A1A04' },
+                              { name: 'Mithai Magenta', c1: '#831843', c2: '#2A0515' },
+                              { name: 'Royal Purple', c1: '#4C1D95', c2: '#1E0741' }
+                            ].map(p => (
+                              <button
+                                key={p.name}
+                                type="button"
+                                onClick={() => { setDeckColor1(p.c1); setDeckColor2(p.c2); }}
+                                className="flex items-center gap-1.5 px-2 py-1 rounded border border-slate-200 dark:border-slate-800 text-[10px] hover:border-red-400 bg-white dark:bg-slate-900"
+                              >
+                                <div className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${p.c1}, ${p.c2})` }} />
+                                <span>{p.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium">Deck Photos (1 or 2 Tall Photos)</label>
+                          <span className="text-[11px] text-slate-500 font-mono">
+                            {(deckPhotos[0] ? 1 : 0) + (deckPhotos[1] ? 1 : 0)}/2 Photos
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Vertical / portrait aspect images (9:16) for full-height swipe card presentation.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Photo 1: Front Tall Photo */}
+                          <div className="space-y-1.5 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Photo 1 (Front View)</span>
+                              {deckPhotos[0] && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDeckPhotos(['', deckPhotos[1] || ''])}
+                                  className="text-[10px] text-red-500 hover:underline"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                            <ImageUpload
+                              value={deckPhotos[0] || ''}
+                              onChange={(url) => setDeckPhotos([url, deckPhotos[1] || ''])}
+                              folder="taste_deck"
+                            />
+                            {deckPhotos[0] && (
+                              <div className="w-full h-32 rounded-lg overflow-hidden border border-red-500/30 mt-1">
+                                <img src={deckPhotos[0]} alt="Deck Photo 1" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Photo 2: Detail / Action Tall Photo */}
+                          <div className="space-y-1.5 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Photo 2 (Detail View)</span>
+                              {deckPhotos[1] && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDeckPhotos([deckPhotos[0] || '', ''])}
+                                  className="text-[10px] text-red-500 hover:underline"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                            <ImageUpload
+                              value={deckPhotos[1] || ''}
+                              onChange={(url) => setDeckPhotos([deckPhotos[0] || '', url])}
+                              folder="taste_deck"
+                            />
+                            {deckPhotos[1] && (
+                              <div className="w-full h-32 rounded-lg overflow-hidden border border-red-500/30 mt-1">
+                                <img src={deckPhotos[1]} alt="Deck Photo 2" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>

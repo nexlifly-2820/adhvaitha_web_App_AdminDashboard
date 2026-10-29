@@ -106,8 +106,8 @@ $defaultConfig = [
     ]
 ];
 
-// Handle GET request
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $finalConfig = $defaultConfig;
+
     // 1. Check if saved in app_settings table
     try {
         $stmt = $pdo->prepare("SELECT json_data FROM app_settings WHERE doc_id = 'shop_categories'");
@@ -116,16 +116,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($row && !empty($row['json_data'])) {
             $decoded = json_decode($row['json_data'], true);
             if ($decoded && isset($decoded['categories'])) {
-                echo $row['json_data'];
-                exit();
+                $finalConfig = $decoded;
             }
         }
     } catch (Exception $e) {
-        // Fallback continues below
+        // Fallback to default
     }
 
-    // 2. Return authentic default config
-    echo json_encode($defaultConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    // 2. Populate top products for each category if products are enabled
+    $showProducts = $finalConfig['settings']['products'] ?? true;
+    if ($showProducts && isset($finalConfig['categories']) && is_array($finalConfig['categories'])) {
+        foreach ($finalConfig['categories'] as &$cat) {
+            if (empty($cat['products'])) {
+                try {
+                    $slug = strtolower($cat['slug'] ?? '');
+                    $pStmt = $pdo->prepare("SELECT id, name, image_url, price FROM app_products WHERE (LOWER(category) LIKE ? OR LOWER(subCategory) LIKE ?) AND is_active = 1 LIMIT 6");
+                    $likeTerm = '%' . $slug . '%';
+                    $pStmt->execute([$likeTerm, $likeTerm]);
+                    $prods = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+                    $catProds = [];
+                    foreach ($prods as $pr) {
+                        $catProds[] = [
+                            'id' => (string)$pr['id'],
+                            'name' => $pr['name'],
+                            'image' => $pr['image_url'] ?? '',
+                            'price' => (float)($pr['price'] ?? 0)
+                        ];
+                    }
+                    if (!empty($catProds)) {
+                        $cat['products'] = $catProds;
+                    }
+                } catch (Exception $pe) {
+                    // Keep existing
+                }
+            }
+        }
+    }
+
+    echo json_encode($finalConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit();
 }
 
