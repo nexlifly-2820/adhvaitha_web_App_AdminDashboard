@@ -44,5 +44,13 @@
     RewriteRule ^admin/login-settings/?$ auth.php?action=admin_login_settings [L,QSA]
     RewriteRule ^admin/login-wall/([0-9]+)/?$ auth.php?action=admin_login_wall_item&id=$1 [L,QSA]
     RewriteRule ^admin/login-wall/?$ auth.php?action=admin_login_wall [L,QSA]
+
+    # Route Showcase Section endpoints to showcase.php
+    RewriteRule ^showcase/([^/]+)/?$ showcase.php?action=public_showcase&key=$1 [L,QSA]
+    RewriteRule ^admin/showcase/([^/]+)/settings/?$ showcase.php?action=admin_settings&key=$1 [L,QSA]
+    RewriteRule ^admin/showcase/([^/]+)/items/?$ showcase.php?action=admin_items&key=$1 [L,QSA]
+    RewriteRule ^admin/showcase/([^/]+)/order/?$ showcase.php?action=admin_order&key=$1 [L,QSA]
+    RewriteRule ^admin/showcase-items/([0-9]+)/?$ showcase.php?action=admin_item_single&id=$1 [L,QSA]
+    RewriteRule ^admin/showcase-upload/?$ showcase.php?action=admin_upload [L,QSA]
 </IfModule>
 

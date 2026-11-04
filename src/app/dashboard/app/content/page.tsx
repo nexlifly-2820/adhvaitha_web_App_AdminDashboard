@@ -1515,6 +1515,12 @@ export default function ContentManager() {
       case 'specials_light':
         handleSaveTab('specials_light', { list: specialsLight })
         break
+      case 'pickles_showcase':
+        handleSaveTab('pickles', {
+          settings: picklesConfig.settings,
+          pickles: picklesConfig.pickles
+        });
+        break
     }
   }
 
@@ -6997,6 +7003,49 @@ export default function ContentManager() {
                   settings: picklesConfig.settings,
                   pickles: picklesConfig.pickles
                 });
+
+                // Also sync to relational showcase tables
+                try {
+                  await fetch('/api/admin/showcase/pickles/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      enabled: picklesConfig.settings.enabled,
+                      eyebrow: picklesConfig.settings.eyebrow,
+                      viewAllText: picklesConfig.settings.viewAllLabel || 'View all →'
+                    })
+                  });
+
+                  for (let idx = 0; idx < picklesConfig.pickles.length; idx++) {
+                    const p = picklesConfig.pickles[idx];
+                    const shots = (p.shots || []).map(s => ({
+                      image: s.url,
+                      caption: s.caption || '',
+                      ms: s.ms || 2100
+                    }));
+                    const variants = [
+                      { id: p.variantId || '250g', label: p.variantId || '250 g', price: p.price || 199, mrp: p.mrp || 0 }
+                    ];
+
+                    await fetch('/api/admin/showcase/pickles/items', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        productId: p.productId,
+                        name: p.name,
+                        badge: p.tag,
+                        description: p.description,
+                        cureText: p.cureNote,
+                        thumb: p.thumb,
+                        shots,
+                        variants,
+                        sort: idx + 1
+                      })
+                    }).catch(() => {});
+                  }
+                } catch (e) {
+                  console.warn('Sync to showcase tables warning:', e);
+                }
               }}
               isSaving={isSaving}
               onResetDefaults={() => {
