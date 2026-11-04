@@ -16,12 +16,12 @@ const mostLovedData = {
         short: "Avakaya",
         tagline: "sweet jaggery meets fiery mango",
         image: "assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg",
+        loves: "2.1k",
+        badge: "👑 No.1 this week",
         colors: ["#F7B733", "#E2722B"],
         rating: 4.8,
         soldToday: 320,
-        loves: "2.1k",
         spice: 2,
-        badge: "👑 No.1 this week",
         variants: [
           { id: "v1", label: "250g", price: 120, mrp: 136, inStock: true },
           { id: "v2", label: "500g", price: 230, mrp: 260, inStock: true },
@@ -34,15 +34,66 @@ const mostLovedData = {
         short: "Karam Podi",
         tagline: "authentic gun powder spice blend",
         image: "assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg",
+        loves: "1.8k",
+        badge: "🔥 Bestseller",
         colors: ["#8E1B2B", "#5C0A0D"],
         rating: 4.9,
         soldToday: 280,
-        loves: "1.8k",
         spice: 3,
-        badge: "🔥 Bestseller",
         variants: [
           { id: "v4", label: "200g", price: 139, mrp: 150, inStock: true },
           { id: "v5", label: "500g", price: 320, mrp: 350, inStock: true }
+        ]
+      },
+      {
+        id: "p3",
+        name: "Kara Murukku",
+        short: "Murukku",
+        tagline: "crispy spiral festive savory",
+        image: "assets/images/karam_janthukalu_murukku_strings_snack.jpg",
+        loves: "1.4k",
+        badge: "✨ Crunchy",
+        colors: ["#18453B", "#235D4E"],
+        rating: 4.7,
+        soldToday: 195,
+        spice: 1,
+        variants: [
+          { id: "v6", label: "250g", price: 129, mrp: 140, inStock: true },
+          { id: "v7", label: "500g", price: 249, mrp: 270, inStock: true }
+        ]
+      },
+      {
+        id: "p4",
+        name: "Sunnunda Laddu",
+        short: "Sunnunda",
+        tagline: "roasted urad dal & pure cow ghee",
+        image: "assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg",
+        loves: "1.9k",
+        badge: "🍯 Ghee Special",
+        colors: ["#8B4513", "#B8860B"],
+        rating: 4.9,
+        soldToday: 210,
+        spice: 0,
+        variants: [
+          { id: "v8", label: "250g", price: 199, mrp: 220, inStock: true },
+          { id: "v9", label: "500g", price: 380, mrp: 420, inStock: true }
+        ]
+      },
+      {
+        id: "p5",
+        name: "Gongura Pickle",
+        short: "Gongura",
+        tagline: "tangy sorrel leaves with garlic",
+        image: "assets/images/gongura_pickle.png",
+        loves: "1.6k",
+        badge: "🌿 Andhra Pride",
+        colors: ["#1E7A46", "#0F3F33"],
+        rating: 4.9,
+        soldToday: 245,
+        spice: 3,
+        variants: [
+          { id: "v10", label: "250g", price: 130, mrp: 145, inStock: true },
+          { id: "v11", label: "500g", price: 245, mrp: 275, inStock: true }
         ]
       }
     ]

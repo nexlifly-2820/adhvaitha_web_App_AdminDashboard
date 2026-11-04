@@ -6867,9 +6867,9 @@ export default function ContentManager() {
               }}
               isSaving={isSaving}
               onResetDefaults={() => {
-                if (!confirm('Reset The Love Chart to authentic presets (Bellam Avakaya & Idli Karam Podi)?')) return;
+                if (!confirm('Reset The Love Chart to authentic presets (Bellam Avakaya, Idli Karam Podi, Kara Murukku, Sunnunda Laddu & Gongura Pickle)?')) return;
                 setMostLoved(DEFAULT_MOST_LOVED);
-                toast.success('Restored Authentic Most Loved Defaults!');
+                toast.success('Restored 5 Authentic Most Loved Presets!');
               }}
             />
           </TabsContent>

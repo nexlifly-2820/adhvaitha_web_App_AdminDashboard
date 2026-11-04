@@ -26,7 +26,8 @@ import {
   Eye,
   ShoppingBag,
   TrendingUp,
-  Tag
+  Tag,
+  Copy
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -111,6 +112,57 @@ export const DEFAULT_MOST_LOVED: MostLovedConfig = {
         { id: "v4", label: "200g", price: 139, mrp: 150, inStock: true },
         { id: "v5", label: "500g", price: 320, mrp: 350, inStock: true }
       ]
+    },
+    {
+      id: "p3",
+      name: "Kara Murukku",
+      short: "Murukku",
+      tagline: "crispy spiral festive savory",
+      image: "assets/images/karam_janthukalu_murukku_strings_snack.jpg",
+      colors: ["#18453B", "#235D4E"],
+      rating: 4.7,
+      soldToday: 195,
+      loves: "1.4k",
+      spice: 1,
+      badge: "✨ Crunchy",
+      variants: [
+        { id: "v6", label: "250g", price: 129, mrp: 140, inStock: true },
+        { id: "v7", label: "500g", price: 249, mrp: 270, inStock: true }
+      ]
+    },
+    {
+      id: "p4",
+      name: "Sunnunda Laddu",
+      short: "Sunnunda",
+      tagline: "roasted urad dal & pure cow ghee",
+      image: "assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg",
+      colors: ["#8B4513", "#B8860B"],
+      rating: 4.9,
+      soldToday: 210,
+      loves: "1.9k",
+      spice: 0,
+      badge: "🍯 Ghee Special",
+      variants: [
+        { id: "v8", label: "250g", price: 199, mrp: 220, inStock: true },
+        { id: "v9", label: "500g", price: 380, mrp: 420, inStock: true }
+      ]
+    },
+    {
+      id: "p5",
+      name: "Gongura Pickle",
+      short: "Gongura",
+      tagline: "tangy sorrel leaves with garlic",
+      image: "assets/images/gongura_pickle.png",
+      colors: ["#1E7A46", "#0F3F33"],
+      rating: 4.9,
+      soldToday: 245,
+      loves: "1.6k",
+      spice: 3,
+      badge: "🌿 Andhra Pride",
+      variants: [
+        { id: "v10", label: "250g", price: 130, mrp: 145, inStock: true },
+        { id: "v11", label: "500g", price: 245, mrp: 275, inStock: true }
+      ]
     }
   ]
 };
@@ -122,13 +174,18 @@ const GRADIENT_PRESETS = [
   { name: 'Forest Herb', colors: ['#2A9D8F', '#1D6B62'], preview: 'from-[#2A9D8F] to-[#1D6B62]' },
   { name: 'Golden Jaggery', colors: ['#F4A261', '#E76F51'], preview: 'from-[#F4A261] to-[#E76F51]' },
   { name: 'Deep Plum', colors: ['#6B2D5C', '#3C1335'], preview: 'from-[#6B2D5C] to-[#3C1335]' },
-  { name: 'Emerald Spice', colors: ['#18453B', '#0E2E27'], preview: 'from-[#18453B] to-[#0E2E27]' },
+  { name: 'Emerald Spice', colors: ['#18453B', '#235D4E'], preview: 'from-[#18453B] to-[#235D4E]' },
+  { name: 'Andhra Green', colors: ['#1E7A46', '#0F3F33'], preview: 'from-[#1E7A46] to-[#0F3F33]' },
+  { name: 'Ghee Golden Brown', colors: ['#8B4513', '#B8860B'], preview: 'from-[#8B4513] to-[#B8860B]' },
   { name: 'Saffron Glow', colors: ['#E65100', '#BF360C'], preview: 'from-[#E65100] to-[#BF360C]' }
 ];
 
 const PRESET_BADGES = [
   "👑 No.1 this week",
   "🔥 Bestseller",
+  "✨ Crunchy",
+  "🍯 Ghee Special",
+  "🌿 Andhra Pride",
   "✨ Trending",
   "⭐ Customer Favorite",
   "🌶️ Fiery Hot",
@@ -137,16 +194,17 @@ const PRESET_BADGES = [
 ];
 
 const IMAGE_PRESETS = [
-  { label: 'Bellam Avakaya Pickle', path: 'assets/images/avakaya_pickle.png' },
-  { label: 'Special Idli Karam Podi', path: 'assets/images/special_idli_karam_podi.png' },
-  { label: 'Kara Murukku Strings', path: 'assets/images/chakralu.png' },
-  { label: 'Khara Mixture', path: 'assets/images/mixture.png' },
-  { label: 'Sunnunda Laddu', path: 'assets/images/sunnundalu.png' },
-  { label: 'Special Kura Karam Podi', path: 'assets/images/special_kura_karam_podi.png' },
-  { label: 'Potato Chips (Allu Chips)', path: 'assets/images/potato_chips.png' },
-  { label: 'Dry Fruits Laddu', path: 'assets/images/dry_fruit_laddu.png' },
-  { label: 'Gondh Laddu', path: 'assets/images/gond_laddu.png' },
-  { label: 'Palli Chikki', path: 'assets/images/palli_chikki.png' }
+  { label: 'Bellam Avakaya Pickle (Authentic)', path: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg' },
+  { label: 'Special Idli Karam Podi (Authentic)', path: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg' },
+  { label: 'Kara Murukku (Authentic)', path: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg' },
+  { label: 'Sunnunda Laddu (Authentic)', path: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg' },
+  { label: 'Gongura Pickle (Bowl)', path: 'assets/images/gongura_pickle.png' },
+  { label: 'Bellam Avakaya Pickle (PNG)', path: 'assets/images/avakaya_pickle.png' },
+  { label: 'Special Idli Karam Podi (PNG)', path: 'assets/images/special_idli_karam_podi.png' },
+  { label: 'Kara Murukku Strings (PNG)', path: 'assets/images/chakralu.png' },
+  { label: 'Khara Mixture (Authentic)', path: 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg' },
+  { label: 'Potato Chips (Authentic)', path: 'assets/images/allu_chips_thinly_sliced_indian_potato_chips.jpg' },
+  { label: 'Palli Chikki (Authentic)', path: 'assets/images/palli_patti_peanut_and_jaggery_chikki.jpg' }
 ];
 
 interface MostLovedManagerProps {
@@ -169,6 +227,11 @@ export function MostLovedManager({
   const [isSimulatingRotation, setIsSimulatingRotation] = useState<boolean>(true);
   const [simulatedIdx, setSimulatedIdx] = useState<number>(0);
   const [showJsonModal, setShowJsonModal] = useState<boolean>(false);
+  const [showPromptModal, setShowPromptModal] = useState<boolean>(false);
+
+  const getAiPrompt = (productName: string) => {
+    return `Professional food photography of ${productName || 'Traditional Andhra Delicacy'} served in an ornate traditional brass and ceramic bowl, 45-degree angle top-down view, isolated on a pure transparent background or subtle warm dark vignette, studio lighting, hyper-detailed texture, mouth-watering homemade quality, clean edge isolation, no white background backdrop --v 6.0 --transparent`;
+  };
 
   const safeConfig: MostLovedConfig = {
     settings: {
@@ -359,6 +422,16 @@ export function MostLovedManager({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPromptModal(true)}
+                className="text-xs border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 hover:bg-amber-100"
+              >
+                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                AI Bowl Prompt Guide
+              </Button>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -756,6 +829,43 @@ export function MostLovedManager({
                           </button>
                         ))}
                       </div>
+                    </div>
+
+                    {/* AI Prompt Quick Copy for this product */}
+                    <div className="mt-3 p-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-gradient-to-r from-amber-50/70 via-white to-amber-50/40 dark:from-slate-900 dark:to-slate-950">
+                      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                        <span className="text-[11px] font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                          AI Bowl Photography Prompt ({activeProduct.name}):
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            type="button"
+                            onClick={() => setShowPromptModal(true)}
+                            className="h-6 text-[10px] text-amber-800 dark:text-amber-300 px-2 hover:bg-amber-100"
+                          >
+                            Full Guide
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(getAiPrompt(activeProduct.name));
+                              toast.success(`Copied AI Bowl prompt for ${activeProduct.name}!`);
+                            }}
+                            className="h-6 text-[10px] border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 px-2"
+                          >
+                            <Copy className="h-2.5 w-2.5 mr-1 text-amber-600" />
+                            Copy AI Prompt
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-600 dark:text-slate-400 font-mono bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-amber-100 dark:border-amber-900/30 line-clamp-2">
+                        {getAiPrompt(activeProduct.name)}
+                      </p>
                     </div>
                   </div>
 
@@ -1160,6 +1270,114 @@ export function MostLovedManager({
                 className="bg-slate-900 text-white dark:bg-white dark:text-slate-900"
               >
                 Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI PROMPT GUIDE MODAL */}
+      {showPromptModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-amber-200 dark:border-amber-900/60 p-6 max-w-2xl w-full shadow-2xl flex flex-col max-h-[85vh] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-amber-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center ring-1 ring-amber-500/20">
+                  <Sparkles className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                    AI Bowl-Shaped Image Prompt Guide
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Midjourney v6, DALL-E 3 & Stable Diffusion bowl photography with transparent background
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPromptModal(false)}
+                className="h-8 w-8 p-0"
+              >
+                ✕
+              </Button>
+            </div>
+
+            <div className="space-y-4 overflow-y-auto pr-1">
+              {/* Active Product Prompt Card */}
+              <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-gradient-to-br from-amber-50/60 via-white to-amber-50/30 dark:from-slate-950 dark:to-slate-900 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                    Prompt for: <span className="underline decoration-amber-500 font-bold">{activeProduct?.name || 'Selected Product'}</span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
+                    onClick={() => {
+                      navigator.clipboard.writeText(getAiPrompt(activeProduct?.name || 'Bellam Avakaya'));
+                      toast.success(`Copied AI Prompt for ${activeProduct?.name || 'Product'}!`);
+                    }}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy This Prompt
+                  </Button>
+                </div>
+                <pre className="p-3 bg-slate-950 text-amber-300 rounded-lg text-xs font-mono leading-relaxed whitespace-pre-wrap break-words border border-slate-800">
+                  {getAiPrompt(activeProduct?.name || 'Bellam Avakaya')}
+                </pre>
+              </div>
+
+              {/* Universal Master Prompt Template */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Master Structure (Replace [Product Name])
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800"
+                    onClick={() => {
+                      navigator.clipboard.writeText('Professional food photography of [Product Name e.g., Traditional Andhra Mango Pickle / Bellam Avakaya] served in an ornate traditional brass and ceramic bowl, 45-degree angle top-down view, isolated on a pure transparent background or subtle warm dark vignette, studio lighting, hyper-detailed texture, mouth-watering homemade quality, clean edge isolation, no white background backdrop --v 6.0 --transparent');
+                      toast.success('Master Prompt Structure copied!');
+                    }}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy Template
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-mono bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                  Professional food photography of [Product Name e.g., Traditional Andhra Mango Pickle / Bellam Avakaya] served in an ornate traditional brass and ceramic bowl, 45-degree angle top-down view, isolated on a pure transparent background or subtle warm dark vignette, studio lighting, hyper-detailed texture, mouth-watering homemade quality, clean edge isolation, no white background backdrop --v 6.0 --transparent
+                </p>
+              </div>
+
+              {/* Best Practice Tips */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs text-slate-600 dark:text-slate-400">
+                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <strong className="block text-slate-800 dark:text-slate-200 mb-1">🥣 Bowl Silhouette</strong>
+                  The ornate brass/ceramic bowl provides a curved base that sits beautifully inside Flutter&apos;s circular gradient glow without square box lines.
+                </div>
+                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <strong className="block text-slate-800 dark:text-slate-200 mb-1">✨ 45° Angle View</strong>
+                  A 45-degree top-down perspective captures both the bowl rim craftsmanship and rich pickle/laddu oil sheen simultaneously.
+                </div>
+                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <strong className="block text-slate-800 dark:text-slate-200 mb-1">✂️ Clean Transparency</strong>
+                  Use Midjourney <code className="text-rose-600">--transparent</code> or tools like remove.bg so the dynamic background gradient shines through seamlessly.
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <Button
+                size="sm"
+                onClick={() => setShowPromptModal(false)}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                Done
               </Button>
             </div>
           </div>

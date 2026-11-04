@@ -52,5 +52,9 @@
     RewriteRule ^admin/showcase/([^/]+)/order/?$ showcase.php?action=admin_order&key=$1 [L,QSA]
     RewriteRule ^admin/showcase-items/([0-9]+)/?$ showcase.php?action=admin_item_single&id=$1 [L,QSA]
     RewriteRule ^admin/showcase-upload/?$ showcase.php?action=admin_upload [L,QSA]
+
+    # Route Home Most Loved endpoints
+    RewriteRule ^home/most-loved/?$ app_settings.php?doc_id=most_loved [L,QSA]
+    RewriteRule ^most-loved/?$ app_settings.php?doc_id=most_loved [L,QSA]
 </IfModule>
 
