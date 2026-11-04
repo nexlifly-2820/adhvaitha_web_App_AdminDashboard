@@ -56,5 +56,9 @@
     # Route Home Most Loved endpoints
     RewriteRule ^home/most-loved/?$ app_settings.php?doc_id=most_loved [L,QSA]
     RewriteRule ^most-loved/?$ app_settings.php?doc_id=most_loved [L,QSA]
+
+    # Route Home Best Sellers endpoints
+    RewriteRule ^home/best-sellers/?$ app_settings.php?doc_id=best_sellers [L,QSA]
+    RewriteRule ^best-sellers/?$ app_settings.php?doc_id=best_sellers [L,QSA]
 </IfModule>
 

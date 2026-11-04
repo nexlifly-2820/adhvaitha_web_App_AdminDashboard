@@ -63,25 +63,54 @@ const bestSellersData = {
             rating: 4.7,
             move: "up",
             moveBy: 3
-          }
-        ]
-      },
-      {
-        id: "pickles",
-        name: "Pickles",
-        emoji: "🥭",
-        items: [
+          },
           {
-            id: "p1",
-            variantId: "v1",
-            name: "Bellam Avakaya",
-            image: "assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg",
-            price: 120,
-            mrp: 136,
-            sold: "12K+",
-            rating: 4.8,
+            id: "p5",
+            variantId: "v10",
+            name: "Khara Mixture",
+            image: "assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg",
+            price: 149,
+            mrp: 165,
+            sold: "5.5K+",
+            rating: 4.6,
+            move: "down",
+            moveBy: 1
+          },
+          {
+            id: "p6",
+            variantId: "v12",
+            name: "Gongura Pickle",
+            image: "assets/images/gongura_pickle.png",
+            price: 130,
+            mrp: 145,
+            sold: "7.1K+",
+            rating: 4.9,
             move: "up",
             moveBy: 2
+          },
+          {
+            id: "p7",
+            variantId: "v14",
+            name: "Usiri Pickle",
+            image: "assets/images/avakaya_pickle.png",
+            price: 130,
+            mrp: 150,
+            sold: "6.8K+",
+            rating: 4.8,
+            move: "up",
+            moveBy: 1
+          },
+          {
+            id: "p8",
+            variantId: "v16",
+            name: "Chakinalu",
+            image: "assets/images/chakralu.png",
+            price: 110,
+            mrp: 130,
+            sold: "8.2K+",
+            rating: 4.8,
+            move: "new",
+            moveBy: 0
           }
         ]
       }
@@ -90,7 +119,7 @@ const bestSellersData = {
 };
 
 async function seed() {
-  console.log("Seeding best_sellers to live endpoint http://api.adhvaithafoods.in/app_settings.php?doc_id=best_sellers...");
+  console.log("Seeding best_sellers with 8 items to live endpoint http://api.adhvaithafoods.in/app_settings.php?doc_id=best_sellers...");
   try {
     const res = await fetch("http://api.adhvaithafoods.in/app_settings.php?doc_id=best_sellers", {
       method: "POST",
@@ -103,8 +132,9 @@ async function seed() {
     console.log("Verifying GET request for best_sellers...");
     const verifyRes = await fetch("http://api.adhvaithafoods.in/app_settings.php?doc_id=best_sellers");
     const verifyData = await verifyRes.json();
-    console.log("Verified GET Data categories:", verifyData.categories?.length);
-    console.log("Verified Settings:", verifyData.settings);
+    console.log("Verified Categories count:", verifyData.categories?.length);
+    console.log("Verified Items count in 'All':", verifyData.categories?.[0]?.items?.length);
+    console.log("Verified Items list:", verifyData.categories?.[0]?.items?.map(i => `${i.id}: ${i.name} (Sold: ${i.sold})`));
   } catch (err) {
     console.error("Seeding failed:", err);
   }

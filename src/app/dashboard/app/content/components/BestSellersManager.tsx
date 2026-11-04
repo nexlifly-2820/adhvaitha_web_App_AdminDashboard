@@ -24,7 +24,8 @@ import {
   Flame, 
   Layers, 
   Clock, 
-  Tag
+  Tag,
+  Copy
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -126,25 +127,54 @@ export const DEFAULT_BEST_SELLERS: BestSellersConfig = {
           rating: 4.7,
           move: "up",
           moveBy: 3
-        }
-      ]
-    },
-    {
-      id: "pickles",
-      name: "Pickles",
-      emoji: "🥭",
-      items: [
+        },
         {
-          id: "p1",
-          variantId: "v1",
-          name: "Bellam Avakaya",
-          image: "assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg",
-          price: 120,
-          mrp: 136,
-          sold: "12K+",
-          rating: 4.8,
+          id: "p5",
+          variantId: "v10",
+          name: "Khara Mixture",
+          image: "assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg",
+          price: 149,
+          mrp: 165,
+          sold: "5.5K+",
+          rating: 4.6,
+          move: "down",
+          moveBy: 1
+        },
+        {
+          id: "p6",
+          variantId: "v12",
+          name: "Gongura Pickle",
+          image: "assets/images/gongura_pickle.png",
+          price: 130,
+          mrp: 145,
+          sold: "7.1K+",
+          rating: 4.9,
           move: "up",
           moveBy: 2
+        },
+        {
+          id: "p7",
+          variantId: "v14",
+          name: "Usiri Pickle",
+          image: "assets/images/avakaya_pickle.png",
+          price: 130,
+          mrp: 150,
+          sold: "6.8K+",
+          rating: 4.8,
+          move: "up",
+          moveBy: 1
+        },
+        {
+          id: "p8",
+          variantId: "v16",
+          name: "Chakinalu",
+          image: "assets/images/chakralu.png",
+          price: 110,
+          mrp: 130,
+          sold: "8.2K+",
+          rating: 4.8,
+          move: "new",
+          moveBy: 0
         }
       ]
     }
@@ -152,16 +182,20 @@ export const DEFAULT_BEST_SELLERS: BestSellersConfig = {
 };
 
 const IMAGE_PRESETS = [
-  { label: 'Bellam Avakaya', path: 'assets/images/avakaya_pickle.png' },
-  { label: 'Special Idli Karam Podi', path: 'assets/images/special_idli_karam_podi.png' },
-  { label: 'Sunnunda Laddu', path: 'assets/images/sunnundalu.png' },
-  { label: 'Kara Murukku', path: 'assets/images/chakralu.png' },
-  { label: 'Khara Mixture', path: 'assets/images/mixture.png' },
-  { label: 'Potato Chips (Allu Chips)', path: 'assets/images/potato_chips.png' },
-  { label: 'Dry Fruits Laddu', path: 'assets/images/dry_fruit_laddu.png' },
-  { label: 'Palli Chikki', path: 'assets/images/palli_chikki.png' },
-  { label: 'Nuvvula Chikki', path: 'assets/images/nuvvula_chikki.png' },
-  { label: 'Special Kura Karam Podi', path: 'assets/images/special_kura_karam_podi.png' }
+  { label: '🥣 Bellam Avakaya (Bowl Transparent)', path: 'assets/images/bowl_bellam_avakaya.png' },
+  { label: '🥣 Idli Karam Podi (Bowl Transparent)', path: 'assets/images/bowl_karam_podi.png' },
+  { label: '🥣 Sunnunda Laddu (Bowl Transparent)', path: 'assets/images/bowl_sunnunda_laddu.png' },
+  { label: '🥣 Kara Murukku (Bowl Transparent)', path: 'assets/images/bowl_kara_murukku.png' },
+  { label: '🥣 Gongura Pickle (Bowl Transparent)', path: 'assets/images/bowl_gongura_pickle.png' },
+  { label: 'Bellam Avakaya (Authentic JPG)', path: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg' },
+  { label: 'Special Idli Karam Podi (Authentic JPG)', path: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg' },
+  { label: 'Sunnunda Laddu (Authentic JPG)', path: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg' },
+  { label: 'Kara Murukku (Authentic JPG)', path: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg' },
+  { label: 'Khara Mixture (Authentic JPG)', path: 'assets/images/khara_mixture_assorted_crunchy_savory_mix.jpg' },
+  { label: 'Gongura Pickle (Authentic PNG)', path: 'assets/images/gongura_pickle.png' },
+  { label: 'Usiri Pickle (Amla)', path: 'assets/images/usiri_pickle.png' },
+  { label: 'Avakaya Pickle (Jar)', path: 'assets/images/avakaya_pickle.png' },
+  { label: 'Chakinalu / Chakralu (PNG)', path: 'assets/images/chakralu.png' }
 ];
 
 interface BestSellersManagerProps {
@@ -182,6 +216,11 @@ export function BestSellersManager({
   const [activeCategoryIdx, setActiveCategoryIdx] = useState<number>(0);
   const [selectedItemIdx, setSelectedItemIdx] = useState<number>(0);
   const [showJsonModal, setShowJsonModal] = useState<boolean>(false);
+  const [showPromptModal, setShowPromptModal] = useState<boolean>(false);
+
+  const getAiPrompt = (productName: string) => {
+    return `Professional food photography of ${productName || 'Andhra Delicacy'} in a traditional polished brass bowl, top-down angle, isolated on a pure transparent background or subtle warm dark vignette, studio lighting, hyper-detailed texture, clean edge isolation around the bowl, no white background backdrop --v 6.0 --transparent`;
+  };
 
   const safeConfig: BestSellersConfig = {
     settings: {
@@ -394,6 +433,16 @@ export function BestSellersManager({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPromptModal(true)}
+                className="text-xs border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 hover:bg-amber-100"
+              >
+                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                AI Bowl Prompt Guide
+              </Button>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -901,6 +950,43 @@ export function BestSellersManager({
                       </button>
                     ))}
                   </div>
+
+                  {/* AI Prompt Quick Copy for this best seller item */}
+                  <div className="mt-3 p-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-gradient-to-r from-amber-50/70 via-white to-amber-50/40 dark:from-slate-900 dark:to-slate-950">
+                    <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                      <span className="text-[11px] font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                        AI Bowl Photography Prompt ({activeItem.name}):
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          type="button"
+                          onClick={() => setShowPromptModal(true)}
+                          className="h-6 text-[10px] text-amber-800 dark:text-amber-300 px-2 hover:bg-amber-100"
+                        >
+                          Full Guide
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(getAiPrompt(activeItem.name));
+                            toast.success(`Copied AI Bowl prompt for ${activeItem.name}!`);
+                          }}
+                          className="h-6 text-[10px] border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 px-2"
+                        >
+                          <Copy className="h-2.5 w-2.5 mr-1 text-amber-600" />
+                          Copy AI Prompt
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400 font-mono bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-amber-100 dark:border-amber-900/30 line-clamp-2">
+                      {getAiPrompt(activeItem.name)}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1169,6 +1255,116 @@ export function BestSellersManager({
                 className="bg-slate-900 text-white dark:bg-white dark:text-slate-900"
               >
                 Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI PROMPT GUIDE MODAL */}
+      {showPromptModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-amber-200 dark:border-amber-900/60 p-6 max-w-2xl w-full shadow-2xl flex flex-col max-h-[85vh] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-amber-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center ring-1 ring-amber-500/20">
+                  <Sparkles className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                    Best Sellers AI Image Prompt Guide
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Polished brass bowl photography with pure transparent background (--transparent)
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPromptModal(false)}
+                className="h-8 w-8 p-0"
+              >
+                ✕
+              </Button>
+            </div>
+
+            <div className="space-y-4 overflow-y-auto pr-1">
+              {/* Active Product Prompt Card */}
+              {activeItem && (
+                <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-gradient-to-br from-amber-50/60 via-white to-amber-50/30 dark:from-slate-950 dark:to-slate-900 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                      Prompt for: <span className="underline decoration-amber-500 font-bold">{activeItem.name}</span>
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
+                      onClick={() => {
+                        navigator.clipboard.writeText(getAiPrompt(activeItem.name));
+                        toast.success(`Copied AI Prompt for ${activeItem.name}!`);
+                      }}
+                    >
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy This Prompt
+                    </Button>
+                  </div>
+                  <pre className="p-3 bg-slate-950 text-amber-300 rounded-lg text-xs font-mono leading-relaxed whitespace-pre-wrap break-words border border-slate-800">
+                    {getAiPrompt(activeItem.name)}
+                  </pre>
+                </div>
+              )}
+
+              {/* Universal Master Prompt Template */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Master Structure (Replace [Product Name])
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800"
+                    onClick={() => {
+                      navigator.clipboard.writeText('Professional food photography of [Product Name e.g., Andhra Gongura Pickle / Spicy Karam Podi] in a traditional polished brass bowl, top-down angle, isolated on a pure transparent background or subtle warm dark vignette, studio lighting, hyper-detailed texture, clean edge isolation around the bowl, no white background backdrop --v 6.0 --transparent');
+                      toast.success('Master Prompt Structure copied!');
+                    }}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy Template
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-mono bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                  Professional food photography of [Product Name e.g., Andhra Gongura Pickle / Spicy Karam Podi] in a traditional polished brass bowl, top-down angle, isolated on a pure transparent background or subtle warm dark vignette, studio lighting, hyper-detailed texture, clean edge isolation around the bowl, no white background backdrop --v 6.0 --transparent
+                </p>
+              </div>
+
+              {/* Best Practice Tips */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs text-slate-600 dark:text-slate-400">
+                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <strong className="block text-slate-800 dark:text-slate-200 mb-1">🥣 Polished Brass Bowl</strong>
+                  The circular brass bowl rim integrates seamlessly with the mobile app&apos;s champion pedestal and ranking numbers without box outlines.
+                </div>
+                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <strong className="block text-slate-800 dark:text-slate-200 mb-1">📐 Top-Down Perspective</strong>
+                  Direct top-down angle creates clear product distinction on podiums #1, #2, and #3 and allows rank badges (▲ 2, ✨ New) to float cleanly.
+                </div>
+                <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <strong className="block text-slate-800 dark:text-slate-200 mb-1">✨ Clean Alpha Channel</strong>
+                  Use Midjourney <code className="text-rose-600">--transparent</code> or background removal tools for effortless rendering on top of champion cards.
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <Button
+                size="sm"
+                onClick={() => setShowPromptModal(false)}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                Done
               </Button>
             </div>
           </div>

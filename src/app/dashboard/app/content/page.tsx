@@ -6887,9 +6887,9 @@ export default function ContentManager() {
               }}
               isSaving={isSaving}
               onResetDefaults={() => {
-                if (!confirm("Reset Best Sellers Champions to authentic defaults?")) return;
+                if (!confirm("Reset Best Sellers Champions to authentic defaults (8 Top Champion Products)?")) return;
                 setBestSellers(DEFAULT_BEST_SELLERS);
-                toast.success('Restored Authentic Best Sellers Defaults!');
+                toast.success('Restored 8 Authentic Best Sellers Champions!');
               }}
             />
           </TabsContent>
