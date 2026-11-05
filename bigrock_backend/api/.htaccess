@@ -58,7 +58,15 @@
     RewriteRule ^most-loved/?$ app_settings.php?doc_id=most_loved [L,QSA]
 
     # Route Home Best Sellers endpoints
-    RewriteRule ^home/best-sellers/?$ app_settings.php?doc_id=best_sellers [L,QSA]
-    RewriteRule ^best-sellers/?$ app_settings.php?doc_id=best_sellers [L,QSA]
+    RewriteRule ^home/best-sellers/?$ best_sellers.php?action=home [L,QSA]
+    RewriteRule ^best-sellers/?$ best_sellers.php?action=tab [L,QSA]
+    RewriteRule ^admin/best-sellers/settings/?$ best_sellers.php?action=admin_settings [L,QSA]
+    RewriteRule ^admin/best-sellers/tabs/order/?$ best_sellers.php?action=admin_tabs_order [L,QSA]
+    RewriteRule ^admin/best-sellers/tabs/([0-9]+)/products/([^/]+)/?$ best_sellers.php?action=admin_override&tabId=$1&productId=$2 [L,QSA]
+    RewriteRule ^admin/best-sellers/tabs/([0-9]+)/order/?$ best_sellers.php?action=admin_tab_products_order&tabId=$1 [L,QSA]
+    RewriteRule ^admin/best-sellers/tabs/([0-9]+)/?$ best_sellers.php?action=admin_delete_tab&id=$1 [L,QSA]
+    RewriteRule ^admin/best-sellers/tabs/?$ best_sellers.php?action=admin_save_tab [L,QSA]
+    RewriteRule ^admin/best-sellers/refresh/?$ best_sellers.php?action=admin_refresh [L,QSA]
+    RewriteRule ^admin/best-sellers/?$ best_sellers.php?action=admin_get [L,QSA]
 </IfModule>
 
