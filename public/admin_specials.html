@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ambhujakshi Specials · Admin</title>
+<style>
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f7efe9;margin:0;color:#2a0a10}
+header{background:linear-gradient(90deg,#4E0F24,#7A1E3A);color:#F6DA9A;padding:14px 20px;font-weight:700;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center}
+header span.sub{font-size:12px;opacity:0.85;font-weight:400}
+main{max-width:960px;margin:auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid rgba(122,30,58,0.08)}
+label{display:block;font-size:12px;font-weight:600;color:#7a5a50;margin:8px 0 3px}
+input,select{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #e3d3cc;border-radius:8px;font:inherit}
+input:focus,select:focus{border-color:#7A1E3A;outline:none}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
+button{background:#7A1E3A;color:#fff;border:0;border-radius:9px;padding:8px 14px;font-weight:700;cursor:pointer;transition:all .15s ease}
+button:hover{background:#922446}
+button.ghost{background:#f3e6e1;color:#2a0a10}button.ghost:hover{background:#ebd8d1}
+button.del{background:#b3261e}button.del:hover{background:#8a1a14}
+.bowl{width:90px;height:76px;object-fit:contain;background:radial-gradient(#7A1E36,#3A0A18);border-radius:12px;display:block;margin-bottom:6px}
+.v{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:6px;margin-bottom:6px}
+.f{display:grid;grid-template-columns:140px 1fr;gap:6px;margin-bottom:6px}
+small{color:#9a7f76}.head{display:flex;justify-content:space-between;align-items:center}
+.api-bar{background:#fff3eb;border:1px dashed #d9b8a8;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.api-bar input{padding:4px 8px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div>🪷 AMBHUJAKSHI SPECIALS · Lotus Eye</div>
+  <span class="sub">Admin Management Dashboard</span>
+</header>
+<main>
+ <div class="api-bar">
+   <div><b>API Base:</b> <span id="currentApi"></span></div>
+   <button class="ghost" style="padding:4px 8px;font-size:11px" onclick="resetApi()">Change API / Token</button>
+ </div>
+
+ <div class="card">
+  <div class="head"><b>Header & Section Texts</b></div>
+  <div class="row">
+    <div><label for="title">Title</label><input id="title"></div>
+    <div><label for="subtitle">Subtitle</label><input id="subtitle"></div>
+    <div><label for="tagline">Tagline</label><input id="tagline"></div>
+  </div>
+  <div class="row">
+    <div><label for="tagText">Gold tag above product name</label><input id="tagText"></div>
+    <div><label for="moreText">"More specials" heading</label><input id="moreText"></div>
+    <div><label for="showIntro">Show intro screen</label><select id="showIntro"><option value="true">Yes</option><option value="false">No</option></select></div>
+    <div><label for="enabled">Show section in app</label><select id="enabled"><option value="true">Yes</option><option value="false">No</option></select></div>
+  </div>
+  <p style="margin:12px 0 0"><button onclick="saveSettings()">Save texts</button></p>
+ </div>
+
+ <div class="head" style="margin-top:20px">
+   <b>Specials (shown in this order)</b>
+   <button onclick="addItem()">+ Add Special</button>
+ </div>
+ <div id="list" style="margin-top:10px"></div>
+</main>
+<script>
+const defaultApi = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://api.adhvaithafoods.in';
+let API = localStorage.API || defaultApi;
+let TOKEN = localStorage.TOKEN || 'admin_secret';
+document.getElementById('currentApi').textContent = API;
+
+function resetApi() {
+  const newApi = prompt('API Base URL (e.g. https://api.adhvaithafoods.in or /api)', API);
+  if (newApi) { API = newApi.replace(/\/$/, ''); localStorage.API = API; }
+  const newToken = prompt('Admin Token', TOKEN);
+  if (newToken) { TOKEN = newToken; localStorage.TOKEN = TOKEN; }
+  document.getElementById('currentApi').textContent = API;
+  load();
+}
+
+const ICONS = [
+  ['recipe','Recipe bowl'],
+  ['leaf','Leaf (No Preservatives)'],
+  ['jar','Jar (Shelf Life)'],
+  ['sun','Sun (Sun-cured)'],
+  ['fire','Flame (Slow-roasted)'],
+  ['hand','Hand-made with Love'],
+  ['ghee','Ghee / Oil Drop'],
+  ['heart','Heart (Health Boost)'],
+  ['star','Star (Bestseller)'],
+  ['truck','Delivery']
+];
+
+async function call(method, url, body) {
+  const isForm = body instanceof FormData;
+  const endpoint = url.startsWith('/') ? url : '/' + url;
+  const headers = isForm ? { Authorization: 'Bearer ' + TOKEN } : { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' };
+  
+  const r = await fetch(API + endpoint, {
+    method,
+    headers,
+    body: isForm ? body : (body ? JSON.stringify(body) : undefined)
+  });
+  
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    alert(j.error || 'Server error ' + r.status);
+    throw new Error(j.error);
+  }
+  return j;
+}
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const img = u => {
+  if (!u) return '';
+  if (/^https?:/.test(u)) return u;
+  return API.replace(/\/api\/?$/, '') + (u.startsWith('/') ? u : '/' + u);
+};
+
+let items = [];
+
+async function load() {
+  try {
+    const s = await call('GET', '/admin/specials/settings');
+    title.value = s.title || 'AMBHUJAKSHI';
+    subtitle.value = s.subtitle || 'SPECIALS';
+    tagline.value = s.tagline || 'Seen through the Lotus Eye';
+    tagText.value = s.tag_text || "AMMA'S SPECIAL";
+    moreText.value = s.more_text || 'MORE SPECIALS';
+    showIntro.value = String(s.show_intro !== false && s.show_intro !== 0);
+    enabled.value = String(s.enabled !== false && s.enabled !== 0);
+    
+    items = await call('GET', '/admin/specials');
+    render();
+  } catch (err) {
+    console.error('Failed to load specials:', err);
+  }
+}
+
+async function saveSettings() {
+  await call('PUT', '/admin/specials/settings', {
+    title: title.value,
+    subtitle: subtitle.value,
+    tagline: tagline.value,
+    tagText: tagText.value,
+    moreText: moreText.value,
+    showIntro: showIntro.value === 'true',
+    enabled: enabled.value === 'true'
+  });
+  alert('Saved — Mobile app updates within a minute!');
+}
+
+function render() {
+  const container = document.getElementById('list');
+  if (!items || !items.length) {
+    container.innerHTML = '<div class="card" style="text-align:center;color:#7a5a50;padding:30px">No specials yet. Click <b>+ Add Special</b> to create one.</div>';
+    return;
+  }
+  container.innerHTML = items.map((it, i) => `
+  <div class="card">
+   <div class="head">
+     <b>${i + 1}. ${esc(it.name)}</b>
+     <span>
+       <button class="ghost" onclick="move(${i},-1)">↑</button>
+       <button class="ghost" onclick="move(${i},1)">↓</button>
+       <label style="display:inline;margin-left:8px"><input type="checkbox" ${it.enabled ? 'checked' : ''} onchange="items[${i}].enabled=this.checked" style="width:auto"> Enabled</label>
+     </span>
+   </div>
+   <div class="row">
+    <div style="flex:0 0 110px">
+      <label>Bowl photo</label>
+      <img class="bowl" src="${esc(img(it.image))}" onerror="this.src='assets/images/bowl_bellam_avakaya.png'">
+      <input type="file" accept="image/*" onchange="up(${i},this)">
+      <small>Transparent PNG bowl</small>
+    </div>
+    <div>
+      <label>Special Name (max 18 chars)</label>
+      <input value="${esc(it.name)}" maxlength="18" oninput="items[${i}].name=this.value">
+      <label>Linked Product ID (for Add to Cart)</label>
+      <input value="${esc(it.product_id || it.productId || '')}" oninput="items[${i}].product_id=this.value">
+    </div>
+    <div>
+      <label>Story Line (max 80 chars)</label>
+      <input value="${esc(it.story)}" maxlength="80" oninput="items[${i}].story=this.value">
+      <label>Default Weight Selected</label>
+      <select onchange="items[${i}].default_variant=+this.value">
+        ${(it.variants || []).map((v, k) => `<option value="${k}" ${k === (it.default_variant || 0) ? 'selected' : ''}>${esc(v.label || 'Weight ' + (k + 1))}</option>`).join('')}
+      </select>
+    </div>
+   </div>
+
+   <label style="margin-top:12px">Key Features (up to 3 highlights)</label>
+   ${[0, 1, 2].map(k => {
+     const f = (it.features || [])[k] || { icon: '', text: '' };
+     return `<div class="f">
+       <select onchange="setF(${i},${k},'icon',this.value)">
+         <option value="">— none —</option>
+         ${ICONS.map(o => `<option value="${o[0]}" ${o[0] === f.icon ? 'selected' : ''}>${o[1]}</option>`).join('')}
+       </select>
+       <input placeholder="e.g. Traditional Sun-Cured Recipe" value="${esc(f.text)}" oninput="setF(${i},${k},'text',this.value)">
+     </div>`;
+   }).join('')}
+
+   <label style="margin-top:12px">Weight Variants (up to 3) <small>— Label, Price (₹), MRP (₹), Variant ID</small></label>
+   ${(it.variants || []).map((v, k) => `
+     <div class="v">
+       <input placeholder="250 g" value="${esc(v.label)}" oninput="items[${i}].variants[${k}].label=this.value">
+       <input type="number" placeholder="Price" value="${v.price || ''}" oninput="items[${i}].variants[${k}].price=+this.value">
+       <input type="number" placeholder="MRP" value="${v.mrp || ''}" oninput="items[${i}].variants[${k}].mrp=+this.value">
+       <input placeholder="Variant ID" value="${esc(v.id || '')}" oninput="items[${i}].variants[${k}].id=this.value">
+       <button class="del" onclick="items[${i}].variants.splice(${k},1);render()">✕</button>
+     </div>
+   `).join('')}
+   ${(it.variants || []).length < 3 ? `<button class="ghost" style="font-size:12px;padding:4px 10px;margin-bottom:8px" onclick="(items[${i}].variants=items[${i}].variants||[]).push({label:'',price:0,mrp:0,id:''});render()">+ Add Weight</button>` : ''}
+
+   <p class="row" style="justify-content:flex-end;margin-top:14px">
+     <button onclick="save(${i})">Save Special</button>
+     <button class="del" style="flex:0" onclick="del(${i})">Delete</button>
+   </p>
+  </div>`).join('');
+}
+
+function setF(i, k, key, val) {
+  const fs = items[i].features = items[i].features || [];
+  fs[k] = fs[k] || { icon: '', text: '' };
+  fs[k][key] = val;
+}
+
+async function up(i, el) {
+  if (!el.files || !el.files[0]) return;
+  const f = new FormData();
+  f.append('image', el.files[0]);
+  try {
+    const r = await call('POST', '/admin/specials-upload', f);
+    items[i].image = r.path || r.url;
+    render();
+  } catch (e) {
+    alert('Upload failed: ' + e.message);
+  }
+}
+
+async function save(i) {
+  const it = items[i];
+  await call('PUT', `/admin/specials/${it.id}`, {
+    name: it.name,
+    productId: it.product_id || it.productId || '',
+    story: it.story,
+    image: it.image,
+    enabled: it.enabled !== false,
+    features: (it.features || []).filter(f => f && f.text && f.icon),
+    variants: it.variants || [],
+    defaultVariant: it.default_variant || 0
+  });
+  alert('Saved successfully!');
+}
+
+async function del(i) {
+  if (!confirm('Are you sure you want to delete special: ' + items[i].name + '?')) return;
+  await call('DELETE', `/admin/specials/${items[i].id}`);
+  load();
+}
+
+async function addItem() {
+  const name = prompt('Special product name (e.g. Bellam Avakaya):');
+  if (!name) return;
+  await call('POST', '/admin/specials', {
+    name,
+    story: "Handcrafted using Amma's age-old recipe.",
+    image: 'assets/images/bowl_bellam_avakaya.png',
+    features: [
+      { icon: 'recipe', text: 'Traditional Recipe' },
+      { icon: 'leaf', text: 'No Preservatives' },
+      { icon: 'jar', text: 'Longer Shelf Life' }
+    ],
+    variants: [
+      { id: '250g', label: '250 g', price: 149, mrp: 169 }
+    ]
+  });
+  load();
+}
+
+async function move(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= items.length) return;
+  [items[i], items[j]] = [items[j], items[i]];
+  await call('PUT', '/admin/specials-order', { ids: items.map(x => x.id) });
+  render();
+}
+
+load();
+</script>
+</body>
+</html>

@@ -68,5 +68,13 @@
     RewriteRule ^admin/best-sellers/tabs/?$ best_sellers.php?action=admin_save_tab [L,QSA]
     RewriteRule ^admin/best-sellers/refresh/?$ best_sellers.php?action=admin_refresh [L,QSA]
     RewriteRule ^admin/best-sellers/?$ best_sellers.php?action=admin_get [L,QSA]
+
+    # Route Ambhujakshi Specials (Lotus Eye) endpoints
+    RewriteRule ^specials/?$ specials.php?action=public_specials [L,QSA]
+    RewriteRule ^admin/specials/settings/?$ specials.php?action=admin_settings [L,QSA]
+    RewriteRule ^admin/specials-order/?$ specials.php?action=admin_order [L,QSA]
+    RewriteRule ^admin/specials-upload/?$ specials.php?action=admin_upload [L,QSA]
+    RewriteRule ^admin/specials/([0-9]+)/?$ specials.php?action=admin_item&id=$1 [L,QSA]
+    RewriteRule ^admin/specials/?$ specials.php?action=admin_specials [L,QSA]
 </IfModule>
 
