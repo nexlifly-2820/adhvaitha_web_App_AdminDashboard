@@ -76,5 +76,13 @@
     RewriteRule ^admin/specials-upload/?$ specials.php?action=admin_upload [L,QSA]
     RewriteRule ^admin/specials/([0-9]+)/?$ specials.php?action=admin_item&id=$1 [L,QSA]
     RewriteRule ^admin/specials/?$ specials.php?action=admin_specials [L,QSA]
+
+    # Route The Art of Pairing endpoints
+    RewriteRule ^pairing/?$ pairing.php?action=public_pairing [L,QSA]
+    RewriteRule ^admin/pairing/settings/?$ pairing.php?action=admin_settings [L,QSA]
+    RewriteRule ^admin/pairing/order/?$ pairing.php?action=admin_order [L,QSA]
+    RewriteRule ^admin/pairing/upload/?$ pairing.php?action=admin_upload [L,QSA]
+    RewriteRule ^admin/pairing/couples/([0-9]+)/?$ pairing.php?action=admin_item&id=$1 [L,QSA]
+    RewriteRule ^admin/pairing/couples/?$ pairing.php?action=admin_couples [L,QSA]
 </IfModule>
 

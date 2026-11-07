@@ -1,0 +1,546 @@
+<!-- Saved copy of public/admin_pairing.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Art of Pairing · Admin Dashboard</title>
+<style>
+  :root {
+    --primary: #7A1E3A;
+    --primary-dark: #4E0F24;
+    --primary-light: #922446;
+    --gold: #F6DA9A;
+    --gold-dark: #B8860B;
+    --bg: #f7efe9;
+    --card-bg: #ffffff;
+    --text: #2a0a10;
+    --text-muted: #7a5a50;
+    --border: #e3d3cc;
+    --danger: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+    color: var(--gold);
+    padding: 16px 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  header span.sub { font-size: 13px; opacity: 0.9; font-weight: 400; color: #fff; }
+  main { max-width: 1040px; margin: auto; padding: 20px 16px; }
+  .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    border: 1px solid rgba(122,30,58,0.08);
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 10px 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  input, select, textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    background: #fff;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(122,30,58,0.12);
+  }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 160px; }
+  button {
+    background: var(--primary);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  button:hover { background: var(--primary-light); }
+  button.ghost { background: #f3e6e1; color: var(--text); }
+  button.ghost:hover { background: #ebd8d1; }
+  button.del { background: var(--danger); color: #fff; }
+  button.del:hover { background: #8a1a14; }
+  .head { display: flex; justify-content: space-between; align-items: center; }
+  .api-bar {
+    background: #fff3eb;
+    border: 1px dashed #d9b8a8;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .pair-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 14px;
+    align-items: center;
+    margin: 16px 0;
+  }
+  @media (max-width: 768px) {
+    .pair-grid { grid-template-columns: 1fr; }
+  }
+  .side-box {
+    background: #faf5f2;
+    border: 1px solid #ebd8d1;
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .side-header {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .thumb-preview {
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+    background: radial-gradient(circle, #f9eae3 0%, #ebd3c8 100%);
+    border: 1px dashed #cbb0a5;
+    border-radius: 10px;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .weight-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1.2fr 1.2fr auto;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 768px) {
+    .weight-row { grid-template-columns: 1fr 1fr; }
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 4px;
+    background: #fdf2d8;
+    color: #855800;
+    border: 1px solid #edd493;
+  }
+  .heart-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin: auto;
+    box-shadow: 0 4px 10px rgba(122,30,58,0.25);
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>✨ THE ART OF PAIRING · Curated Couples</div>
+  <span class="sub">Admin Management Dashboard</span>
+</header>
+<main>
+  <div class="api-bar">
+    <div><b>API Base:</b> <span id="currentApi"></span></div>
+    <button class="ghost" style="padding:5px 10px;font-size:12px" onclick="resetApi()">Change API / Token</button>
+  </div>
+
+  <div class="card">
+    <div class="head">
+      <h3 style="margin:0;color:var(--primary-dark);font-size:16px;">Hero & Section Settings</h3>
+      <span class="badge">Master Texts</span>
+    </div>
+    <div class="row">
+      <div><label>Eyebrow</label><input id="eyebrow" placeholder="CURATED COMBOS"></div>
+      <div><label>Title Prefix</label><input id="title" placeholder="The Art of"></div>
+      <div><label>Title Accent (Gold/Highlight)</label><input id="titleAccent" placeholder="Pairing"></div>
+    </div>
+    <div class="row">
+      <div><label>Subtitle</label><input id="subtitle" placeholder="Flavors meant to be experienced together"></div>
+      <div><label>Match Text</label><input id="matchText" placeholder="Made for each other"></div>
+      <div><label>Action Button Text</label><input id="buttonText" placeholder="Meet Amma's perfect couples"></div>
+    </div>
+    <div class="row">
+      <div><label>More Couples Heading</label><input id="moreText" placeholder="MORE PERFECT COUPLES"></div>
+      <div><label>Section Enabled</label>
+        <select id="enabled">
+          <option value="true">Enabled (Shown in App & Web)</option>
+          <option value="false">Disabled (Hidden)</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label>Explain / Story Text</label>
+      <textarea id="explainText" rows="2" placeholder="Why these combinations create traditional harmony..."></textarea>
+    </div>
+    <p style="margin:16px 0 0"><button onclick="saveSettings()">Save Section Settings</button></p>
+  </div>
+
+  <div class="head" style="margin:24px 0 12px">
+    <div>
+      <h3 style="margin:0;color:var(--primary-dark);font-size:17px;display:inline-block">Couples & Combos</h3>
+      <span style="font-size:12px;color:var(--text-muted);margin-left:8px">(Display order in app)</span>
+    </div>
+    <button onclick="addCouple()">+ Add Couple</button>
+  </div>
+  <div id="list"></div>
+</main>
+
+<script>
+const defaultApi = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://api.adhvaithafoods.in';
+let API = localStorage.API || defaultApi;
+let TOKEN = localStorage.TOKEN || 'admin_secret';
+document.getElementById('currentApi').textContent = API;
+
+function resetApi() {
+  const newApi = prompt('API Base URL (e.g. https://api.adhvaithafoods.in or /api)', API);
+  if (newApi) { API = newApi.replace(/\/$/, ''); localStorage.API = API; }
+  const newToken = prompt('Admin Token', TOKEN);
+  if (newToken) { TOKEN = newToken; localStorage.TOKEN = TOKEN; }
+  document.getElementById('currentApi').textContent = API;
+  load();
+}
+
+async function call(method, url, body) {
+  const isForm = body instanceof FormData;
+  const endpoint = url.startsWith('/') ? url : '/' + url;
+  const headers = isForm ? { Authorization: 'Bearer ' + TOKEN } : { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' };
+  const r = await fetch(API + endpoint, {
+    method,
+    headers,
+    body: isForm ? body : (body ? JSON.stringify(body) : undefined)
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    alert(j.error || 'Server error ' + r.status);
+    throw new Error(j.error);
+  }
+  return j;
+}
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const img = u => {
+  if (!u) return '';
+  if (/^https?:/.test(u)) return u;
+  return API.replace(/\/api\/?$/, '') + (u.startsWith('/') ? u : '/' + u);
+};
+
+let couples = [];
+
+async function load() {
+  try {
+    const s = await call('GET', '/admin/pairing/settings');
+    eyebrow.value = s.eyebrow || 'CURATED COMBOS';
+    title.value = s.title || 'The Art of';
+    titleAccent.value = s.title_accent || s.titleAccent || 'Pairing';
+    subtitle.value = s.subtitle || '';
+    matchText.value = s.match_text || s.matchText || 'Made for each other';
+    buttonText.value = s.button_text || s.buttonText || "Meet Amma's perfect couples";
+    moreText.value = s.more_text || s.moreText || 'MORE PERFECT COUPLES';
+    explainText.value = s.explain_text || s.explainText || '';
+    enabled.value = String(s.enabled !== false && s.enabled !== 0);
+
+    couples = await call('GET', '/admin/pairing/couples');
+    render();
+  } catch (err) {
+    console.error('Failed to load pairing config:', err);
+  }
+}
+
+async function saveSettings() {
+  await call('PUT', '/admin/pairing/settings', {
+    eyebrow: eyebrow.value,
+    title: title.value,
+    titleAccent: titleAccent.value,
+    subtitle: subtitle.value,
+    matchText: matchText.value,
+    buttonText: buttonText.value,
+    moreText: moreText.value,
+    explainText: explainText.value,
+    enabled: enabled.value === 'true'
+  });
+  alert('Settings saved successfully!');
+}
+
+function render() {
+  const container = document.getElementById('list');
+  if (!couples || !couples.length) {
+    container.innerHTML = '<div class="card" style="text-align:center;color:var(--text-muted);padding:36px">No couples added yet. Click <b>+ Add Couple</b> to get started.</div>';
+    return;
+  }
+
+  container.innerHTML = couples.map((c, i) => {
+    const a = typeof c.a === 'string' ? JSON.parse(c.a || '{}') : (c.a || {});
+    const b = typeof c.b === 'string' ? JSON.parse(c.b || '{}') : (c.b || {});
+    const weights = typeof c.weights === 'string' ? JSON.parse(c.weights || '[]') : (c.weights || []);
+
+    return `
+    <div class="card">
+      <div class="head">
+        <div>
+          <b style="font-size:15px;color:var(--primary-dark)">${i + 1}. ${esc(c.name)}</b>
+          ${c.tag ? `<span class="badge" style="margin-left:8px">${esc(c.tag)}</span>` : ''}
+        </div>
+        <span>
+          <button class="ghost" style="padding:4px 8px" onclick="move(${i},-1)">↑</button>
+          <button class="ghost" style="padding:4px 8px" onclick="move(${i},1)">↓</button>
+          <label style="display:inline;margin-left:10px;font-size:12px;text-transform:none">
+            <input type="checkbox" ${c.enabled !== false && c.enabled !== 0 ? 'checked' : ''} onchange="couples[${i}].enabled=this.checked" style="width:auto"> Enabled
+          </label>
+        </span>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>Couple Name (max 26)</label>
+          <input value="${esc(c.name)}" maxlength="26" oninput="couples[${i}].name=this.value">
+        </div>
+        <div>
+          <label>Tag Badge (max 14)</label>
+          <input value="${esc(c.tag || '')}" maxlength="14" placeholder="e.g. BESTSELLER" oninput="couples[${i}].tag=this.value.toUpperCase()">
+        </div>
+        <div>
+          <label>Meal Icon & Name (max 4 / 12)</label>
+          <div style="display:flex;gap:6px">
+            <input value="${esc(c.meal_icon || c.mealIcon || '')}" style="width:50px" placeholder="🌅" maxlength="4" oninput="couples[${i}].meal_icon=this.value">
+            <input value="${esc(c.meal_name || c.mealName || '')}" placeholder="BREAKFAST" maxlength="12" oninput="couples[${i}].meal_name=this.value.toUpperCase()">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Loved Text (max 32)</label>
+          <input value="${esc(c.loved_text || c.lovedText || '')}" maxlength="32" placeholder="e.g. Amma's morning pairing" oninput="couples[${i}].loved_text=this.value">
+        </div>
+        <div>
+          <label>Serving Tip (max 52)</label>
+          <input value="${esc(c.tip || '')}" maxlength="52" placeholder="e.g. Serve hot with pure cow ghee" oninput="couples[${i}].tip=this.value">
+        </div>
+      </div>
+
+      <!-- SIDE A + SIDE B -->
+      <div class="pair-grid">
+        <div class="side-box">
+          <div class="side-header">🍯 Product A</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <div>
+              <img class="thumb-preview" src="${esc(img(a.image))}" onerror="this.src='assets/images/bowl_bellam_avakaya.png'">
+              <input type="file" accept="image/*" style="font-size:11px" onchange="uploadImage(${i}, 'a', this)">
+            </div>
+            <div style="flex:1">
+              <label>Name (max 16)</label>
+              <input value="${esc(a.name || '')}" maxlength="16" placeholder="Karam Podi" oninput="setSide(${i}, 'a', 'name', this.value)">
+              <label>Product ID</label>
+              <input value="${esc(a.productId || '')}" placeholder="sku_01" oninput="setSide(${i}, 'a', 'productId', this.value)">
+            </div>
+          </div>
+          <label>Short Bio (max 45)</label>
+          <input value="${esc(a.bio || '')}" maxlength="45" placeholder="Roasted lentils & red chilies" oninput="setSide(${i}, 'a', 'bio', this.value)">
+          <label>Tags (up to 2, comma-separated)</label>
+          <input value="${esc((a.tags || []).join(', '))}" placeholder="SPICY, ROASTED" oninput="setSideTags(${i}, 'a', this.value)">
+        </div>
+
+        <div class="heart-badge">❤️</div>
+
+        <div class="side-box">
+          <div class="side-header">🥭 Product B</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <div>
+              <img class="thumb-preview" src="${esc(img(b.image))}" onerror="this.src='assets/images/bowl_bellam_avakaya.png'">
+              <input type="file" accept="image/*" style="font-size:11px" onchange="uploadImage(${i}, 'b', this)">
+            </div>
+            <div style="flex:1">
+              <label>Name (max 16)</label>
+              <input value="${esc(b.name || '')}" maxlength="16" placeholder="Bellam Avakaya" oninput="setSide(${i}, 'b', 'name', this.value)">
+              <label>Product ID</label>
+              <input value="${esc(b.productId || '')}" placeholder="sku_02" oninput="setSide(${i}, 'b', 'productId', this.value)">
+            </div>
+          </div>
+          <label>Short Bio (max 45)</label>
+          <input value="${esc(b.bio || '')}" maxlength="45" placeholder="Sweet and spicy mango jaggery pickle" oninput="setSide(${i}, 'b', 'bio', this.value)">
+          <label>Tags (up to 2, comma-separated)</label>
+          <input value="${esc((b.tags || []).join(', '))}" placeholder="SWEET, TANGY" oninput="setSideTags(${i}, 'b', this.value)">
+        </div>
+      </div>
+
+      <!-- WEIGHTS -->
+      <label>Combo Weights (1 to 3 options) <small>— Label, Price (₹), MRP (₹), Variant ID A, Variant ID B</small></label>
+      ${weights.map((w, k) => `
+        <div class="weight-row">
+          <input placeholder="250 g each" value="${esc(w.label)}" maxlength="12" oninput="setWeight(${i}, ${k}, 'label', this.value)">
+          <input type="number" placeholder="Price ₹" value="${w.price || ''}" oninput="setWeight(${i}, ${k}, 'price', +this.value)">
+          <input type="number" placeholder="MRP ₹" value="${w.mrp || ''}" oninput="setWeight(${i}, ${k}, 'mrp', +this.value)">
+          <input placeholder="Variant A ID" value="${esc(w.aVariantId || '')}" oninput="setWeight(${i}, ${k}, 'aVariantId', this.value)">
+          <input placeholder="Variant B ID" value="${esc(w.bVariantId || '')}" oninput="setWeight(${i}, ${k}, 'bVariantId', this.value)">
+          <button class="del" style="padding:6px 10px" onclick="delWeight(${i}, ${k})">✕</button>
+        </div>
+      `).join('')}
+
+      ${weights.length < 3 ? `
+        <button class="ghost" style="font-size:12px;padding:4px 10px;margin-bottom:12px" onclick="addWeight(${i})">+ Add Weight</button>
+      ` : ''}
+
+      <div class="head" style="margin-top:16px;border-top:1px solid #f3e6e1;padding-top:14px">
+        <button class="del" onclick="delCouple(${i})">Delete Couple</button>
+        <button onclick="saveCouple(${i})">Save Couple</button>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function setSide(i, sideKey, field, val) {
+  let s = couples[i][sideKey];
+  if (typeof s === 'string') s = JSON.parse(s || '{}');
+  s = s || {};
+  s[field] = val;
+  couples[i][sideKey] = s;
+}
+
+function setSideTags(i, sideKey, val) {
+  let s = couples[i][sideKey];
+  if (typeof s === 'string') s = JSON.parse(s || '{}');
+  s = s || {};
+  s.tags = val.split(',').map(x => x.trim().toUpperCase().slice(0, 10)).filter(Boolean).slice(0, 2);
+  couples[i][sideKey] = s;
+}
+
+function setWeight(i, k, field, val) {
+  let ws = couples[i].weights;
+  if (typeof ws === 'string') ws = JSON.parse(ws || '[]');
+  ws[k] = ws[k] || {};
+  ws[k][field] = val;
+  couples[i].weights = ws;
+}
+
+function addWeight(i) {
+  let ws = couples[i].weights;
+  if (typeof ws === 'string') ws = JSON.parse(ws || '[]');
+  ws.push({ label: '250 g each', price: 299, mrp: 0, aVariantId: '', bVariantId: '' });
+  couples[i].weights = ws;
+  render();
+}
+
+function delWeight(i, k) {
+  let ws = couples[i].weights;
+  if (typeof ws === 'string') ws = JSON.parse(ws || '[]');
+  ws.splice(k, 1);
+  couples[i].weights = ws;
+  render();
+}
+
+async function uploadImage(i, sideKey, el) {
+  if (!el.files || !el.files[0]) return;
+  const f = new FormData();
+  f.append('image', el.files[0]);
+  try {
+    const r = await call('POST', '/admin/pairing/upload', f);
+    setSide(i, sideKey, 'image', r.path || r.url);
+    render();
+  } catch (e) {
+    alert('Upload failed: ' + e.message);
+  }
+}
+
+async function saveCouple(i) {
+  const c = couples[i];
+  const a = typeof c.a === 'string' ? JSON.parse(c.a || '{}') : (c.a || {});
+  const b = typeof c.b === 'string' ? JSON.parse(c.b || '{}') : (c.b || {});
+  const weights = typeof c.weights === 'string' ? JSON.parse(c.weights || '[]') : (c.weights || []);
+
+  const payload = {
+    name: c.name,
+    tag: c.tag || '',
+    mealIcon: c.meal_icon || c.mealIcon || '',
+    mealName: c.meal_name || c.mealName || '',
+    lovedText: c.loved_text || c.lovedText || '',
+    tip: c.tip || '',
+    a,
+    b,
+    weights,
+    enabled: c.enabled !== false && c.enabled !== 0
+  };
+
+  await call('PUT', `/admin/pairing/couples/${c.id}`, payload);
+  alert('Couple saved successfully!');
+  load();
+}
+
+async function delCouple(i) {
+  if (!confirm('Are you sure you want to delete couple: ' + couples[i].name + '?')) return;
+  await call('DELETE', `/admin/pairing/couples/${couples[i].id}`);
+  load();
+}
+
+async function addCouple() {
+  const name = prompt('Couple Name (e.g. Idli Karam + Bellam Avakaya):');
+  if (!name) return;
+  await call('POST', '/admin/pairing/couples', {
+    name,
+    tag: 'BESTSELLER',
+    mealIcon: '🌅',
+    mealName: 'BREAKFAST',
+    lovedText: "Amma's Morning Duo",
+    tip: 'Serve with warm idlis & pure cow ghee',
+    a: { name: 'Karam Podi', bio: 'Roasted spices & lentils', image: 'assets/images/bowl_karam_podi.png', tags: ['SPICY'] },
+    b: { name: 'Bellam Avakaya', bio: 'Sweet mango pickle', image: 'assets/images/bowl_bellam_avakaya.png', tags: ['SWEET'] },
+    weights: [{ label: '250 g each', price: 299, mrp: 349, aVariantId: 'a1', bVariantId: 'b1' }]
+  });
+  load();
+}
+
+async function move(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= couples.length) return;
+  [couples[i], couples[j]] = [couples[j], couples[i]];
+  await call('PUT', '/admin/pairing/order', { ids: couples.map(x => x.id) });
+  render();
+}
+
+load();
+</script>
+</body>
+</html>
+
