@@ -84,5 +84,14 @@
     RewriteRule ^admin/pairing/upload/?$ pairing.php?action=admin_upload [L,QSA]
     RewriteRule ^admin/pairing/couples/([0-9]+)/?$ pairing.php?action=admin_item&id=$1 [L,QSA]
     RewriteRule ^admin/pairing/couples/?$ pairing.php?action=admin_couples [L,QSA]
+
+    # Route Amma's Combo Box endpoints
+    RewriteRule ^combo-box/?$ combo_box.php?action=public_combo [L,QSA]
+    RewriteRule ^admin/combo-box/settings/?$ combo_box.php?action=admin_settings [L,QSA]
+    RewriteRule ^admin/combo-box/products/bulk/?$ combo_box.php?action=admin_bulk [L,QSA]
+    RewriteRule ^admin/combo-box/products/order/?$ combo_box.php?action=admin_order [L,QSA]
+    RewriteRule ^admin/combo-box/upload/?$ combo_box.php?action=admin_upload [L,QSA]
+    RewriteRule ^admin/combo-box/products/([0-9]+)/?$ combo_box.php?action=admin_item&id=$1 [L,QSA]
+    RewriteRule ^admin/combo-box/products/?$ combo_box.php?action=admin_products [L,QSA]
 </IfModule>
 

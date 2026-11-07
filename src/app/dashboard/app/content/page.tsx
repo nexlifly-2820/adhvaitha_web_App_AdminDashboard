@@ -5833,6 +5833,14 @@ export default function ContentManager() {
                           >
                             ✨ Pairing Couples Panel ↗
                           </a>
+                          <a
+                            href="/admin_combo_box.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center rounded-md text-xs font-bold transition-colors border border-amber-600 bg-amber-600/10 text-amber-800 dark:text-amber-300 hover:bg-amber-600 hover:text-white px-3 py-1.5 shadow-2xs"
+                          >
+                            🎁 Amma's Combo Box Panel ↗
+                          </a>
                           <Button 
                             size="sm"
                             disabled={isSaving}

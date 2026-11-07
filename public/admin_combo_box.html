@@ -1,0 +1,586 @@
+<!-- Saved copy of public/admin_combo_box.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Amma's Combo Box · Admin Dashboard</title>
+<style>
+  :root {
+    --primary: #7A1E3A;
+    --primary-dark: #4E0F24;
+    --primary-light: #922446;
+    --gold: #F6DA9A;
+    --gold-dark: #B8860B;
+    --bg: #f7efe9;
+    --card-bg: #ffffff;
+    --text: #2a0a10;
+    --text-muted: #7a5a50;
+    --border: #e3d3cc;
+    --danger: #b3261e;
+    --success: #1b5e20;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+    color: var(--gold);
+    padding: 16px 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  header span.sub { font-size: 13px; opacity: 0.9; font-weight: 400; color: #fff; }
+  main { max-width: 1100px; margin: auto; padding: 20px 16px; }
+  .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    border: 1px solid rgba(122,30,58,0.08);
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 10px 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  input, select, textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    background: #fff;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(122,30,58,0.12);
+  }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 160px; }
+  button {
+    background: var(--primary);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  button:hover { background: var(--primary-light); }
+  button.ghost { background: #f3e6e1; color: var(--text); }
+  button.ghost:hover { background: #ebd8d1; }
+  button.del { background: var(--danger); color: #fff; }
+  button.del:hover { background: #8a1a14; }
+  button.gold { background: linear-gradient(135deg, #b8860b, #d4af37); color: #2a0a10; font-weight: 700; }
+  button.gold:hover { background: #b8860b; color: #fff; }
+  .head { display: flex; justify-content: space-between; align-items: center; }
+  .api-bar {
+    background: #fff3eb;
+    border: 1px dashed #d9b8a8;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 4px;
+    background: #fdf2d8;
+    color: #855800;
+    border: 1px solid #edd493;
+  }
+  .tier-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .p-card {
+    background: #faf6f3;
+    border: 1px solid #ebd8d1;
+    border-radius: 12px;
+    padding: 14px;
+    position: relative;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .p-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  }
+  .p-thumb {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: radial-gradient(circle, #fff, #eddcd4);
+    border: 1px solid #dfc7bc;
+    margin-bottom: 6px;
+  }
+  .cat-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .cat-pill.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  .bulk-box {
+    background: linear-gradient(135deg, #fff7eb 0%, #fff0e3 100%);
+    border: 2px dashed #e6a88a;
+    border-radius: 14px;
+    padding: 22px;
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>🎁 AMMA'S COMBO BOX · Custom Box Builder</div>
+  <span class="sub">Admin Management Dashboard</span>
+</header>
+<main>
+  <div class="api-bar">
+    <div><b>API Base:</b> <span id="currentApi"></span></div>
+    <button class="ghost" style="padding:5px 10px;font-size:12px" onclick="resetApi()">Change API / Token</button>
+  </div>
+
+  <!-- SECTION 1: MASTER BOX & TIER SETTINGS -->
+  <div class="card">
+    <div class="head">
+      <h3 style="margin:0;color:var(--primary-dark);font-size:16px;">Box Settings & Tiered Discounts</h3>
+      <span class="badge">Master Configuration</span>
+    </div>
+    <div class="row">
+      <div><label>Eyebrow</label><input id="eyebrow" placeholder="BUILD YOUR BOX"></div>
+      <div><label>Title Start</label><input id="titleStart" placeholder="Amma's"></div>
+      <div><label>Title Accent (Gold)</label><input id="titleAccent" placeholder="Combo Box"></div>
+      <div><label>Jars per Box</label><input type="number" id="jars" min="1" max="12" placeholder="4"></div>
+    </div>
+    <div class="row">
+      <div><label>Box Label</label><input id="boxLabel" placeholder="Amma's Combo"></div>
+      <div><label>Lid Stamp Text</label><input id="lidText" placeholder="Made with love, packed by Amma"></div>
+      <div><label>Gift Tag Text</label><input id="tagText" placeholder="For you, with love 💛"></div>
+      <div><label>Enabled</label>
+        <select id="enabled">
+          <option value="true">Enabled (Shown in App & Web)</option>
+          <option value="false">Disabled (Hidden)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div><label>Available Jar Sizes (comma-separated)</label><input id="sizes" placeholder="250 g, 500 g, 1 kg"></div>
+      <div><label>Categories (comma-separated)</label><input id="categories" placeholder="Pickles, Podis, Snacks, Sweets"></div>
+    </div>
+
+    <!-- TIERED DISCOUNTS -->
+    <label style="margin-top:16px">Tiered Volume Discounts (e.g. 4 jars = 10% OFF, 6 jars = 15% OFF)</label>
+    <div id="tiersList"></div>
+    <button type="button" class="ghost" style="font-size:12px;padding:4px 10px;margin-bottom:12px" onclick="addTier()">+ Add Tier</button>
+
+    <!-- HOMEPAGE CARD TEXTS -->
+    <label style="margin-top:14px">Homepage Banner / Teaser Card Texts</label>
+    <div class="row">
+      <div><label>Home Kicker Line</label><input id="homeLine" placeholder="pick any 4 jars, Amma packs them"></div>
+      <div><label>Home Title</label><input id="homeTitle" placeholder="Fill the box,"></div>
+      <div><label>Home Accent</label><input id="homeAccent" placeholder="save more"></div>
+      <div><label>Button Label</label><input id="homeButton" placeholder="Start building your box"></div>
+    </div>
+
+    <p style="margin:18px 0 0"><button onclick="saveSettings()">Save Box Settings</button></p>
+  </div>
+
+  <!-- SECTION 2: PRODUCTS / JARS IN COMBO BOX -->
+  <div class="head" style="margin:26px 0 12px">
+    <div>
+      <h3 style="margin:0;color:var(--primary-dark);font-size:17px;display:inline-block">Jars In Amma's Box</h3>
+      <span id="prodCount" style="font-size:12px;color:var(--text-muted);margin-left:8px">(0 jars loaded)</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="gold" onclick="scrollToBulk()">⚡ Bulk Add 20+ Products</button>
+      <button onclick="addSingleProduct()">+ Add Single Jar</button>
+    </div>
+  </div>
+
+  <!-- Category filter pills -->
+  <div id="catFilters" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"></div>
+
+  <div id="productsList" class="product-grid"></div>
+
+  <!-- SECTION 3: BULK IMPORT 20+ PRODUCTS -->
+  <div class="bulk-box" id="bulkSection">
+    <div class="head">
+      <div>
+        <h3 style="margin:0;color:var(--primary-dark);font-size:16px;">⚡ Bulk Import 20+ Products to Amma's Combo Box</h3>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--text-muted)">
+          Paste a comma-separated or space-separated list of product IDs to import into the combo box selector.
+        </p>
+      </div>
+      <button class="ghost" style="font-size:12px" onclick="fillSampleIds()">Paste Sample 1..20 IDs</button>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <div style="flex:2">
+        <label>Product IDs (comma or space separated)</label>
+        <textarea id="bulkIds" rows="3" placeholder="1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20"></textarea>
+      </div>
+      <div style="flex:1">
+        <label>Assign to Category</label>
+        <select id="bulkCategory">
+          <option value="Pickles">Pickles</option>
+          <option value="Podis">Podis</option>
+          <option value="Snacks">Snacks</option>
+          <option value="Sweets">Sweets</option>
+        </select>
+        <div style="margin-top:22px">
+          <button class="gold" style="width:100%;padding:10px" onclick="importBulkProducts()">+ Add 20+ Products</button>
+        </div>
+      </div>
+    </div>
+    <div id="bulkResult" style="margin-top:10px;font-size:13px;font-weight:600"></div>
+  </div>
+</main>
+
+<script>
+const defaultApi = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://api.adhvaithafoods.in';
+let API = localStorage.API || defaultApi;
+let TOKEN = localStorage.TOKEN || 'admin_secret';
+document.getElementById('currentApi').textContent = API;
+
+function resetApi() {
+  const newApi = prompt('API Base URL (e.g. https://api.adhvaithafoods.in or /api)', API);
+  if (newApi) { API = newApi.replace(/\/$/, ''); localStorage.API = API; }
+  const newToken = prompt('Admin Token', TOKEN);
+  if (newToken) { TOKEN = newToken; localStorage.TOKEN = TOKEN; }
+  document.getElementById('currentApi').textContent = API;
+  load();
+}
+
+async function call(method, url, body) {
+  const isForm = body instanceof FormData;
+  const endpoint = url.startsWith('/') ? url : '/' + url;
+  const headers = isForm ? { Authorization: 'Bearer ' + TOKEN } : { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' };
+  const r = await fetch(API + endpoint, {
+    method,
+    headers,
+    body: isForm ? body : (body ? JSON.stringify(body) : undefined)
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    alert(j.error || 'Server error ' + r.status);
+    throw new Error(j.error);
+  }
+  return j;
+}
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const img = u => {
+  if (!u) return 'assets/images/bowl_bellam_avakaya.png';
+  if (/^https?:/.test(u)) return u;
+  return API.replace(/\/api\/?$/, '') + (u.startsWith('/') ? u : '/' + u);
+};
+
+let settings = {};
+let products = [];
+let tiers = [];
+let selectedCat = 'ALL';
+
+async function load() {
+  try {
+    settings = await call('GET', '/admin/combo-box/settings');
+    eyebrow.value = settings.eyebrow || 'BUILD YOUR BOX';
+    titleStart.value = settings.titleStart ?? settings.title_start ?? "Amma's";
+    titleAccent.value = settings.titleAccent ?? settings.title_accent ?? 'Combo Box';
+    jars.value = settings.jars || 4;
+    boxLabel.value = settings.boxLabel ?? settings.box_label ?? "Amma's Combo";
+    lidText.value = settings.lidText ?? settings.lid_text ?? 'Made with love, packed by Amma';
+    tagText.value = settings.tagText ?? settings.tag_text ?? 'For you, with love 💛';
+    enabled.value = String(settings.enabled !== false && settings.enabled !== 0);
+    sizes.value = (settings.sizes || ['250 g', '500 g', '1 kg']).join(', ');
+    categories.value = (settings.categories || ['Pickles', 'Podis', 'Snacks', 'Sweets']).join(', ');
+
+    homeLine.value = settings.homeLine ?? settings.home_line ?? 'pick any 4 jars, Amma packs them';
+    homeTitle.value = settings.homeTitle ?? settings.home_title ?? 'Fill the box,';
+    homeAccent.value = settings.homeAccent ?? settings.home_accent ?? 'save more';
+    homeButton.value = settings.homeButton ?? settings.home_button ?? 'Start building your box';
+
+    tiers = Array.isArray(settings.tiers) && settings.tiers.length ? settings.tiers : [
+      { jars: 4, percent: 10 },
+      { jars: 6, percent: 15 },
+      { jars: 8, percent: 20 }
+    ];
+    renderTiers();
+
+    products = await call('GET', '/admin/combo-box/products');
+    renderCategories();
+    renderProducts();
+  } catch (err) {
+    console.error('Failed to load combo box data:', err);
+  }
+}
+
+function renderTiers() {
+  const container = document.getElementById('tiersList');
+  container.innerHTML = tiers.map((t, k) => `
+    <div class="tier-row">
+      <input type="number" min="1" placeholder="Jars count (e.g. 4)" value="${t.jars}" oninput="tiers[${k}].jars=+this.value">
+      <input type="number" min="1" max="100" placeholder="Discount % (e.g. 10)" value="${t.percent}" oninput="tiers[${k}].percent=+this.value">
+      <button class="del" style="padding:7px 12px" onclick="tiers.splice(${k},1);renderTiers()">✕</button>
+    </div>
+  `).join('');
+}
+
+function addTier() {
+  tiers.push({ jars: (tiers[tiers.length - 1]?.jars || 4) + 2, percent: (tiers[tiers.length - 1]?.percent || 10) + 5 });
+  renderTiers();
+}
+
+async function saveSettings() {
+  const sList = sizes.value.split(',').map(s => s.trim()).filter(Boolean);
+  const cList = categories.value.split(',').map(c => c.trim()).filter(Boolean);
+
+  await call('PUT', '/admin/combo-box/settings', {
+    eyebrow: eyebrow.value,
+    titleStart: titleStart.value,
+    titleAccent: titleAccent.value,
+    jars: parseInt(jars.value, 10) || 4,
+    boxLabel: boxLabel.value,
+    lidText: lidText.value,
+    tagText: tagText.value,
+    enabled: enabled.value === 'true',
+    sizes: sList,
+    categories: cList,
+    tiers: tiers.filter(t => t.jars > 0 && t.percent > 0),
+    homeLine: homeLine.value,
+    homeTitle: homeTitle.value,
+    homeAccent: homeAccent.value,
+    homeButton: homeButton.value
+  });
+  alert('Settings saved successfully!');
+  load();
+}
+
+function renderCategories() {
+  const cats = ['ALL', ...(settings.categories || ['Pickles', 'Podis', 'Snacks', 'Sweets'])];
+  const container = document.getElementById('catFilters');
+  container.innerHTML = cats.map(c => `
+    <span class="cat-pill ${selectedCat === c ? 'active' : ''}" onclick="selectedCat='${c}';renderProducts();renderCategories()">${c}</span>
+  `).join('');
+
+  // Update bulk category dropdown
+  const bulkCat = document.getElementById('bulkCategory');
+  bulkCat.innerHTML = (settings.categories || ['Pickles', 'Podis', 'Snacks', 'Sweets']).map(c => `
+    <option value="${c}">${c}</option>
+  `).join('');
+}
+
+function renderProducts() {
+  const container = document.getElementById('productsList');
+  const filtered = selectedCat === 'ALL' ? products : products.filter(p => (p.category || '').toLowerCase() === selectedCat.toLowerCase());
+  document.getElementById('prodCount').textContent = `(${products.length} jars in combo box)`;
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text-muted)">No jars in this category. Use Bulk Add below to add 20+ products.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map((p, idx) => {
+    const realIdx = products.findIndex(x => x.id === p.id);
+    const priceEntries = Object.entries(p.prices || {});
+    return `
+    <div class="p-card">
+      <div class="head">
+        <div>
+          <b style="font-size:14px;color:var(--primary-dark)">#${p.productId} ${esc(p.name || 'Product ' + p.productId)}</b>
+          <div style="font-size:11px;color:var(--text-muted)">${esc(p.category || 'Pickles')}</div>
+        </div>
+        <span>
+          <button class="ghost" style="padding:2px 6px;font-size:11px" onclick="moveProduct(${realIdx}, -1)">↑</button>
+          <button class="ghost" style="padding:2px 6px;font-size:11px" onclick="moveProduct(${realIdx}, 1)">↓</button>
+          <button class="del" style="padding:2px 6px;font-size:11px" onclick="delProduct('${p.id}')">✕</button>
+        </span>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+        <div>
+          <img class="p-thumb" src="${esc(img(p.image))}">
+          <input type="file" accept="image/*" style="font-size:10px" onchange="uploadJarPhoto(${realIdx}, this)">
+        </div>
+        <div style="flex:1">
+          <label style="margin-top:0">Category</label>
+          <select onchange="updateProduct(${realIdx}, 'category', this.value)">
+            ${(settings.categories || ['Pickles', 'Podis', 'Snacks', 'Sweets']).map(c => `
+              <option value="${c}" ${c === p.category ? 'selected' : ''}>${c}</option>
+            `).join('')}
+          </select>
+
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <div style="flex:1">
+              <label style="margin:2px 0 1px">Color 1</label>
+              <input type="color" value="${p.color1 || '#8A1A10'}" style="height:28px;padding:2px" onchange="updateProduct(${realIdx}, 'color1', this.value)">
+            </div>
+            <div style="flex:1">
+              <label style="margin:2px 0 1px">Color 2</label>
+              <input type="color" value="${p.color2 || '#2A0806'}" style="height:28px;padding:2px" onchange="updateProduct(${realIdx}, 'color2', this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;font-size:11px;background:#f2e6e1;border-radius:6px;padding:6px">
+        <b>Available Weights & Prices:</b>
+        ${priceEntries.length ? priceEntries.map(([sz, v]) => `
+          <div style="display:flex;justify-content:space-between;margin-top:2px">
+            <span>${sz}</span>
+            <span><b>₹${v.price}</b> <s style="opacity:0.7">₹${v.mrp}</s></span>
+          </div>
+        `).join('') : '<div style="color:red">No variants configured for this size.</div>'}
+      </div>
+
+      <div class="head" style="margin-top:10px">
+        <label style="display:inline;font-size:11px;text-transform:none">
+          <input type="checkbox" ${p.enabled !== false && p.enabled !== 0 ? 'checked' : ''} onchange="updateProduct(${realIdx}, 'enabled', this.checked)" style="width:auto"> Enabled
+        </label>
+        <button style="font-size:11px;padding:4px 8px" onclick="saveProduct(${realIdx})">Save Jar</button>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function updateProduct(idx, key, val) {
+  products[idx][key] = val;
+}
+
+async function saveProduct(idx) {
+  const p = products[idx];
+  await call('PUT', `/admin/combo-box/products/${p.id}`, {
+    category: p.category,
+    image: p.image,
+    color1: p.color1,
+    color2: p.color2,
+    enabled: p.enabled !== false && p.enabled !== 0
+  });
+  alert('Jar saved!');
+}
+
+async function delProduct(id) {
+  if (!confirm('Remove this product from the Combo Box?')) return;
+  await call('DELETE', `/admin/combo-box/products/${id}`);
+  load();
+}
+
+async function moveProduct(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= products.length) return;
+  [products[i], products[j]] = [products[j], products[i]];
+  await call('PUT', '/admin/combo-box/products/order', { ids: products.map(x => x.id) });
+  renderProducts();
+}
+
+async function uploadJarPhoto(idx, el) {
+  if (!el.files || !el.files[0]) return;
+  const f = new FormData();
+  f.append('image', el.files[0]);
+  try {
+    const r = await call('POST', '/admin/combo-box/upload', f);
+    products[idx].image = r.path || r.url;
+    renderProducts();
+  } catch (e) {
+    alert('Upload failed: ' + e.message);
+  }
+}
+
+async function addSingleProduct() {
+  const pid = prompt('Enter Product ID:');
+  if (!pid) return;
+  const cat = prompt('Category (Pickles, Podis, Snacks, Sweets):', 'Pickles');
+  await call('POST', '/admin/combo-box/products', { productId: pid, category: cat });
+  load();
+}
+
+function fillSampleIds() {
+  document.getElementById('bulkIds').value = '1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20';
+}
+
+function scrollToBulk() {
+  document.getElementById('bulkSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function importBulkProducts() {
+  const raw = document.getElementById('bulkIds').value.trim();
+  const category = document.getElementById('bulkCategory').value;
+  if (!raw) {
+    alert('Please paste a list of product IDs');
+    return;
+  }
+
+  const resultDiv = document.getElementById('bulkResult');
+  resultDiv.style.color = '#7A1E3A';
+  resultDiv.textContent = 'Importing products...';
+
+  try {
+    const res = await call('POST', '/admin/combo-box/products/bulk', {
+      productIds: raw,
+      category
+    });
+
+    resultDiv.style.color = 'var(--success)';
+    resultDiv.textContent = `✓ Successfully imported ${res.added} products into ${category}!`;
+    if (res.notFound && res.notFound.length) {
+      resultDiv.textContent += ` (Note: IDs not found in catalog: ${res.notFound.join(', ')})`;
+    }
+    load();
+  } catch (err) {
+    resultDiv.style.color = 'var(--danger)';
+    resultDiv.textContent = 'Error importing: ' + err.message;
+  }
+}
+
+load();
+</script>
+</body>
+</html>
