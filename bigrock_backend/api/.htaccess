@@ -93,5 +93,12 @@
     RewriteRule ^admin/combo-box/upload/?$ combo_box.php?action=admin_upload [L,QSA]
     RewriteRule ^admin/combo-box/products/([0-9]+)/?$ combo_box.php?action=admin_item&id=$1 [L,QSA]
     RewriteRule ^admin/combo-box/products/?$ combo_box.php?action=admin_products [L,QSA]
+
+    # Route Home Glass Category Tabs endpoints
+    RewriteRule ^category-tabs/?$ category_tabs.php?action=public_tabs [L,QSA]
+    RewriteRule ^admin/category-tabs/order/?$ category_tabs.php?action=admin_order [L,QSA]
+    RewriteRule ^admin/category-tabs/upload/?$ category_tabs.php?action=admin_upload [L,QSA]
+    RewriteRule ^admin/category-tabs/([0-9]+)/?$ category_tabs.php?action=admin_item&id=$1 [L,QSA]
+    RewriteRule ^admin/category-tabs/?$ category_tabs.php?action=admin_tabs [L,QSA]
 </IfModule>
 

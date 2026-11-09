@@ -5520,7 +5520,17 @@ export default function ContentManager() {
             <Card>
               <CardHeader className="flex flex-row justify-between items-center pb-2 border-b mb-4">
                 <div><CardTitle>Categories & Product Listing Banners</CardTitle><CardDescription>Manage Category Banners, Titles, Descriptions, and Subtitles dynamically</CardDescription></div>
-                <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', tag: '', title_line_1: '', title_line_2: '', description: '', subtitle: '' })}>+ Add Category</Button>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="/admin_category_tabs.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-md text-xs font-bold transition-colors border border-red-600 bg-red-600/10 text-red-800 dark:text-red-300 hover:bg-red-600 hover:text-white px-3 py-1.5 shadow-2xs"
+                  >
+                    🏷️ Glass Category Tabs Panel ↗
+                  </a>
+                  <Button variant="outline" size="sm" onClick={() => addToArray(setCategories, { label: '', img: '', tag: '', title_line_1: '', title_line_2: '', description: '', subtitle: '' })}>+ Add Category</Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {categories.map((cat, idx) => (
