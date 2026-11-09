@@ -541,3 +541,4 @@ switch ($action) {
         echo json_encode(['error' => 'Endpoint not found']);
         break;
 }
+
