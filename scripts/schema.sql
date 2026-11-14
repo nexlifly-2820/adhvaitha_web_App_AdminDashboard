@@ -86,3 +86,91 @@ CREATE TABLE IF NOT EXISTS user_reward_state (
 CREATE INDEX IF NOT EXISTS idx_user_cards_user_status ON user_cards(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_user_cards_code ON user_cards(code);
 CREATE INDEX IF NOT EXISTS idx_reward_offers_step_active ON reward_offers(step, active);
+
+-- ==============================================================================
+-- 5. GLASS CATEGORY TABS
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS category_tabs (
+  id SERIAL PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,          -- all, pickles, snacks, sweets, podis, combos
+  label TEXT NOT NULL,                -- shown under the circle
+  image TEXT DEFAULT '',              -- dish photo (transparent PNG)
+  badge TEXT DEFAULT '',              -- e.g. NEW (empty = none)
+  enabled BOOLEAN DEFAULT TRUE,
+  sort INT DEFAULT 0
+);
+
+INSERT INTO category_tabs (slug, label, sort) VALUES
+  ('all', 'All', 1),
+  ('pickles', 'Pickles', 2),
+  ('snacks', 'Snacks', 3),
+  ('sweets', 'Sweets', 4),
+  ('podis', 'Podis', 5),
+  ('combos', 'Combos', 6)
+ON CONFLICT (slug) DO NOTHING;
+
+UPDATE category_tabs SET badge='NEW' WHERE slug='snacks' AND badge='';
+
+-- ==============================================================================
+-- 6. THE ART OF PAIRING
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS pairing_settings (
+  id INT PRIMARY KEY DEFAULT 1,
+  enabled BOOLEAN DEFAULT TRUE,
+  eyebrow VARCHAR(100) DEFAULT 'CURATED COMBOS',
+  title VARCHAR(100) DEFAULT 'The Art of',
+  title_accent VARCHAR(100) DEFAULT 'Pairing',
+  subtitle VARCHAR(255) DEFAULT '',
+  explain_text TEXT DEFAULT '',
+  match_text VARCHAR(100) DEFAULT 'Made for each other',
+  button_text VARCHAR(100) DEFAULT 'Meet Amma''s perfect couples',
+  more_text VARCHAR(100) DEFAULT 'MORE PERFECT COUPLES'
+);
+
+CREATE TABLE IF NOT EXISTS pairing_couples (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(50) NOT NULL,
+  tag VARCHAR(30) DEFAULT '',
+  meal_icon VARCHAR(10) DEFAULT '',
+  meal_name VARCHAR(30) DEFAULT '',
+  loved_text VARCHAR(60) DEFAULT '',
+  tip VARCHAR(100) DEFAULT '',
+  a JSONB DEFAULT '{}',
+  b JSONB DEFAULT '{}',
+  weights JSONB DEFAULT '[]',
+  enabled BOOLEAN DEFAULT TRUE,
+  sort INT DEFAULT 0
+);
+
+-- ==============================================================================
+-- 7. AMMA'S COMBO BOX
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS combo_settings (
+  id INT PRIMARY KEY DEFAULT 1,
+  enabled BOOLEAN DEFAULT TRUE,
+  eyebrow VARCHAR(100) DEFAULT 'BUILD YOUR BOX',
+  title_start VARCHAR(100) DEFAULT 'Amma''s',
+  title_accent VARCHAR(100) DEFAULT 'Combo Box',
+  jars INT DEFAULT 4,
+  box_label VARCHAR(100) DEFAULT 'Amma''s Combo',
+  lid_text TEXT DEFAULT 'Made with love,\npacked by Amma',
+  tag_text VARCHAR(100) DEFAULT 'For you, with love 💛',
+  sizes JSONB DEFAULT '["250 g", "500 g", "1 kg"]',
+  tiers JSONB DEFAULT '[{"jars":4,"percent":10},{"jars":6,"percent":15},{"jars":8,"percent":20}]',
+  categories JSONB DEFAULT '["Pickles", "Podis", "Snacks", "Sweets"]',
+  home_line VARCHAR(255) DEFAULT 'pick any 4 jars, Amma packs them',
+  home_title VARCHAR(100) DEFAULT 'Fill the box,',
+  home_accent VARCHAR(100) DEFAULT 'save more',
+  home_button VARCHAR(100) DEFAULT 'Start building your box'
+);
+
+CREATE TABLE IF NOT EXISTS combo_products (
+  id SERIAL PRIMARY KEY,
+  product_id INT NOT NULL UNIQUE,
+  category VARCHAR(50) DEFAULT 'Pickles',
+  image TEXT DEFAULT NULL,
+  color1 VARCHAR(20) DEFAULT '#8A1A10',
+  color2 VARCHAR(20) DEFAULT '#2A0806',
+  enabled BOOLEAN DEFAULT TRUE,
+  sort INT DEFAULT 0
+);
