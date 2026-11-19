@@ -123,65 +123,107 @@ export function VideoUpload({
     setErrorMessage(null)
     
     try {
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+      // 1. Try Cloudflare R2 Upload First with live progress
+      const r2FormData = new FormData();
+      r2FormData.append('file', file);
+      r2FormData.append('folder', 'adhvaitha_foods_videos');
 
-      if (!cloudName || !uploadPreset) {
-        throw new Error('Cloudinary environment variables missing. Please configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME & NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.');
-      }
+      const xhrR2 = new XMLHttpRequest();
+      xhrR2.open('POST', '/api/upload/r2', true);
 
-      // Use /auto/upload to handle both MP4/MOV videos AND animated GIFs (.gif) seamlessly
-      const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', uploadPreset);
-      formData.append('folder', 'adhvaitha_foods_videos');
-
-      // Use XMLHttpRequest to track live upload progress
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', CLOUDINARY_URL, true);
-
-      xhr.upload.onprogress = (event) => {
+      xhrR2.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           const progress = Math.round((event.loaded / event.total) * 100);
           setUploadProgress(progress);
         }
       };
 
-      xhr.onload = () => {
-        setIsUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const response = JSON.parse(xhr.responseText);
-          onChange(response.secure_url);
+      xhrR2.onload = () => {
+        if (xhrR2.status >= 200 && xhrR2.status < 300) {
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          const response = JSON.parse(xhrR2.responseText);
+          onChange(response.url || response.secure_url);
           setVideoError(false);
-          toast.success(file.name.endsWith('.gif') ? 'Full-screen GIF animation uploaded to Cloudinary!' : 'Video uploaded successfully to Cloudinary!');
-        } else {
-          let errorMsg = 'Failed to upload file';
-          try {
-            const errJson = JSON.parse(xhr.responseText);
-            errorMsg = errJson.error?.message || xhr.statusText;
-          } catch(e) {}
-          
-          if (errorMsg.includes('File size too large')) {
-            errorMsg = 'Cloudinary size limit reached (max 100MB). Please compress the video or export under 100MB.';
-          }
-          setErrorMessage(`Cloudinary Error: ${errorMsg}`);
-          toast.error(errorMsg);
+          toast.success(file.name.endsWith('.gif') ? 'GIF animation uploaded to Cloudflare R2!' : 'Video uploaded to Cloudflare R2!');
+          return;
         }
+
+        // If R2 fails, attempt Cloudinary fallback
+        fallbackCloudinary();
       };
 
-      xhr.onerror = () => {
-        setIsUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        setErrorMessage('Network error during upload to Cloudinary. Please check your connection.');
-        toast.error('Upload failed due to network error.');
+      xhrR2.onerror = () => {
+        fallbackCloudinary();
       };
 
-      xhr.send(formData);
+      xhrR2.send(r2FormData);
 
+      const currentFile = file;
+
+      function fallbackCloudinary() {
+        if (!currentFile) {
+          setIsUploading(false);
+          return;
+        }
+
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+        if (!cloudName || !uploadPreset) {
+          setIsUploading(false);
+          setErrorMessage('Upload error: Cloudflare R2 and Cloudinary are not available.');
+          toast.error('Upload failed. Please check R2 configuration.');
+          return;
+        }
+
+        const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+        
+        const formData = new FormData();
+        formData.append('file', currentFile);
+        formData.append('upload_preset', uploadPreset);
+        formData.append('folder', 'adhvaitha_foods_videos');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', CLOUDINARY_URL, true);
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(progress);
+          }
+        };
+
+        xhr.onload = () => {
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const response = JSON.parse(xhr.responseText);
+            onChange(response.secure_url);
+            setVideoError(false);
+            toast.success(currentFile.name.endsWith('.gif') ? 'GIF uploaded to Cloudinary (fallback)!' : 'Video uploaded to Cloudinary (fallback)!');
+          } else {
+            let errorMsg = 'Failed to upload file';
+            try {
+              const errJson = JSON.parse(xhr.responseText);
+              errorMsg = errJson.error?.message || xhr.statusText;
+            } catch(e) {}
+            
+            setErrorMessage(`Upload Error: ${errorMsg}`);
+            toast.error(errorMsg);
+          }
+        };
+
+        xhr.onerror = () => {
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          setErrorMessage('Network error during upload. Please check your connection.');
+          toast.error('Upload failed due to network error.');
+        };
+
+        xhr.send(formData);
+      }
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')
@@ -455,7 +497,7 @@ export function VideoUpload({
             {isUploading ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-                <span className="font-semibold text-sm">Uploading File to Cloudinary ({uploadProgress}%)...</span>
+                <span className="font-semibold text-sm">Uploading File ({uploadProgress}%)...</span>
                 <div className="w-48 bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                   <div 
                     className="bg-orange-600 h-full transition-all duration-150"
@@ -485,7 +527,7 @@ export function VideoUpload({
                     GIF & MP4 Auto-Detect
                   </span>
                   <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">
-                    Cloudinary CDN
+                    Cloudflare R2 CDN
                   </span>
                 </div>
               </div>
@@ -494,7 +536,7 @@ export function VideoUpload({
 
           {/* Quick Option to Paste Direct Video URL */}
           <div className="flex items-center justify-between px-1 text-xs text-slate-500">
-            <span>Already have a Cloudinary, CDN, or GIF URL?</span>
+            <span>Already have an R2, Cloudinary, or GIF URL?</span>
             <Button
               type="button"
               variant="link"
@@ -519,7 +561,7 @@ export function VideoUpload({
           </div>
           <div>{errorMessage}</div>
           <div className="text-[11px] text-slate-500 pt-1">
-            Tip: You can also paste an existing Cloudinary or CDN URL directly using the "Paste Direct URL" button.
+            Tip: You can also paste an existing R2, Cloudinary, or CDN URL directly using the "Paste Direct URL" button.
           </div>
         </div>
       )}
@@ -603,12 +645,12 @@ export function VideoUpload({
                 Set Direct Media URL
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Paste any Cloudinary, CDN, or local asset link (e.g. assets/images/ambhujakshi_loading_fullscreen.gif or .mp4)
+                Paste any R2, Cloudinary, CDN, or local asset link (e.g. assets/images/ambhujakshi_loading_fullscreen.gif or .mp4)
               </p>
             </div>
 
             <Input 
-              placeholder="https://res.cloudinary.com/... or assets/images/....gif" 
+              placeholder="https://media.nexlifly.in/... or assets/images/....gif" 
               value={urlInputValue}
               onChange={e => setUrlInputValue(e.target.value)}
               className="text-xs font-mono"

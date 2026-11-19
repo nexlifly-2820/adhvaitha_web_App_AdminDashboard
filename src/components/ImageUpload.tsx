@@ -30,11 +30,33 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
 
     setIsUploading(true)
     try {
+      // 1. Try Cloudflare R2 first
+      const r2FormData = new FormData();
+      r2FormData.append('file', file);
+      r2FormData.append('folder', 'adhvaitha_foods_images');
+
+      const r2Res = await fetch('/api/upload/r2', {
+        method: 'POST',
+        body: r2FormData,
+      });
+
+      if (r2Res.ok) {
+        const data = await r2Res.json();
+        if (data.url || data.secure_url) {
+          onChange(data.url || data.secure_url);
+          toast.success('Image uploaded to Cloudflare R2!');
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+      }
+
+      // 2. Fallback to Cloudinary if R2 fails
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
       if (!cloudName || !uploadPreset) {
-        throw new Error('Cloudinary environment variables are missing. Please configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in Vercel.');
+        throw new Error('Upload service error: Could not complete R2 or Cloudinary upload.');
       }
 
       const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
@@ -54,13 +76,13 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
         if (xhr.status >= 200 && xhr.status < 300) {
           const response = JSON.parse(xhr.responseText);
           onChange(response.secure_url);
-          toast.success('Image uploaded perfectly to Cloudinary!');
+          toast.success('Image uploaded to Cloudinary (fallback)!');
         } else {
           let errorMsg = 'Failed to upload image';
           try {
             errorMsg = JSON.parse(xhr.responseText).error.message;
           } catch(e) {}
-          toast.error(`Cloudinary Error: ${errorMsg}`);
+          toast.error(`Upload Error: ${errorMsg}`);
         }
       };
 
