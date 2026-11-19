@@ -30,29 +30,40 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
 
     setIsUploading(true)
     try {
-      // 1. Try Cloudflare R2 first
-      const r2FormData = new FormData();
-      r2FormData.append('file', file);
-      r2FormData.append('folder', 'adhvaitha_foods_images');
-
-      const r2Res = await fetch('/api/upload/r2', {
+      // 1. Get presigned upload URL from server (bypasses Vercel payload limits)
+      const presignRes = await fetch('/api/upload/r2/presign', {
         method: 'POST',
-        body: r2FormData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type || 'image/jpeg',
+          folder: 'adhvaitha_foods_images',
+        }),
       });
 
-      if (r2Res.ok) {
-        const data = await r2Res.json();
-        if (data.url || data.secure_url) {
-          onChange(data.url || data.secure_url);
-          toast.success('Image uploaded to Cloudflare R2!');
-          setIsUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          return;
-        }
+      if (!presignRes.ok) {
+        const presignErr = await presignRes.json().catch(() => ({}));
+        throw new Error(presignErr.error || 'Failed to initialize upload session.');
       }
 
-      const errData = await r2Res.json().catch(() => ({}));
-      throw new Error(errData.error || 'Failed to upload to Cloudflare R2');
+      const { uploadUrl, publicUrl } = await presignRes.json();
+
+      // 2. Upload file directly to Cloudflare R2 via PUT
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type || 'image/jpeg' },
+        body: file,
+      });
+
+      if (uploadRes.ok) {
+        onChange(publicUrl);
+        toast.success('Image uploaded to Cloudflare R2!');
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      throw new Error(`Upload failed with status ${uploadRes.status}`);
 
     } catch (error: any) {
       console.error('Upload error:', error)

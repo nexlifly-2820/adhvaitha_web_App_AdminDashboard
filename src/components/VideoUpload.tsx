@@ -123,56 +123,62 @@ export function VideoUpload({
     setErrorMessage(null)
     
     try {
-      // 1. Try Cloudflare R2 Upload First with live progress
-      const r2FormData = new FormData();
-      r2FormData.append('file', file);
-      r2FormData.append('folder', 'adhvaitha_foods_videos');
+      // 1. Get presigned upload URL from server (bypasses Vercel 4.5MB payload limit)
+      const presignRes = await fetch('/api/upload/r2/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type || 'video/mp4',
+          folder: 'adhvaitha_foods_videos',
+        }),
+      });
 
-      const xhrR2 = new XMLHttpRequest();
-      xhrR2.open('POST', '/api/upload/r2', true);
+      if (!presignRes.ok) {
+        const presignErr = await presignRes.json().catch(() => ({}));
+        throw new Error(presignErr.error || 'Failed to initialize upload session.');
+      }
 
-      xhrR2.upload.onprogress = (event) => {
+      const { uploadUrl, publicUrl } = await presignRes.json();
+
+      // 2. Upload file directly to Cloudflare R2 via PUT with progress tracking
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+      xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           const progress = Math.round((event.loaded / event.total) * 100);
           setUploadProgress(progress);
         }
       };
 
-      xhrR2.onload = () => {
+      xhr.onload = () => {
         setIsUploading(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
 
-        if (xhrR2.status >= 200 && xhrR2.status < 300) {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          onChange(publicUrl);
+          setVideoError(false);
+          toast.success(file.name.endsWith('.gif') ? 'GIF animation uploaded to Cloudflare R2!' : 'Video uploaded to Cloudflare R2!');
+        } else {
+          let errorMsg = `Upload failed with status ${xhr.status}`;
           try {
-            const response = JSON.parse(xhrR2.responseText);
-            onChange(response.url || response.secure_url);
-            setVideoError(false);
-            toast.success(file.name.endsWith('.gif') ? 'GIF animation uploaded to Cloudflare R2!' : 'Video uploaded to Cloudflare R2!');
-          } catch (e) {
-            setErrorMessage('Invalid server response from R2 upload');
-            toast.error('Failed to parse upload response.');
-          }
-          return;
+            errorMsg = xhr.responseText || errorMsg;
+          } catch (e) {}
+          setErrorMessage(`R2 Upload Error: ${errorMsg}`);
+          toast.error('Upload to Cloudflare R2 failed.');
         }
-
-        // R2 upload error handling
-        let errorMsg = 'Failed to upload to Cloudflare R2';
-        try {
-          const errJson = JSON.parse(xhrR2.responseText);
-          errorMsg = errJson.error || errJson.message || errorMsg;
-        } catch(e) {}
-        setErrorMessage(`R2 Upload Error: ${errorMsg}`);
-        toast.error(errorMsg);
       };
 
-      xhrR2.onerror = () => {
+      xhr.onerror = () => {
         setIsUploading(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
-        setErrorMessage('Network error during R2 upload. Please check your connection.');
+        setErrorMessage('Network error during upload to Cloudflare R2. Please check your connection.');
         toast.error('Upload failed due to network error.');
       };
 
-      xhrR2.send(r2FormData);
+      xhr.send(file);
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')
