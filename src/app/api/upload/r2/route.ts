@@ -17,6 +17,18 @@ const r2 = new S3Client({
   },
 });
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    version: 'r2-active',
+    bucket,
+    publicUrl,
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
