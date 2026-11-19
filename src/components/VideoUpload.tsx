@@ -139,91 +139,40 @@ export function VideoUpload({
       };
 
       xhrR2.onload = () => {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
         if (xhrR2.status >= 200 && xhrR2.status < 300) {
-          setIsUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          const response = JSON.parse(xhrR2.responseText);
-          onChange(response.url || response.secure_url);
-          setVideoError(false);
-          toast.success(file.name.endsWith('.gif') ? 'GIF animation uploaded to Cloudflare R2!' : 'Video uploaded to Cloudflare R2!');
+          try {
+            const response = JSON.parse(xhrR2.responseText);
+            onChange(response.url || response.secure_url);
+            setVideoError(false);
+            toast.success(file.name.endsWith('.gif') ? 'GIF animation uploaded to Cloudflare R2!' : 'Video uploaded to Cloudflare R2!');
+          } catch (e) {
+            setErrorMessage('Invalid server response from R2 upload');
+            toast.error('Failed to parse upload response.');
+          }
           return;
         }
 
-        // If R2 fails, attempt Cloudinary fallback
-        fallbackCloudinary();
+        // R2 upload error handling
+        let errorMsg = 'Failed to upload to Cloudflare R2';
+        try {
+          const errJson = JSON.parse(xhrR2.responseText);
+          errorMsg = errJson.error || errJson.message || errorMsg;
+        } catch(e) {}
+        setErrorMessage(`R2 Upload Error: ${errorMsg}`);
+        toast.error(errorMsg);
       };
 
       xhrR2.onerror = () => {
-        fallbackCloudinary();
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setErrorMessage('Network error during R2 upload. Please check your connection.');
+        toast.error('Upload failed due to network error.');
       };
 
       xhrR2.send(r2FormData);
-
-      const currentFile = file;
-
-      function fallbackCloudinary() {
-        if (!currentFile) {
-          setIsUploading(false);
-          return;
-        }
-
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-        if (!cloudName || !uploadPreset) {
-          setIsUploading(false);
-          setErrorMessage('Upload error: Cloudflare R2 and Cloudinary are not available.');
-          toast.error('Upload failed. Please check R2 configuration.');
-          return;
-        }
-
-        const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
-        
-        const formData = new FormData();
-        formData.append('file', currentFile);
-        formData.append('upload_preset', uploadPreset);
-        formData.append('folder', 'adhvaitha_foods_videos');
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', CLOUDINARY_URL, true);
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(progress);
-          }
-        };
-
-        xhr.onload = () => {
-          setIsUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-
-          if (xhr.status >= 200 && xhr.status < 300) {
-            const response = JSON.parse(xhr.responseText);
-            onChange(response.secure_url);
-            setVideoError(false);
-            toast.success(currentFile.name.endsWith('.gif') ? 'GIF uploaded to Cloudinary (fallback)!' : 'Video uploaded to Cloudinary (fallback)!');
-          } else {
-            let errorMsg = 'Failed to upload file';
-            try {
-              const errJson = JSON.parse(xhr.responseText);
-              errorMsg = errJson.error?.message || xhr.statusText;
-            } catch(e) {}
-            
-            setErrorMessage(`Upload Error: ${errorMsg}`);
-            toast.error(errorMsg);
-          }
-        };
-
-        xhr.onerror = () => {
-          setIsUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          setErrorMessage('Network error during upload. Please check your connection.');
-          toast.error('Upload failed due to network error.');
-        };
-
-        xhr.send(formData);
-      }
     } catch (error: any) {
       console.error('Upload error:', error)
       toast.error(error.message || 'Failed to upload video.')

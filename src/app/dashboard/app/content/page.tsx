@@ -1839,7 +1839,7 @@ export default function ContentManager() {
                   Enable Header Video Background
                 </label>
                 <p className="text-xs text-slate-500">
-                  When enabled, loops your festive Cloudinary MP4 video. When disabled or offline, smoothly falls back to the Royal Maroon festive gradient.
+                  When enabled, loops your festive MP4 video. When disabled or offline, smoothly falls back to the Royal Maroon festive gradient.
                 </p>
               </div>
               <input 
@@ -1854,7 +1854,7 @@ export default function ContentManager() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Upload Header Video File (Direct to Cloudinary)
+                  Upload Header Video File (Cloudflare R2)
                 </label>
                 {homeVideo.header_video_url && (
                   <a 
@@ -1878,10 +1878,10 @@ export default function ContentManager() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Header Video CDN / Cloudinary URL</label>
+              <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Header Video CDN / Media URL</label>
               <div className="flex gap-2">
                 <Input 
-                  placeholder="https://res.cloudinary.com/dxynqm0zo/video/upload/.../video.mp4" 
+                  placeholder="https://media.nexlifly.in/... or video URL" 
                   value={homeVideo.header_video_url} 
                   onChange={e => setHomeVideo(prev => ({ ...prev, header_video_url: e.target.value }))}
                   className="font-mono text-xs" 
@@ -2084,7 +2084,7 @@ export default function ContentManager() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Upload Featured Video File (Direct to Cloudinary)
+                  Upload Featured Video File (Cloudflare R2)
                 </label>
                 {homeVideo.video_url && (
                   <a 
@@ -2108,10 +2108,10 @@ export default function ContentManager() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Featured Video CDN / Cloudinary URL</label>
+              <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Featured Video CDN / Media URL</label>
               <div className="flex gap-2">
                 <Input 
-                  placeholder="https://res.cloudinary.com/dxynqm0zo/video/upload/.../video.mp4" 
+                  placeholder="https://media.nexlifly.in/... or video URL" 
                   value={homeVideo.video_url} 
                   onChange={e => setHomeVideo(prev => ({ ...prev, video_url: e.target.value, featured_video_url: e.target.value }))}
                   className="font-mono text-xs" 
@@ -2269,7 +2269,7 @@ export default function ContentManager() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Upload Showcase Video File (Direct to Cloudinary)
+                  Upload Showcase Video File (Cloudflare R2)
                 </label>
                 {heritageVideo.video_url && (
                   <a 
@@ -2293,10 +2293,10 @@ export default function ContentManager() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Showcase Video CDN / Cloudinary URL</label>
+              <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Showcase Video CDN / Media URL</label>
               <div className="flex gap-2">
                 <Input 
-                  placeholder="https://res.cloudinary.com/dxynqm0zo/video/upload/.../video.mp4" 
+                  placeholder="https://media.nexlifly.in/... or video URL" 
                   value={heritageVideo.video_url} 
                   onChange={e => setHeritageVideo(prev => ({ ...prev, video_url: e.target.value }))} 
                   className="font-mono text-xs" 
@@ -2617,10 +2617,10 @@ export default function ContentManager() {
 
             {/* Direct URL Input */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Transition Video CDN / Cloudinary URL</label>
+              <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">Transition Video CDN / Media URL</label>
               <div className="flex gap-2">
                 <Input 
-                  placeholder="https://res.cloudinary.com/dxynqm0zo/video/upload/.../video.mp4" 
+                  placeholder="https://media.nexlifly.in/... or video URL" 
                   value={tabTransitionVideo.video_url} 
                   onChange={e => setTabTransitionVideo(prev => ({ ...prev, video_url: e.target.value }))} 
                   className="font-mono text-xs" 

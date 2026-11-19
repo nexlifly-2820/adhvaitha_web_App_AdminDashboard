@@ -51,48 +51,8 @@ export function ImageUpload({ value, onChange, folder = 'uploads', className = '
         }
       }
 
-      // 2. Fallback to Cloudinary if R2 fails
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-      if (!cloudName || !uploadPreset) {
-        throw new Error('Upload service error: Could not complete R2 or Cloudinary upload.');
-      }
-
-      const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', uploadPreset);
-      formData.append('folder', 'adhvaitha_foods_images');
-
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', CLOUDINARY_URL, true);
-
-      xhr.onload = () => {
-        setIsUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const response = JSON.parse(xhr.responseText);
-          onChange(response.secure_url);
-          toast.success('Image uploaded to Cloudinary (fallback)!');
-        } else {
-          let errorMsg = 'Failed to upload image';
-          try {
-            errorMsg = JSON.parse(xhr.responseText).error.message;
-          } catch(e) {}
-          toast.error(`Upload Error: ${errorMsg}`);
-        }
-      };
-
-      xhr.onerror = () => {
-        setIsUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        toast.error('Upload failed. Network error.');
-      };
-
-      xhr.send(formData);
+      const errData = await r2Res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to upload to Cloudflare R2');
 
     } catch (error: any) {
       console.error('Upload error:', error)
