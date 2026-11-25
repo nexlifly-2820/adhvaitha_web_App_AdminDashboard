@@ -30,6 +30,7 @@ import { BestSellersBoard } from './components/BestSellersBoard'
 import { StorySnacksManager } from './components/StorySnacksManager'
 import { FreshPicksBoard } from './components/FreshPicksBoard'
 import { FestiveManager } from './components/FestiveManager'
+import { SweetsBoard } from './components/SweetsBoard'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
@@ -1621,10 +1622,6 @@ export default function ContentManager() {
         }),
         postConfig('snacks_with_story', {
           list: DEFAULT_STORY_SNACKS
-        }),
-        postConfig('sweets', {
-          settings: DEFAULT_SWEETS.settings,
-          products: DEFAULT_SWEETS.products
         }),
         postConfig('spices_grinder', {
           settings: DEFAULT_SPICE_GRINDER.settings,
@@ -4724,22 +4721,7 @@ export default function ContentManager() {
 
           {/* MITHAI THALI SWEETS SECTION */}
           <TabsContent value="sweets_thali" className="mt-0 space-y-6">
-            <SweetsThaliManager
-              config={sweetsThali}
-              onChange={setSweetsThali}
-              onSave={async () => {
-                await handleSaveTab('sweets', {
-                  settings: sweetsThali.settings,
-                  products: sweetsThali.products
-                });
-              }}
-              isSaving={isSaving}
-              onResetDefaults={() => {
-                if (!confirm("Reset Mithai Thali Sweets to authentic defaults?")) return;
-                setSweetsThali(DEFAULT_SWEETS);
-                toast.success('Restored Authentic Mithai Thali Defaults!');
-              }}
-            />
+            <SweetsBoard />
           </TabsContent>
 
           {/* SPICE GRINDER SECTION */}
