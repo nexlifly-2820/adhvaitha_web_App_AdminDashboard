@@ -1,5 +1,21 @@
 import { NextResponse } from 'next/server';
-import { BIGROCK_API_URL } from '@/lib/api-client';
+import { BIGROCK_API_URL, fetchApi } from '@/lib/api-client';
+import { DEFAULT_WALL } from '@/app/dashboard/app/settings/components/loginWallDefaults';
+
+export const dynamic = 'force-dynamic';
+
+// moving-wall photos from the admin (app settings doc "login_wall"), else the 9 built-in photos
+async function wallPhotos(): Promise<string[]> {
+  try {
+    const raw: any = await fetchApi('/app_settings.php?doc_id=login_wall');
+    const d = raw?.content ?? raw?.data ?? raw;
+    if (String(d?.version) === '2' && Array.isArray(d?.photos)) {
+      const l = d.photos.filter((p: any) => p?.enabled !== false && p?.url).map((p: any) => String(p.url));
+      if (l.length) return l;
+    }
+  } catch {}
+  return DEFAULT_WALL.map((p) => p.url);
+}
 
 export async function GET() {
   try {
@@ -11,7 +27,7 @@ export async function GET() {
 
     if (res.ok) {
       const data = await res.json();
-      return NextResponse.json(data);
+      return NextResponse.json({ ...data, wall: await wallPhotos() }, { headers: { 'Cache-Control': 'no-store' } });
     }
     throw new Error('Backend failed');
   } catch (error: any) {
@@ -34,13 +50,7 @@ export async function GET() {
         otpLength: 6,
         resendSeconds: 30
       },
-      wall: [
-        "assets/images/banner_1.jpg",
-        "assets/images/banner_2.jpg",
-        "assets/images/banner_3.jpg",
-        "assets/images/banner_4.jpg",
-        "assets/images/avakaya_pickle.png"
-      ]
+      wall: await wallPhotos()
     });
   }
 }

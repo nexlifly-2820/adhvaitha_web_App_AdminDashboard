@@ -22,12 +22,11 @@ import {
   FileText
 } from 'lucide-react'
 import { ImageUpload } from '@/components/ImageUpload'
+import { DEFAULT_WALL, WALL_PREVIEWS, type WallItem } from './loginWallDefaults'
 
-interface WallPhoto {
-  id: number;
-  url: string;
-  sort: number;
-}
+const wallSrc = (u: string) => WALL_PREVIEWS[u] || (u.startsWith('assets/') ? '' : u)
+
+type WallPhoto = WallItem
 
 export function LoginScreenManager() {
   const [isLoading, setIsLoading] = useState(true)
@@ -65,7 +64,40 @@ export function LoginScreenManager() {
 
   useEffect(() => {
     fetchSettings()
+    fetchWall()
   }, [])
+
+  // Moving wall photos live in app settings doc "login_wall" ({ version: 2, photos })
+  const fetchWall = async () => {
+    try {
+      const res = await fetch('/dashboard/app/api/app-data?docId=login_wall')
+      const d = (await res.json())?.data || {}
+      if (String(d.version) === '2' && Array.isArray(d.photos) && d.photos.length) {
+        setWallPhotos(d.photos.map((p: any) => ({ url: String(p?.url ?? ''), label: String(p?.label ?? ''), enabled: p?.enabled !== false })).filter((p: WallPhoto) => p.url))
+      } else {
+        setWallPhotos(DEFAULT_WALL)
+      }
+    } catch {
+      setWallPhotos(DEFAULT_WALL)
+    }
+  }
+
+  const saveWall = async (next: WallPhoto[], msg: string) => {
+    if (!next.some((p) => p.enabled)) { toast.error('Keep at least one photo switched on'); return }
+    setWallPhotos(next)
+    try {
+      const res = await fetch('/dashboard/app/api/app-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ docId: 'login_wall', version: 2, photos: next, updatedAt: new Date().toISOString() }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok || j?.success === false) throw new Error(j?.error || 'Save failed')
+      toast.success(msg)
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not save the wall')
+    }
+  }
 
   const fetchSettings = async () => {
     setIsLoading(true)
@@ -81,9 +113,6 @@ export function LoginScreenManager() {
         if (data.expiry_minutes) setExpiryMinutes(data.expiry_minutes)
         if (data.mail_subject) setMailSubject(data.mail_subject)
         if (data.mail_body) setMailBody(data.mail_body)
-        if (data.wall && Array.isArray(data.wall)) {
-          setWallPhotos(data.wall)
-        }
       }
     } catch (err) {
       console.error('Error fetching login settings:', err)
@@ -124,49 +153,29 @@ export function LoginScreenManager() {
   }
 
   const handleAddWallPhoto = async () => {
-    if (!newWallUrl.trim()) {
-      toast.error('Please upload or enter a photo URL')
-      return
-    }
-
+    const url = newWallUrl.trim()
+    if (!url) { toast.error('Please upload or enter a photo URL'); return }
     setIsAddingPhoto(true)
-    try {
-      const res = await fetch('/api/admin/login-wall', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: newWallUrl.trim() })
-      })
-
-      if (res.ok) {
-        const newPhoto = await res.json()
-        setWallPhotos(prev => [...prev, newPhoto])
-        setNewWallUrl('')
-        toast.success('Photo added to moving wall')
-      } else {
-        toast.error('Failed to add wall photo')
-      }
-    } catch (err: any) {
-      toast.error('Error adding photo: ' + err.message)
-    } finally {
-      setIsAddingPhoto(false)
-    }
+    await saveWall([...wallPhotos, { url, label: '', enabled: true }], 'Photo added — the app shows it on next open')
+    setNewWallUrl('')
+    setIsAddingPhoto(false)
   }
 
-  const handleDeleteWallPhoto = async (id: number) => {
-    try {
-      const res = await fetch(`/api/admin/login-wall/${id}`, {
-        method: 'DELETE'
-      })
+  const handleDeleteWallPhoto = async (idx: number) => {
+    if (wallPhotos.length <= 1) { toast.error('Keep at least one photo'); return }
+    if (!confirm('Remove this photo from the login wall?')) return
+    await saveWall(wallPhotos.filter((_, k) => k !== idx), 'Photo removed')
+  }
 
-      if (res.ok) {
-        setWallPhotos(prev => prev.filter(p => p.id !== id))
-        toast.success('Photo removed from wall')
-      } else {
-        toast.error('Failed to remove photo')
-      }
-    } catch (err: any) {
-      toast.error('Error removing photo: ' + err.message)
-    }
+  const moveWallPhoto = async (idx: number, d: -1 | 1) => {
+    const j = idx + d
+    if (j < 0 || j >= wallPhotos.length) return
+    const n = [...wallPhotos]; [n[idx], n[j]] = [n[j], n[idx]]
+    await saveWall(n, 'Order saved')
+  }
+
+  const toggleWallPhoto = async (idx: number) => {
+    await saveWall(wallPhotos.map((p, k) => (k === idx ? { ...p, enabled: !p.enabled } : p)), 'Saved')
   }
 
   if (isLoading) {
@@ -255,7 +264,7 @@ export function LoginScreenManager() {
           }`}
         >
           <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
-          Moving Wall Photos ({wallPhotos.length})
+          Moving Wall Photos ({wallPhotos.filter((p) => p.enabled).length})
         </button>
         <button
           type="button"
@@ -534,7 +543,7 @@ export function LoginScreenManager() {
                   Moving Wall Background Photos
                 </div>
                 <span className="text-xs text-slate-500 font-mono font-normal">
-                  {wallPhotos.length} images active
+                  {wallPhotos.filter((p) => p.enabled).length} images active
                 </span>
               </CardTitle>
               <CardDescription className="text-xs">
@@ -580,29 +589,26 @@ export function LoginScreenManager() {
               </div>
 
               {/* PHOTOS GRID */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-slate-500">Photos are shown in 3 moving columns, cropped square, under a dark overlay. Use full-frame food photos.</p>
+                <Button type="button" variant="outline" size="sm" onClick={() => { if (confirm('Reset the wall to the 9 built-in photos?')) saveWall(DEFAULT_WALL, 'Wall reset to the built-in photos') }}>
+                  <RefreshCw className="h-3.5 w-3.5 mr-1" /> Built-in photos
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3">
                 {wallPhotos.map((photo, idx) => (
-                  <div 
-                    key={photo.id || idx}
-                    className="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 aspect-[3/4] shadow-sm hover:shadow-md transition-all"
-                  >
-                    <img 
-                      src={photo.url} 
-                      alt={`Wall photo ${idx + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                      <span className="text-[10px] font-mono text-white/80 bg-black/50 px-1.5 py-0.5 rounded w-fit">
-                        #{idx + 1}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteWallPhoto(photo.id)}
-                        className="w-7 h-7 rounded-full bg-red-600/90 hover:bg-red-700 text-white flex items-center justify-center self-end shadow"
-                        title="Delete photo"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                  <div key={photo.url + idx} className={`relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 shadow-sm ${photo.enabled ? '' : 'opacity-50'}`}>
+                    <div className="aspect-square">
+                      {wallSrc(photo.url) ? <img src={wallSrc(photo.url)} alt={photo.label || `Wall photo ${idx + 1}`} className="w-full h-full object-cover" /> : <div className="flex h-full items-center justify-center text-[10px] text-slate-400 p-2 break-all">{photo.url}</div>}
+                    </div>
+                    <span className="absolute left-1.5 top-1.5 text-[10px] font-mono text-white bg-black/60 px-1.5 py-0.5 rounded">#{idx + 1}</span>
+                    <div className="flex items-center justify-between gap-1 p-1.5">
+                      <label className="flex items-center gap-1 text-[10px]"><input type="checkbox" checked={photo.enabled} onChange={() => toggleWallPhoto(idx)} /> Show</label>
+                      <div className="flex gap-1">
+                        <button type="button" onClick={() => moveWallPhoto(idx, -1)} disabled={idx === 0} className="h-6 w-6 rounded border text-xs disabled:opacity-30" title="Move earlier">‹</button>
+                        <button type="button" onClick={() => moveWallPhoto(idx, 1)} disabled={idx === wallPhotos.length - 1} className="h-6 w-6 rounded border text-xs disabled:opacity-30" title="Move later">›</button>
+                        <button type="button" onClick={() => handleDeleteWallPhoto(idx)} className="h-6 w-6 rounded bg-red-600 text-white flex items-center justify-center" title="Delete photo"><Trash2 className="h-3 w-3" /></button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -623,9 +629,9 @@ export function LoginScreenManager() {
 
             {/* BACKGROUND MOVING WALL SIMULATION */}
             <div className="absolute inset-0 grid grid-cols-2 gap-2 p-2 opacity-40 blur-[1px]">
-              {wallPhotos.slice(0, 4).map((p, i) => (
+              {wallPhotos.filter((p) => p.enabled).slice(0, 4).map((p, i) => (
                 <div key={i} className="rounded-lg overflow-hidden bg-stone-800 h-44">
-                  <img src={p.url} alt="" className="w-full h-full object-cover" />
+                  <img src={wallSrc(p.url)} alt="" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
