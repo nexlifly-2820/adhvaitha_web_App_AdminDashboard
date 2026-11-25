@@ -25,6 +25,7 @@ import { HomeOffersManager } from './components/HomeOffersManager'
 import { ArtOfPairingManager } from './components/ArtOfPairingManager'
 import { SpecialsManager } from './components/SpecialsManager'
 import { PickleParadiseManager } from './components/PickleParadiseManager'
+import { LoveChartManager } from './components/LoveChartManager'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
@@ -1620,10 +1621,6 @@ export default function ContentManager() {
         }),
         postConfig('snacks_with_story', {
           list: DEFAULT_STORY_SNACKS
-        }),
-        postConfig('most_loved', {
-          settings: DEFAULT_MOST_LOVED.settings,
-          products: DEFAULT_MOST_LOVED.products
         }),
         postConfig('best_sellers', {
           settings: DEFAULT_BEST_SELLERS.settings,
@@ -5815,22 +5812,7 @@ export default function ContentManager() {
 
           {/* THE LOVE CHART (MOST LOVED PRODUCTS) */}
           <TabsContent value="most_loved" className="mt-0 space-y-6">
-            <MostLovedManager
-              config={mostLoved}
-              onChange={setMostLoved}
-              onSave={async () => {
-                await handleSaveTab('most_loved', {
-                  settings: mostLoved.settings,
-                  products: mostLoved.products
-                });
-              }}
-              isSaving={isSaving}
-              onResetDefaults={() => {
-                if (!confirm('Reset The Love Chart to authentic presets (Bellam Avakaya, Idli Karam Podi, Kara Murukku, Sunnunda Laddu & Gongura Pickle)?')) return;
-                setMostLoved(DEFAULT_MOST_LOVED);
-                toast.success('Restored 5 Authentic Most Loved Presets!');
-              }}
-            />
+            <LoveChartManager />
           </TabsContent>
 
           {/* BEST SELLERS CHAMPIONS PODIUM */}
