@@ -1,63 +1,30 @@
 import { NextResponse } from 'next/server';
-import { BIGROCK_API_URL } from '@/lib/api-client';
+import { BIGROCK_API_URL, fetchApi } from '@/lib/api-client';
+import { DEFAULT_SETTINGS, DEFAULT_COUPLES } from '@/app/dashboard/app/content/components/pairDefaults';
 
+export const dynamic = 'force-dynamic';
+
+// Serves the Art of Pairing data to the app.
+// 1) what the admin saved (app settings doc "art_of_pairing"), 2) old pairing.php, 3) built-in defaults.
 export async function GET() {
   try {
-    const targetUrl = `${BIGROCK_API_URL}/pairing.php?action=public_pairing`;
-    const res = await fetch(targetUrl, {
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
-    });
+    const raw: any = await fetchApi(`/app_settings.php?doc_id=art_of_pairing`);
+    const d = raw?.data ?? raw;
+    if (d && Array.isArray(d.couples) && d.couples.length) {
+      return NextResponse.json({
+        settings: { ...DEFAULT_SETTINGS, ...(d.settings || {}) },
+        couples: d.couples.filter((c: any) => c?.enabled !== false),
+      }, { headers: { 'Cache-Control': 'no-store' } });
+    }
+  } catch {}
 
+  try {
+    const res = await fetch(`${BIGROCK_API_URL}/pairing.php?action=public_pairing`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      return NextResponse.json(data);
+      if (Array.isArray(data?.couples) && data.couples.length) return NextResponse.json(data);
     }
+  } catch {}
 
-    // Default fallback
-    return NextResponse.json({
-      settings: {
-        enabled: true,
-        eyebrow: 'CURATED COMBOS',
-        title: 'The Art of',
-        titleAccent: 'Pairing',
-        subtitle: 'Flavors meant to be experienced together',
-        explainText: 'Traditional South Indian dining has always paired complementary flavors.',
-        matchText: 'Made for each other',
-        buttonText: "Meet Amma's perfect couples",
-        moreText: 'MORE PERFECT COUPLES'
-      },
-      couples: [
-        {
-          id: '1',
-          name: 'Karam Podi + Avakaya',
-          tag: 'BESTSELLER',
-          mealIcon: '🌅',
-          mealName: 'BREAKFAST',
-          lovedText: "Amma's favorite morning duo",
-          tip: 'Serve hot with piping hot idlis and pure cow ghee',
-          a: {
-            productId: 'p2',
-            name: 'Karam Podi',
-            bio: 'Stone-ground spices & roasted lentils',
-            image: 'assets/images/bowl_karam_podi.png',
-            tags: ['SPICY', 'CRISP']
-          },
-          b: {
-            productId: 'p1',
-            name: 'Bellam Avakaya',
-            bio: 'Sun-cured sweet and spicy mango pickle',
-            image: 'assets/images/bowl_bellam_avakaya.png',
-            tags: ['SWEET', 'TANGY']
-          },
-          weights: [
-            { label: '250 g each', price: 379, mrp: 419, aVariantId: 'p2_250', bVariantId: 'p1_250' }
-          ]
-        }
-      ]
-    });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  return NextResponse.json({ settings: DEFAULT_SETTINGS, couples: DEFAULT_COUPLES });
 }
-
