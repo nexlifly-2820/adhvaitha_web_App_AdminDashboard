@@ -119,7 +119,7 @@ export function SpecialsManager() {
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
+          <div className="grid w-full max-w-full gap-5 2xl:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
             {/* live preview of the home tiles */}
             <div>
               <div className="mb-2 text-xs font-bold text-muted-foreground">APP PREVIEW — tap a tile to edit</div>
@@ -175,7 +175,7 @@ export function SpecialsManager() {
                     </div>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
+                  <div className="grid gap-3 xl:grid-cols-[150px_minmax(0,1fr)]">
                     <div>
                       <ImageUpload value={isAsset(c.image) ? '' : c.image} onChange={(url) => upd(open, { image: url })} folder="specials_light" maxSizeMB={3} />
                       {isAsset(c.image) && preview(c.image) && (
@@ -207,7 +207,7 @@ export function SpecialsManager() {
                   <div className="rounded-lg border p-3 space-y-2">
                     <div className="text-xs font-bold">Sizes & prices <span className="font-normal text-muted-foreground">(● = selected by default)</span></div>
                     {c.variants.map((v, k) => (
-                      <div key={k} className="grid grid-cols-2 sm:grid-cols-[28px_1fr_100px_100px_40px] items-center gap-2">
+                      <div key={k} className="grid grid-cols-2 xl:grid-cols-[28px_1fr_100px_100px_40px] items-center gap-2">
                         <input type="radio" name={`def-${open}`} checked={c.defaultVariant === k} onChange={() => upd(open, { defaultVariant: k })} />
                         <Input value={v.label} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, label: e.target.value, id: e.target.value.replace(/\s+/g, '') } : y)) })} placeholder="250g" />
                         <Input type="number" value={v.price} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, price: num(e.target.value) } : y)) })} placeholder="Price ₹" />

@@ -120,7 +120,7 @@ export function FestiveManager() {
       </CardHeader>
       <CardContent>
         {loading ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> : (
-          <div className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)] [&>*]:min-w-0">
+          <div className="grid w-full max-w-full gap-5 2xl:grid-cols-[380px_minmax(0,1fr)] [&>*]:min-w-0">
             {/* APP PREVIEW */}
             <div>
               <div className="mb-2 text-xs font-bold text-muted-foreground">APP PREVIEW</div>
@@ -252,7 +252,7 @@ export function FestiveManager() {
                           <Button size="sm" variant="outline" className="text-red-700" disabled={f.chips.length <= 1} onClick={() => { if (confirm(`Delete "${c.title}" and its products?`)) { set({ chips: f.chips.filter((_, k) => k !== chip) }); setChip(0) } }}><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </div>
-                      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px]">
+                      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_160px]">
                         <div className="space-y-2">
                           <div><label className="text-xs font-semibold">Chip name</label><Input value={c.title} onChange={(e) => updChip(chip, { title: e.target.value })} placeholder="Pickles" /></div>
                           <div><label className="text-xs font-semibold">Category (used for &quot;view all&quot;)</label>
@@ -263,7 +263,7 @@ export function FestiveManager() {
                       <div className="text-xs font-bold">Products under &quot;{c.title}&quot; <span className="font-normal text-muted-foreground">(at least 4 recommended)</span></div>
                       <div className="space-y-2">
                         {c.products.map((p, i) => (
-                          <div key={i} className="grid gap-2 rounded-lg border p-2 sm:grid-cols-[120px_minmax(0,1fr)]">
+                          <div key={i} className="grid gap-2 rounded-lg border p-2 xl:grid-cols-[120px_minmax(0,1fr)]">
                             <ImageField label="" value={p.image} onChange={(v) => updProd(chip, i, { image: v })} folder="festive" />
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                               <div className="col-span-2"><label className="text-[11px] font-semibold">Name</label><Input value={p.name} onChange={(e) => updProd(chip, i, { name: e.target.value })} /></div>

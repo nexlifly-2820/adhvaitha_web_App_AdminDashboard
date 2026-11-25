@@ -34,7 +34,7 @@ function SideEditor({ label, value, onChange }: { label: string; value: Side; on
   return (
     <div className="rounded-lg border bg-orange-50/40 p-3 space-y-2">
       <div className="text-xs font-bold text-rose-800">{label}</div>
-      <div className="grid gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
+      <div className="grid gap-2 xl:grid-cols-[120px_minmax(0,1fr)]">
         <div>
           <ImageUpload value={isAsset(value.image) ? '' : value.image} onChange={(url) => onChange({ ...value, image: url })} folder="art_of_pairing" maxSizeMB={3} />
           {isAsset(value.image) && preview(value.image) && (
@@ -204,7 +204,7 @@ export function ArtOfPairingManager() {
                     <div><label className="text-xs font-semibold">Couple name</label><Input value={c.name} onChange={(e) => upd(i, { name: e.target.value })} placeholder="Kara Murukku + Sunnunda Laddu" /></div>
                     <div><label className="text-xs font-semibold">Tag</label><Input value={c.tag} onChange={(e) => upd(i, { tag: e.target.value.toUpperCase() })} placeholder="SNACK & SWEET" /></div>
                     <div><label className="text-xs font-semibold">Loved-for line</label><Input value={c.lovedText} onChange={(e) => upd(i, { lovedText: e.target.value })} placeholder="The ultimate tea-time combo" /></div>
-                    <div className="grid grid-cols-2 sm:grid-cols-[70px_1fr] gap-2">
+                    <div className="grid grid-cols-2 xl:grid-cols-[70px_1fr] gap-2">
                       <div><label className="text-xs font-semibold">Meal icon</label><Input value={c.mealIcon} onChange={(e) => upd(i, { mealIcon: e.target.value })} placeholder="☕" /></div>
                       <div><label className="text-xs font-semibold">Best for</label><Input value={c.mealName} onChange={(e) => upd(i, { mealName: e.target.value.toUpperCase() })} placeholder="EVENING TEA" /></div>
                     </div>
@@ -217,7 +217,7 @@ export function ArtOfPairingManager() {
                   <div className="rounded-lg border p-3 space-y-2">
                     <div className="text-xs font-bold">Sizes & combo prices</div>
                     {c.weights.map((x, k) => (
-                      <div key={k} className="grid grid-cols-2 sm:grid-cols-[1fr_110px_110px_40px] gap-2">
+                      <div key={k} className="grid grid-cols-2 xl:grid-cols-[1fr_110px_110px_40px] gap-2">
                         <Input value={x.label} onChange={(e) => upd(i, { weights: c.weights.map((y, j) => (j === k ? { ...y, label: e.target.value } : y)) })} placeholder="250 g each" />
                         <Input type="number" value={x.price} onChange={(e) => upd(i, { weights: c.weights.map((y, j) => (j === k ? { ...y, price: num(e.target.value) } : y)) })} placeholder="Price ₹" />
                         <Input type="number" value={x.mrp} onChange={(e) => upd(i, { weights: c.weights.map((y, j) => (j === k ? { ...y, mrp: num(e.target.value) } : y)) })} placeholder="MRP ₹" />

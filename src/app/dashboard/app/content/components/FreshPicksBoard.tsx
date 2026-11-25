@@ -126,7 +126,7 @@ export function FreshPicksBoard() {
 
       <CardContent>
         {loading ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> : (
-          <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
+          <div className="grid w-full max-w-full gap-5 2xl:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
             <div>
               <div className="mb-2 text-xs font-bold text-muted-foreground">APP PREVIEW</div>
               <div className="overflow-hidden rounded-2xl p-4 text-center" style={{ background: 'radial-gradient(circle at 50% 0,#4a2412,#1d0d06)' }}>
@@ -198,7 +198,7 @@ export function FreshPicksBoard() {
                       <Button size="sm" variant="outline" className="text-red-700" disabled={items.length <= 1} onClick={() => { if (confirm(`Delete "${c.name || 'this product'}"?`)) { setItems((p) => p.filter((_, k) => k !== open)); setOpen(0) } }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
+                  <div className="grid gap-3 xl:grid-cols-[150px_minmax(0,1fr)]">
                     <div>
                       <ImageUpload value={isAsset(c.image) ? '' : c.image} onChange={(url) => upd(open, { image: url })} folder="fresh_picks" maxSizeMB={3} />
                       {isAsset(c.image) && preview(c.image) && <div className="mt-1 flex items-center gap-2"><img src={preview(c.image)} alt="" className="h-12 w-12 object-contain" /><span className="text-[10px] text-muted-foreground">Built-in image</span></div>}
@@ -215,7 +215,7 @@ export function FreshPicksBoard() {
                   <div className="space-y-2 rounded-lg border p-3">
                     <div className="text-xs font-bold">Sizes & prices</div>
                     {c.variants.map((v, k) => (
-                      <div key={k} className="grid grid-cols-2 sm:grid-cols-[1fr_95px_95px_90px_40px] items-center gap-2">
+                      <div key={k} className="grid grid-cols-2 xl:grid-cols-[1fr_95px_95px_90px_40px] items-center gap-2">
                         <Input value={v.label} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, label: e.target.value } : y)) })} placeholder="250g" />
                         <Input type="number" value={v.price} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, price: num(e.target.value) } : y)) })} placeholder="Price ₹" />
                         <Input type="number" value={v.mrp} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, mrp: num(e.target.value) } : y)) })} placeholder="MRP ₹" />

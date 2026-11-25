@@ -124,7 +124,7 @@ export function ComboManager() {
       </CardHeader>
       <CardContent>
         {loading ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> : (
-          <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
+          <div className="grid w-full max-w-full gap-5 2xl:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
             {/* PREVIEW */}
             <div>
               <div className="mb-2 text-xs font-bold text-muted-foreground">APP PREVIEW — tap products to fill the box</div>
@@ -253,7 +253,7 @@ export function ComboManager() {
                           <Button size="sm" variant="outline" className="text-red-700" onClick={() => { if (confirm(`Delete "${c.name || 'this product'}"?`)) { setItems((p) => p.filter((_, k) => k !== open)); setPicked((p) => p.filter((id) => id !== c.id)); setOpen(0) } }}><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </div>
-                      <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
+                      <div className="grid gap-3 xl:grid-cols-[150px_minmax(0,1fr)]">
                         <div>
                           <ImageUpload value={isAsset(c.image) ? '' : c.image} onChange={(url) => upd(open, { image: url })} folder="combo_box" maxSizeMB={3} />
                           {isAsset(c.image) && preview(c.image) && <div className="mt-1 flex items-center gap-2"><img src={preview(c.image)} alt="" className="h-12 w-12 object-contain" /><span className="text-[10px] text-muted-foreground">Built-in image</span></div>}
@@ -270,7 +270,7 @@ export function ComboManager() {
                         {settings.sizes.map((s) => {
                           const pr = c.prices[s]
                           return (
-                            <div key={s} className="grid grid-cols-2 items-center gap-2 sm:grid-cols-[70px_100px_100px_90px_40px]">
+                            <div key={s} className="grid grid-cols-2 items-center gap-2 xl:grid-cols-[70px_100px_100px_90px_40px]">
                               <div className="text-sm font-semibold">{s}</div>
                               <Input type="number" placeholder="Price ₹" value={pr?.price ?? ''} onChange={(e) => setPrice(open, s, { price: num(e.target.value) })} />
                               <Input type="number" placeholder="MRP ₹" value={pr?.mrp ?? ''} onChange={(e) => setPrice(open, s, { mrp: num(e.target.value) })} />
