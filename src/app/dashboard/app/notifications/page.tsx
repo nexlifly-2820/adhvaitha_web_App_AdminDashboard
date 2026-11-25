@@ -203,14 +203,18 @@ export default function NotificationsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Automatic notifications</CardTitle>
-              <CardDescription>These go out on their own — you don’t need to send them. Each shows the Ambhujakshi logo and the customer’s order number.</CardDescription>
+              <CardDescription>These go out on their own — you don’t need to send them. 35 different messages in 3 styles, only between 9 AM and 9 PM. Each shows the Ambhujakshi logo and the customer’s order number.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
                 ['Order placed 🎉', 'Right after a customer pays online or places a Cash on Delivery order.'],
                 ['Order accepted 🍲 · Packed 📦 · On the way 🚚 · Out for delivery 🛵 · Delivered 💛 · Cancelled', 'When you change the order status in Orders.'],
-                ['Your cart misses you 🛒', '2 hours after a customer adds items to the cart but does not order.'],
-                ['Still thinking about …?', '24 hours later, if the cart is still not ordered. Both cart reminders stop as soon as they order or empty the cart.'],
+                ['Left in cart — 4 reminders (14 messages)', '1 hour, 4 hours, 1 day and 3 days after adding to cart. Some show the product photo, some list every item. Stop as soon as they order.'],
+                ['Removed from cart (3 messages)', '3 hours after a customer removes items and leaves the cart empty.'],
+                ['Viewed but not added (3 messages)', '6 hours after opening a product without adding it.'],
+                ['Wishlist (3 messages)', '2 days after saving a product to the wishlist.'],
+                ['After an order (5 messages)', 'Day 5: “How was your order? ⭐” · Day 21: “Running low? Reorder in one tap”.'],
+                ['We miss you (8 messages)', 'If the app is not opened for 3, 7 or 14 days. Opening the app pushes these back.'],
               ].map(([t, d]) => (
                 <div key={t} className="rounded-lg border p-3">
                   <div className="text-sm font-semibold">{t}</div>
