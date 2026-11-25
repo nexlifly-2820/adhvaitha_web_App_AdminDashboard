@@ -28,6 +28,7 @@ import { PickleParadiseManager } from './components/PickleParadiseManager'
 import { LoveChartManager } from './components/LoveChartManager'
 import { BestSellersBoard } from './components/BestSellersBoard'
 import { StorySnacksManager } from './components/StorySnacksManager'
+import { FreshPicksBoard } from './components/FreshPicksBoard'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
@@ -5243,22 +5244,7 @@ export default function ContentManager() {
 
           {/* FRESH PICKS (AMMA'S KITCHEN) SECTION */}
           <TabsContent value="fresh_picks" className="mt-0 space-y-6">
-            <FreshPicksManager
-              config={freshPicks}
-              onChange={setFreshPicks}
-              onSave={async () => {
-                await handleSaveTab('fresh_picks', {
-                  settings: freshPicks.settings,
-                  products: freshPicks.products
-                });
-              }}
-              isSaving={isSaving}
-              onResetDefaults={() => {
-                if (!confirm("Reset Fresh Picks to authentic defaults?")) return;
-                setFreshPicks(DEFAULT_FRESH_PICKS);
-                toast.success('Restored Authentic Fresh Picks Defaults!');
-              }}
-            />
+            <FreshPicksBoard />
           </TabsContent>
 
           {/* LETTERS FROM HOME (CUSTOMER REVIEWS) SECTION */}
