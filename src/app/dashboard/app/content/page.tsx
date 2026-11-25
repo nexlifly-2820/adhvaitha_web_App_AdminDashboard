@@ -26,6 +26,7 @@ import { ArtOfPairingManager } from './components/ArtOfPairingManager'
 import { SpecialsManager } from './components/SpecialsManager'
 import { PickleParadiseManager } from './components/PickleParadiseManager'
 import { LoveChartManager } from './components/LoveChartManager'
+import { BestSellersBoard } from './components/BestSellersBoard'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
@@ -1621,10 +1622,6 @@ export default function ContentManager() {
         }),
         postConfig('snacks_with_story', {
           list: DEFAULT_STORY_SNACKS
-        }),
-        postConfig('best_sellers', {
-          settings: DEFAULT_BEST_SELLERS.settings,
-          categories: DEFAULT_BEST_SELLERS.categories
         }),
         postConfig('sweets', {
           settings: DEFAULT_SWEETS.settings,
@@ -5817,22 +5814,7 @@ export default function ContentManager() {
 
           {/* BEST SELLERS CHAMPIONS PODIUM */}
           <TabsContent value="best_sellers" className="mt-0 space-y-6">
-            <BestSellersManager
-              config={bestSellers}
-              onChange={setBestSellers}
-              onSave={async () => {
-                await handleSaveTab('best_sellers', {
-                  settings: bestSellers.settings,
-                  categories: bestSellers.categories
-                });
-              }}
-              isSaving={isSaving}
-              onResetDefaults={() => {
-                if (!confirm("Reset Best Sellers Champions to authentic defaults (8 Top Champion Products)?")) return;
-                setBestSellers(DEFAULT_BEST_SELLERS);
-                toast.success('Restored 8 Authentic Best Sellers Champions!');
-              }}
-            />
+            <BestSellersBoard />
           </TabsContent>
 
           {/* MITHAI THALI SWEETS SECTION */}
