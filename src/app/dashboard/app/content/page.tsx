@@ -31,6 +31,7 @@ import { StorySnacksManager } from './components/StorySnacksManager'
 import { FreshPicksBoard } from './components/FreshPicksBoard'
 import { FestiveManager } from './components/FestiveManager'
 import { SweetsBoard } from './components/SweetsBoard'
+import { SpiceBoard } from './components/SpiceBoard'
 import { ComboManager } from './components/ComboManager'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
@@ -1624,10 +1625,6 @@ export default function ContentManager() {
         }),
         postConfig('snacks_with_story', {
           list: DEFAULT_STORY_SNACKS
-        }),
-        postConfig('spices_grinder', {
-          settings: DEFAULT_SPICE_GRINDER.settings,
-          products: DEFAULT_SPICE_GRINDER.products
         })
       ])
       toast.success('Demo data seeded successfully!')
@@ -4740,22 +4737,7 @@ export default function ContentManager() {
 
           {/* SPICE GRINDER SECTION */}
           <TabsContent value="spice_grinder" className="mt-0 space-y-6">
-            <SpiceGrinderManager
-              config={spiceGrinder}
-              onChange={setSpiceGrinder}
-              onSave={async () => {
-                await handleSaveTab('spices_grinder', {
-                  settings: spiceGrinder.settings,
-                  products: spiceGrinder.products
-                });
-              }}
-              isSaving={isSaving}
-              onResetDefaults={() => {
-                if (!confirm("Reset Spice Grinder section to authentic defaults?")) return;
-                setSpiceGrinder(DEFAULT_SPICE_GRINDER);
-                toast.success('Restored Authentic Spice Grinder Defaults!');
-              }}
-            />
+            <SpiceBoard />
           </TabsContent>
 
           {/* FRESH PICKS (AMMA'S KITCHEN) SECTION */}
