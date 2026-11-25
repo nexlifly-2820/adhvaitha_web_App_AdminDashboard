@@ -61,7 +61,7 @@ export function ComboManager() {
 
   const upd = (i: number, patch: Partial<CProduct>) => setItems((p) => p.map((x, k) => (k === i ? { ...x, ...patch } : x)))
   const setPrice = (i: number, size: string, patch: Partial<CProduct['prices'][string]>) =>
-    setItems((p) => p.map((x, k) => (k === i ? { ...x, prices: { ...x.prices, [size]: { variantId: size, price: 0, mrp: 0, inStock: true, ...x.prices[size], ...patch } } } : x)))
+    setItems((p) => p.map((x, k) => (k === i ? { ...x, prices: { ...x.prices, [size]: { ...{ variantId: size, price: 0, mrp: 0, inStock: true }, ...x.prices[size], ...patch } } } : x)))
   const removePrice = (i: number, size: string) => setItems((p) => p.map((x, k) => { if (k !== i) return x; const n = { ...x.prices }; delete n[size]; return { ...x, prices: n } }))
   const move = (i: number, d: -1 | 1) => { const j = i + d; if (j < 0 || j >= items.length) return; const n = [...items]; [n[i], n[j]] = [n[j], n[i]]; setItems(n); setOpen(j) }
 
