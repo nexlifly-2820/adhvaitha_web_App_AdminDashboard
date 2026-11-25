@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ImageUpload } from '@/components/ImageUpload';
+import { TRUST_PREVIEWS, LEGACY_SHELF_IMAGES } from './trustPreviews';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -102,27 +104,27 @@ export const DEFAULT_TRUST: TrustConfig = {
   shelf: [
     {
       label: 'Pickles',
-      image: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg',
+      image: 'assets/images/pickle_bellam_avakaya.png',
       category: 'Pickles'
     },
     {
       label: 'Powders',
-      image: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg',
+      image: 'assets/images/loved_idli_karam_podi.png',
       category: 'Powders'
     },
     {
       label: 'Sweets',
-      image: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg',
+      image: 'assets/images/sweet_sunnunda_laddu.png',
       category: 'Sweets'
     },
     {
       label: 'Snacks',
-      image: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg',
+      image: 'assets/images/snack_kara_murukku.png',
       category: 'Snacks'
     },
     {
       label: 'Gifts',
-      image: 'assets/images/good_food_text.png',
+      image: 'assets/images/fest_dryfruit_laddu.png',
       category: 'Gifts'
     }
   ]
@@ -149,13 +151,18 @@ const PRESET_GRADIENTS = [
 ];
 
 const SUGGESTED_SHELF_IMAGES = [
-  { label: 'Pickles Jar', path: 'assets/images/bellam_avakaya_sweet_jaggery_mango_pickle.jpg' },
-  { label: 'Idli Podi Pouch', path: 'assets/images/special_idli_karam_podi_gun_powder_spice_for_idlis.jpg' },
-  { label: 'Sunnunda Laddu', path: 'assets/images/sunnunda_laddu_roasted_urad_dal_laddu.jpg' },
-  { label: 'Karam Murukku', path: 'assets/images/karam_janthukalu_murukku_strings_snack.jpg' },
-  { label: 'Good Food Gifting', path: 'assets/images/good_food_text.png' },
-  { label: 'Banner Heritage', path: 'assets/images/banner_1.jpg' }
+  { label: 'Bellam Avakaya', path: 'assets/images/pickle_bellam_avakaya.png' },
+  { label: 'Gongura Pickle', path: 'assets/images/pickle_gongura.png' },
+  { label: 'Kandi Podi', path: 'assets/images/special_kandi_podi.png' },
+  { label: 'Idli Karam Podi', path: 'assets/images/loved_idli_karam_podi.png' },
+  { label: 'Sunnunda Laddu', path: 'assets/images/sweet_sunnunda_laddu.png' },
+  { label: 'Kara Murukku', path: 'assets/images/snack_kara_murukku.png' },
+  { label: 'Kaju Katli', path: 'assets/images/sweet_kaju_katli.png' },
+  { label: 'Dry Fruit Laddu', path: 'assets/images/fest_dryfruit_laddu.png' },
 ];
+
+const fixShelfImage = (p: string) => LEGACY_SHELF_IMAGES[p] || p;
+const shelfSrc = (p: string) => TRUST_PREVIEWS[p] || (p.startsWith('assets/') ? '/' + p : p);
 
 const STANDARD_CATEGORIES = ['Pickles', 'Powders', 'Sweets', 'Snacks', 'Gifts', 'Combos'];
 
@@ -191,7 +198,7 @@ export function TrustPromiseManager({
       ? config.tags
       : DEFAULT_TRUST.tags,
     shelf: Array.isArray(config?.shelf) && config.shelf.length > 0
-      ? config.shelf
+      ? config.shelf.map((x) => ({ ...x, image: fixShelfImage(x.image) }))
       : DEFAULT_TRUST.shelf
   };
 
@@ -221,7 +228,7 @@ export function TrustPromiseManager({
     }
     const newItem: ShelfCategoryItem = {
       label: 'New Category',
-      image: 'assets/images/banner_1.jpg',
+      image: 'assets/images/pickle_gongura.png',
       category: 'Pickles'
     };
     updateRoot('shelf', [...safeConfig.shelf, newItem]);
@@ -320,9 +327,9 @@ export function TrustPromiseManager({
       </div>
 
       {/* Main Grid: Left Controls (Tabs) & Right Mobile Phone Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 2xl:grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: Controls */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="2xl:col-span-7 space-y-6">
           {/* Sub Navigation */}
           <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
             <button
@@ -655,7 +662,7 @@ export function TrustPromiseManager({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
                             Shelf Label
@@ -683,30 +690,32 @@ export function TrustPromiseManager({
                           </select>
                         </div>
 
-                        <div>
-                          <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
-                            Image Path / URL
-                          </label>
-                          <Input
-                            value={item.image}
-                            onChange={e => updateShelfItem(idx, { image: e.target.value })}
-                            placeholder="assets/images/..."
-                            className="h-8 text-xs mt-1"
-                          />
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-3 items-start">
+                        <div className="w-20 h-20 shrink-0 rounded-lg bg-gradient-to-br from-amber-200 to-orange-400 flex items-center justify-center overflow-hidden">
+                          {item.image ? <img src={shelfSrc(item.image)} alt={item.label} className="max-w-full max-h-full object-contain" /> : <span className="text-[10px] text-white">No image</span>}
+                        </div>
+                        <div className="flex-1 min-w-0 w-full">
+                          <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Upload your own (transparent PNG works best)</label>
+                          <div className="mt-1">
+                            <ImageUpload value={item.image.startsWith('assets/') ? '' : item.image} onChange={(url: string) => updateShelfItem(idx, { image: url })} folder="home_trust" maxSizeMB={2} />
+                          </div>
                         </div>
                       </div>
 
                       {/* Quick Image Suggestions */}
                       <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="text-[10px] text-slate-500 mr-1">Image Presets:</span>
+                        <span className="text-[10px] text-slate-500 mr-1 w-full sm:w-auto">Or pick a built-in bowl:</span>
                         {SUGGESTED_SHELF_IMAGES.map((img, imgIdx) => (
                           <button
                             key={imgIdx}
                             type="button"
                             onClick={() => updateShelfItem(idx, { image: img.path })}
-                            className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-orange-500 border border-transparent transition-colors"
+                            title={img.label}
+                            className={`w-11 h-11 p-0.5 rounded-lg bg-orange-50 dark:bg-slate-800 border-2 transition-colors ${item.image === img.path ? 'border-orange-500' : 'border-transparent hover:border-orange-300'}`}
                           >
-                            {img.label}
+                            <img src={shelfSrc(img.path)} alt={img.label} className="w-full h-full object-contain" />
                           </button>
                         ))}
                       </div>
@@ -857,7 +866,7 @@ export function TrustPromiseManager({
         </div>
 
         {/* RIGHT COLUMN: INTERACTIVE MOBILE PHONE PREVIEW (Aspect Ratio 362/420) */}
-        <div className="lg:col-span-5 sticky top-6">
+        <div className="2xl:col-span-5 2xl:sticky 2xl:top-6">
           <div className="mx-auto w-full max-w-[340px] bg-slate-950 p-3 rounded-[40px] shadow-2xl border-4 border-slate-800 ring-1 ring-slate-700/50">
             {/* Phone Notch */}
             <div className="flex justify-center mb-2">
@@ -1060,7 +1069,7 @@ export function TrustPromiseManager({
                     >
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-amber-100 border-2 border-amber-300 shadow-xl group-hover:scale-110 transition-transform">
                         <img
-                          src={s.image.startsWith('assets/') ? `/${s.image}` : s.image}
+                          src={shelfSrc(s.image)}
                           alt={s.label}
                           className="w-full h-full object-cover"
                           onError={e => {
