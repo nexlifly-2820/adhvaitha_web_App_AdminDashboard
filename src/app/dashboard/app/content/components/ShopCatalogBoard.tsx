@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ImageUpload } from '@/components/ImageUpload'
 import { toast } from 'sonner'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Loader2, Plus, RotateCcw, Save, Store, Trash2 } from 'lucide-react'
-import { BOWL_FIX, DEFAULT_SH_CATEGORIES, DEFAULT_SH_SETTINGS, SHOP_PREVIEWS, type ShCategory, type ShProduct, type ShSettings } from './shopCatalogDefaults'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Loader2, Plus, RotateCcw, Save, Store, Trash2, X } from 'lucide-react'
+import { BOWL_FIX, DEFAULT_SH_CATEGORIES, DEFAULT_SH_SETTINGS, INGREDIENT_PALETTE, SHOP_PREVIEWS, type ShCategory, type ShProduct, type ShSettings } from './shopCatalogDefaults'
 
 const DOC_ID = 'shop_catalog'
 const BRAND = '#9E1424'
@@ -27,7 +27,18 @@ function normProducts(raw: any): ShProduct[] {
     spice: Math.min(5, Math.max(0, Math.round(num(m?.spice)))), rating: Math.min(5, Math.max(0, num(m?.rating))),
     color1: hex(m?.color1, '#8A1A10'), color2: hex(m?.color2, '#2A0806'), enabled: m?.enabled !== false,
     variants: Array.isArray(m?.variants) ? m.variants.map((v: any, k: number) => ({ id: String(v?.id || `v${k + 1}`), label: String(v?.label ?? ''), price: num(v?.price), mrp: num(v?.mrp), inStock: v?.inStock !== false })) : [],
+    ...pageFields(m),
   }))
+}
+// product-page details; missing ones are filled from the default catalogue entry of the same product
+function pageFields(m: any) {
+  const def = DEFAULT_SH_CATEGORIES.flatMap((c) => c.products).find((x) => x.id === String(m?.id ?? '') || x.name.toLowerCase() === String(m?.name ?? '').toLowerCase())
+  const str = (k: 'process' | 'processText' | 'origin' | 'shelfLife' | 'storage' | 'highlight') => (typeof m?.[k] === 'string' ? m[k] : def?.[k] ?? '')
+  return {
+    ingredients: Array.isArray(m?.ingredients) ? m.ingredients.map((g: any) => ({ name: String(g?.name ?? ''), image: String(g?.image ?? '') })) : def?.ingredients ?? [],
+    process: str('process'), processText: str('processText'), origin: str('origin'), shelfLife: str('shelfLife'), storage: str('storage'), highlight: str('highlight'),
+    features: Array.isArray(m?.features) ? m.features.map(String).slice(0, 4) : def?.features ?? [],
+  }
 }
 function normCats(raw: any): ShCategory[] {
   if (!Array.isArray(raw)) return []
@@ -39,7 +50,7 @@ function normCats(raw: any): ShCategory[] {
   }))
 }
 
-const blankProduct = (): ShProduct => ({ id: `p${Date.now()}`, name: '', image: '', description: '', tag: '', cureNote: '', spice: 2, rating: 4.8, color1: '#8A1A10', color2: '#2A0806', enabled: true, variants: [{ id: 'v1', label: '250g', price: 0, mrp: 0, inStock: true }] })
+const blankProduct = (): ShProduct => ({ id: `p${Date.now()}`, name: '', image: '', description: '', tag: '', cureNote: '', spice: 2, rating: 4.8, color1: '#8A1A10', color2: '#2A0806', enabled: true, variants: [{ id: 'v1', label: '250g', price: 0, mrp: 0, inStock: true }], ingredients: [], process: 'Handmade', processText: 'Made in small batches with care.', origin: 'Andhra', shelfLife: '6 months', storage: 'Store in a cool, dry place.', highlight: '', features: ['No preservatives', 'Traditional recipe', '100% natural'] })
 
 export function ShopCatalogBoard() {
   const [cats, setCats] = useState<ShCategory[]>(DEFAULT_SH_CATEGORIES)
@@ -48,6 +59,7 @@ export function ShopCatalogBoard() {
   const [pi, setPi] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [ingPick, setIngPick] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -99,7 +111,7 @@ export function ShopCatalogBoard() {
     if (!cats.some((c) => c.enabled && c.products.some((x) => x.enabled))) return toast.error('Keep at least one category with products switched on')
     setSaving(true)
     try {
-      const clean = cats.map((c) => ({ ...c, slug: c.slug || slug(c.name), name: c.name.trim(), products: c.products.map((x) => ({ ...x, id: x.id || slug(x.name), name: x.name.trim() })) }))
+      const clean = cats.map((c) => ({ ...c, slug: c.slug || slug(c.name), name: c.name.trim(), products: c.products.map((x) => ({ ...x, id: x.id || slug(x.name), name: x.name.trim(), features: x.features.map((f) => f.trim()).filter(Boolean), ingredients: x.ingredients.filter((g) => g.name.trim()) })) }))
       const res = await fetch('/dashboard/app/api/app-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -195,13 +207,27 @@ export function ShopCatalogBoard() {
                 <div><label className="text-xs font-semibold">Hint</label><Input value={settings.hint} onChange={(e) => setSettings({ ...settings, hint: e.target.value })} /></div>
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={settings.products} onChange={(e) => setSettings({ ...settings, products: e.target.checked })} /> Show the product strip under the turntable</label>
               </div>
+              <div className="mt-4 space-y-2 rounded-xl border p-3">
+                <div className="text-sm font-bold">Master Artisan (shown on every product page)</div>
+                <div className="grid gap-3 sm:grid-cols-[110px_minmax(0,1fr)]">
+                  <div>
+                    <div className="mx-auto mb-1 h-20 w-20 overflow-hidden rounded-full border-2 border-amber-300 bg-amber-50">{preview(settings.artisanPhoto) && <img src={preview(settings.artisanPhoto)} alt="" className="h-full w-full object-cover" />}</div>
+                    <ImageUpload value={isAsset(settings.artisanPhoto) ? '' : settings.artisanPhoto} onChange={(url: string) => setSettings({ ...settings, artisanPhoto: url || DEFAULT_SH_SETTINGS.artisanPhoto })} folder="shop" maxSizeMB={2} />
+                  </div>
+                  <div className="space-y-2">
+                    <div><label className="text-xs font-semibold">Name</label><Input value={settings.artisanName} onChange={(e) => setSettings({ ...settings, artisanName: e.target.value })} /></div>
+                    <div><label className="text-xs font-semibold">Line under name</label><Input value={settings.artisanSince} onChange={(e) => setSettings({ ...settings, artisanSince: e.target.value })} /></div>
+                    <div><label className="text-xs font-semibold">Quote</label><Input value={settings.artisanQuote} onChange={(e) => setSettings({ ...settings, artisanQuote: e.target.value })} /></div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* EDITOR */}
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
                 {cats.map((c, k) => (
-                  <button key={c.id + k} type="button" onClick={() => { setCi(k); setPi(0) }} className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm ${k === ci ? 'border-red-800 bg-red-50 font-semibold dark:bg-red-950/40' : ''} ${c.enabled ? '' : 'opacity-50'}`}>
+                  <button key={c.id + k} type="button" onClick={() => { setCi(k); setPi(0); setIngPick(false) }} className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm ${k === ci ? 'border-red-800 bg-red-50 font-semibold dark:bg-red-950/40' : ''} ${c.enabled ? '' : 'opacity-50'}`}>
                     {preview(c.image) && <img src={preview(c.image)} alt="" className="h-5 w-5 object-contain" />}{c.name || 'New'} <span className="text-xs text-muted-foreground">({c.products.length})</span>
                   </button>
                 ))}
@@ -245,7 +271,7 @@ export function ShopCatalogBoard() {
                     <div className="text-xs font-bold">Products in {cat.name} ({cat.products.length})</div>
                     <div className="grid gap-1 sm:grid-cols-2">
                       {cat.products.map((x, j) => (
-                        <div key={x.id + j} onClick={() => setPi(j)} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5 text-sm ${pi === j ? 'border-red-800 bg-red-50 dark:bg-red-950/30' : ''} ${x.enabled ? '' : 'opacity-50'}`}>
+                        <div key={x.id + j} onClick={() => { setPi(j); setIngPick(false) }} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5 text-sm ${pi === j ? 'border-red-800 bg-red-50 dark:bg-red-950/30' : ''} ${x.enabled ? '' : 'opacity-50'}`}>
                           {preview(x.image) && <img src={preview(x.image)} alt="" className="h-7 w-7 object-contain" />}
                           <span className="flex-1 truncate font-medium">{j + 1}. {x.name || 'Untitled'}</span>
                           {!x.enabled && <span className="text-[10px]">hidden</span>}
@@ -300,6 +326,50 @@ export function ShopCatalogBoard() {
                       </div>
                     </div>
                   </div>
+                  <div className="space-y-3 rounded-lg border p-3">
+                    <div className="text-xs font-bold">Product page details</div>
+                    <div>
+                      <div className="mb-1 text-[11px] font-semibold text-muted-foreground">Ingredients ({prod.ingredients.length})</div>
+                      <div className="flex flex-wrap gap-2">
+                        {prod.ingredients.map((g, k) => (
+                          <div key={k} className="relative flex w-[76px] flex-col items-center gap-1 rounded-lg border p-1.5">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50">{preview(g.image) ? <img src={preview(g.image)} alt="" className="h-9 w-9 object-contain" /> : <span className="text-lg">🌿</span>}</div>
+                            <input value={g.name} onChange={(e) => updProd({ ingredients: prod.ingredients.map((x, j) => (j === k ? { ...x, name: e.target.value } : x)) })} className="w-full rounded border bg-background px-1 text-center text-[10px]" />
+                            <button type="button" onClick={() => updProd({ ingredients: prod.ingredients.filter((_, j) => j !== k) })} className="absolute -right-1.5 -top-1.5 rounded-full bg-red-600 p-0.5 text-white"><X className="h-3 w-3" /></button>
+                          </div>
+                        ))}
+                        {prod.ingredients.length < 9 && <Button size="sm" variant="outline" className="h-auto min-h-[70px] w-[76px] flex-col" onClick={() => setIngPick(!ingPick)}><Plus className="h-4 w-4" /><span className="text-[10px]">Add</span></Button>}
+                      </div>
+                      {ingPick && (
+                        <div className="mt-2 rounded-lg border bg-stone-50 p-2 dark:bg-stone-900">
+                          <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">Pick an ingredient <button type="button" onClick={() => setIngPick(false)}><X className="h-3.5 w-3.5" /></button></div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {INGREDIENT_PALETTE.map((g) => (
+                              <button key={g.image + g.name} type="button" title={g.name} onClick={() => { if (!prod.ingredients.some((x) => x.name === g.name)) updProd({ ingredients: [...prod.ingredients, g] }); setIngPick(false) }}
+                                className="flex w-[64px] flex-col items-center rounded-md border bg-white p-1 text-[9px] text-stone-700 hover:border-red-700">
+                                {preview(g.image) ? <img src={preview(g.image)} alt="" className="h-8 w-8 object-contain" /> : <span className="text-lg">🌿</span>}<span className="truncate w-full text-center">{g.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="sm:col-span-2"><label className="text-xs font-semibold">Highlight (“made with …”)</label><Input value={prod.highlight} onChange={(e) => updProd({ highlight: e.target.value })} placeholder="cold-pressed sesame oil & Guntur chilli" /></div>
+                      <div><label className="text-xs font-semibold">Origin</label><Input value={prod.origin} onChange={(e) => updProd({ origin: e.target.value })} /></div>
+                      <div><label className="text-xs font-semibold">Process</label><Input value={prod.process} onChange={(e) => updProd({ process: e.target.value })} placeholder="Sun-cured" /></div>
+                      <div className="sm:col-span-2"><label className="text-xs font-semibold">How it is made</label><Input value={prod.processText} onChange={(e) => updProd({ processText: e.target.value })} /></div>
+                      <div><label className="text-xs font-semibold">Shelf life</label><Input value={prod.shelfLife} onChange={(e) => updProd({ shelfLife: e.target.value })} placeholder="12 months" /></div>
+                      <div><label className="text-xs font-semibold">Storage</label><Input value={prod.storage} onChange={(e) => updProd({ storage: e.target.value })} /></div>
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-semibold">Feature badges (up to 4)</label>
+                        <div className="mt-1 grid gap-2 sm:grid-cols-2">
+                          {[0, 1, 2, 3].map((k) => <Input key={k} value={prod.features[k] || ''} onChange={(e) => { const f = [0, 1, 2, 3].map((j) => (j === k ? e.target.value : prod.features[j] || '')); updProd({ features: f.filter((x, j) => x.trim() || j < f.length) .slice(0, 4) }) }} placeholder={k === 0 ? 'No preservatives' : ''} />)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-2 rounded-lg border p-3">
                     <div className="text-xs font-bold">Sizes & prices</div>
                     {prod.variants.map((v, k) => (
