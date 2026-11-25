@@ -398,8 +398,8 @@ export default function ProductsPage() {
 
   return (
     <div className="flex-1 space-y-6 p-2 sm:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Products</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3 space-y-2">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Products</h2>
         <div className="flex items-center space-x-2">
           <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
             <Plus className="mr-2 h-4 w-4" /> Add Product
@@ -437,7 +437,7 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border border-slate-100 dark:border-slate-800">
+          <div className="rounded-md border border-slate-100 dark:border-slate-800 overflow-x-auto">
             <Table>
               <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50">
                 <TableRow>
@@ -552,9 +552,9 @@ export default function ProductsPage() {
               </Button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-5 mb-6">
+                <TabsList className="grid w-full h-auto grid-cols-2 sm:grid-cols-5 gap-1 mb-6">
                   <TabsTrigger value="basic">Basic Info</TabsTrigger>
                   <TabsTrigger value="inventory">Pricing</TabsTrigger>
                   <TabsTrigger value="details">Behind the Jar</TabsTrigger>

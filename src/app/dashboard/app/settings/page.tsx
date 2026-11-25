@@ -124,9 +124,9 @@ export default function SystemSettingsPage() {
         </TabsList>
 
         <TabsContent value="global" className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
                 <Settings className="h-6 w-6 text-slate-600 dark:text-slate-400" />
                 Global App Control
               </h2>

@@ -652,7 +652,7 @@ function OrderDetail({ order, onUpdateStatus, onUpdateHeritage }: { order: Order
 
       {showRejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-xl w-[400px] shadow-xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white p-6 rounded-xl w-[400px] max-w-[92vw] shadow-xl animate-in zoom-in-95 duration-200">
             <h3 className="text-lg font-bold mb-4">Reject Order</h3>
             <textarea
               value={rejectReason}
@@ -978,7 +978,7 @@ function NewOrderToast({ order, onAccept, onReject, onClose }: any) {
 
   return (
     <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
-      <div className="bg-white rounded-xl shadow-2xl border border-[#2563eb] p-4 w-[360px] overflow-hidden relative">
+      <div className="bg-white rounded-xl shadow-2xl border border-[#2563eb] p-4 w-[360px] max-w-[92vw] overflow-hidden relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-[#2563eb] animate-[shrink_8s_linear]"></div>
 
         <div className="flex justify-between items-start mb-3">

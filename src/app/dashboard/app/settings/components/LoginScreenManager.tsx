@@ -615,7 +615,7 @@ export function LoginScreenManager() {
       {/* TAB 4: LIVE MOBILE APP PREVIEW */}
       {activeTab === 'preview' && (
         <div className="flex justify-center p-6 bg-slate-950 rounded-2xl border border-slate-800">
-          <div className="w-[320px] h-[640px] rounded-[40px] border-4 border-stone-800 bg-stone-900 shadow-2xl overflow-hidden relative flex flex-col">
+          <div className="w-[320px] max-w-full h-[640px] rounded-[40px] border-4 border-stone-800 bg-stone-900 shadow-2xl overflow-hidden relative flex flex-col">
             {/* PHONE NOTCH */}
             <div className="absolute top-2 inset-x-0 flex justify-center z-30">
               <div className="w-24 h-4 bg-black rounded-full" />

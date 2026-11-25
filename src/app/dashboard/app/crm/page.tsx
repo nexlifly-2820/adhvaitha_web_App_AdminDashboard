@@ -124,7 +124,7 @@ export default function CRMPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6 overflow-hidden">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Customer CRM</h1>
           <p className="text-sm text-slate-500">Manage user accounts and support inquiries.</p>
@@ -132,7 +132,7 @@ export default function CRMPage() {
       </div>
       
       <Tabs defaultValue="users" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent mb-4 space-x-6">
+        <TabsList className="w-full justify-start overflow-x-auto border-b rounded-none h-auto p-0 bg-transparent mb-4 space-x-6">
           <TabsTrigger value="users" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-600 data-[state=active]:shadow-none data-[state=active]:bg-transparent px-2 py-3">Users Database</TabsTrigger>
           <TabsTrigger value="inquiries" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-600 data-[state=active]:shadow-none data-[state=active]:bg-transparent px-2 py-3 flex items-center gap-2">
             Inquiries
@@ -162,7 +162,7 @@ export default function CRMPage() {
               ) : filteredUsers.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">No users found.</div>
               ) : (
-                <div className="min-w-[800px]">
+                <div className="min-w-[800px] overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50 sticky top-0 z-10">
                       <tr>

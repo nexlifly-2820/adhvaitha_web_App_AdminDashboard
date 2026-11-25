@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import AppSidebar from '@/app/dashboard/app/components/AppSidebar'
 import WebSidebar from '@/app/dashboard/website/components/WebSidebar'
-import { Bell, Search, User, Globe, Smartphone } from 'lucide-react'
+import { Bell, Search, User, Globe, Smartphone, Menu, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
@@ -12,11 +12,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Avoid hydration mismatch by only rendering after mount
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // close the phone menu whenever the page changes
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
 
   if (!mounted) return null
 
@@ -30,6 +36,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.push('/dashboard/website')
     }
   }
+
+  const sidebarBody = (
+    <>
+      <div className="p-4 border-b">
+        <div className="relative">
+          {mode === 'app' ? (
+            <Smartphone className="absolute left-3 top-3 h-4 w-4 text-slate-500 pointer-events-none" />
+          ) : (
+            <Globe className="absolute left-3 top-3 h-4 w-4 text-slate-500 pointer-events-none" />
+          )}
+          <select
+            value={mode}
+            onChange={handleModeSwitch}
+            className="w-full rounded-md border border-slate-200 py-2 pl-9 pr-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-slate-800 dark:bg-slate-950 appearance-none bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <option value="app">App Management</option>
+            <option value="website">Website Management</option>
+          </select>
+          <div className="absolute right-3 top-3 text-slate-400 pointer-events-none">▼</div>
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto py-2">
+        {mode === 'app' ? <AppSidebar /> : <WebSidebar />}
+      </div>
+    </>
+  )
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans">
@@ -47,28 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <div className="p-4 border-b">
-          <div className="relative">
-            {mode === 'app' ? (
-              <Smartphone className="absolute left-3 top-3 h-4 w-4 text-slate-500 pointer-events-none" />
-            ) : (
-              <Globe className="absolute left-3 top-3 h-4 w-4 text-slate-500 pointer-events-none" />
-            )}
-            <select 
-              value={mode} 
-              onChange={handleModeSwitch}
-              className="w-full rounded-md border border-slate-200 py-2 pl-9 pr-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-slate-800 dark:bg-slate-950 appearance-none bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <option value="app">App Management</option>
-              <option value="website">Website Management</option>
-            </select>
-            <div className="absolute right-3 top-3 text-slate-400 pointer-events-none">▼</div>
-          </div>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto py-2">
-          {mode === 'app' ? <AppSidebar /> : <WebSidebar />}
-        </div>
+        {sidebarBody}
 
         <div className="p-4 border-t bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300">
@@ -81,12 +92,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
+      {/* Phone / small-tablet menu (the sidebar above is hidden below md) */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
+          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col bg-white shadow-xl dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b bg-gradient-to-r from-orange-50 to-amber-50 p-4 dark:from-slate-800 dark:to-slate-900">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-lg font-bold text-white shadow">A</div>
+                <div>
+                  <h1 className="text-base font-bold leading-tight">Adhvaitha</h1>
+                  <span className="text-xs font-medium text-slate-500">Control Panel</span>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            {sidebarBody}
+          </aside>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+      <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
         {/* Header */}
-        <header className="h-16 border-b bg-white/80 backdrop-blur-md dark:bg-slate-900/80 flex items-center justify-between px-6 shrink-0 z-10 sticky top-0">
-          <div className="flex items-center flex-1">
-            <div className="relative w-96 hidden sm:block">
+        <header className="h-16 border-b bg-white/80 backdrop-blur-md dark:bg-slate-900/80 flex items-center justify-between gap-2 px-3 sm:px-6 shrink-0 z-10 sticky top-0">
+          <div className="flex items-center flex-1 min-w-0 gap-2">
+            <Button variant="ghost" size="icon" className="md:hidden shrink-0 rounded-full" onClick={() => setMenuOpen(true)} aria-label="Open menu">
+              <Menu className="h-5 w-5" />
+            </Button>
+            <span className="md:hidden truncate font-bold">Adhvaitha</span>
+            <div className="relative w-full max-w-96 hidden sm:block">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input
                 type="search"
@@ -107,7 +144,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
         
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-4 md:p-8">
+        <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-8">
           <div className="mx-auto max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>

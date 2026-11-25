@@ -371,7 +371,7 @@ export function ProductDetailManager({ product, isOpen, onClose, onSaved }: Prop
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
       <div className="w-full max-w-5xl bg-stone-900 border border-stone-800 text-white rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
         {/* HEADER BAR */}
-        <div className="flex items-center justify-between p-5 border-b border-stone-800 bg-stone-950/60 shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5 border-b border-stone-800 bg-stone-950/60 shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
@@ -833,7 +833,7 @@ export function ProductDetailManager({ product, isOpen, onClose, onSaved }: Prop
                 {journey.map((step, idx) => (
                   <div
                     key={idx}
-                    className="p-3.5 rounded-xl bg-stone-950 border border-stone-800 grid grid-cols-12 gap-2 items-center"
+                    className="p-3.5 rounded-xl bg-stone-950 border border-stone-800 grid grid-cols-12 gap-2 items-center overflow-x-auto"
                   >
                     <div className="col-span-1">
                       <Input
@@ -956,7 +956,7 @@ export function ProductDetailManager({ product, isOpen, onClose, onSaved }: Prop
         </div>
 
         {/* FOOTER ACTIONS */}
-        <div className="flex items-center justify-between p-4 border-t border-stone-800 bg-stone-950/70 shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-t border-stone-800 bg-stone-950/70 shrink-0">
           <Button
             variant="outline"
             size="sm"
