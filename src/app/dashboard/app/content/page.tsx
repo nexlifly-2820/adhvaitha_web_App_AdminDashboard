@@ -31,6 +31,7 @@ import { StorySnacksManager } from './components/StorySnacksManager'
 import { FreshPicksBoard } from './components/FreshPicksBoard'
 import { FestiveManager } from './components/FestiveManager'
 import { SweetsBoard } from './components/SweetsBoard'
+import { ComboManager } from './components/ComboManager'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
@@ -1447,6 +1448,7 @@ export default function ContentManager() {
 
   const saveCurrentTab = () => {
     switch (activeTab) {
+      case 'combo_box':
       case 'home_offers':
       case 'home_categories':
         toast.info('Use the Save button inside the card below.');
@@ -3292,6 +3294,18 @@ export default function ContentManager() {
             <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded uppercase">Strip</span>
           </TabsTrigger>
 
+          {/* COMBO BOX (build your box) */}
+          <TabsTrigger
+            value="combo_box"
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-800" />
+              <span className="font-semibold text-xs text-left">Combo Box</span>
+            </span>
+            <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded uppercase">Build</span>
+          </TabsTrigger>
+
           {/* HOME OFFERS (colourful coupon cards) */}
           <TabsTrigger
             value="home_offers"
@@ -4794,6 +4808,10 @@ export default function ContentManager() {
           </TabsContent>
 
           {/* HOME OFFERS SECTION — saves itself */}
+          <TabsContent value="combo_box" className="mt-0 space-y-6">
+            <ComboManager />
+          </TabsContent>
+
           <TabsContent value="home_offers" className="mt-0 space-y-6">
             <HomeOffersManager />
           </TabsContent>
