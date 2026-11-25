@@ -1,190 +1,159 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { MessageSquare, Star, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { MessageSquare, Star, CheckCircle, XCircle, Clock, Trash2, RefreshCw, MapPin, Phone, ShieldCheck, Undo2 } from 'lucide-react'
 
-interface Review {
+interface Letter {
   id: string;
+  name: string;
+  city: string;
+  phone: string;
   productId: string;
-  userName: string;
-  rating: number;
-  comment: string;
+  productName: string;
+  stars: number;
+  text: string;
   status: 'pending' | 'approved' | 'rejected';
+  verified: boolean;
   createdAt: string;
 }
 
 export default function ReviewsManagement() {
-  const [reviews, setReviews] = useState<Review[]>([])
+  const [letters, setLetters] = useState<Letter[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [verifiedPick, setVerifiedPick] = useState<Record<string, boolean>>({})
 
-  useEffect(() => {
-    fetchReviews()
-  }, [])
+  useEffect(() => { load() }, [])
 
-  const fetchReviews = async () => {
+  const load = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch('/dashboard/app/api/reviews')
+      const res = await fetch('/dashboard/app/api/reviews', { cache: 'no-store' })
       const result = await res.json()
-      if (result.success && result.data) {
-        let fetchedReviews = result.data as Review[]
-        // Sort newest first
-        fetchedReviews.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-        setReviews(fetchedReviews)
-      } else {
-        toast.error('Failed to load reviews')
-      }
-    } catch (error: any) {
-      console.error('Error fetching reviews:', error)
-      toast.error('Failed to load reviews')
+      if (result.success && Array.isArray(result.data)) setLetters(result.data)
+      else toast.error('Failed to load letters')
+    } catch {
+      toast.error('Failed to load letters')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const approveReview = async (reviewId: string) => {
+  const act = async (l: Letter, body: Record<string, unknown>, ok: string) => {
+    setBusy(l.id)
     try {
       const res = await fetch('/dashboard/app/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewId, status: 'approved' })
+        body: JSON.stringify({ id: l.id, ...body }),
       })
-      if (res.ok) {
-        setReviews(reviews.map(r => r.id === reviewId ? { ...r, status: 'approved' } : r))
-        toast.success('Review approved!')
-      } else {
-        toast.error('Failed to approve review')
-      }
-    } catch (error) {
-      console.error('Error approving review:', error)
-      toast.error('Failed to approve review')
+      const r = await res.json().catch(() => ({}))
+      if (!res.ok || r.success === false) throw new Error(r.error || 'Failed')
+      if (body.action === 'delete') setLetters((xs) => xs.filter((x) => x.id !== l.id))
+      else setLetters((xs) => xs.map((x) => (x.id === l.id ? { ...x, status: body.status as Letter['status'], verified: typeof body.verified === 'boolean' ? body.verified : x.verified } : x)))
+      toast.success(ok)
+    } catch (e: any) {
+      toast.error(e?.message || 'Something went wrong')
+    } finally {
+      setBusy(null)
     }
   }
 
-  const rejectReview = async (reviewId: string) => {
-    try {
-      const res = await fetch('/dashboard/app/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewId, status: 'rejected' })
-      })
-      if (res.ok) {
-        setReviews(reviews.map(r => r.id === reviewId ? { ...r, status: 'rejected' } : r))
-        toast.success('Review rejected!')
-      } else {
-        toast.error('Failed to reject review')
-      }
-    } catch (error) {
-      console.error('Error rejecting review:', error)
-      toast.error('Failed to reject review')
-    }
+  const pending = letters.filter((r) => r.status === 'pending' || !r.status)
+  const approved = letters.filter((r) => r.status === 'approved')
+  const rejected = letters.filter((r) => r.status === 'rejected')
+
+  const LetterCard = ({ l }: { l: Letter }) => {
+    const v = verifiedPick[l.id] ?? l.verified
+    const isBusy = busy === l.id
+    return (
+      <Card className="border shadow-sm flex flex-col min-w-0">
+        <CardContent className="flex-1 p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{l.name || 'Anonymous'}</p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-0.5">
+                {l.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{l.city}</span>}
+                {l.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</span>}
+              </div>
+            </div>
+            <div className="flex shrink-0 text-amber-500">
+              {[0, 1, 2, 3, 4].map((i) => <Star key={i} className={`h-4 w-4 ${i < (l.stars || 5) ? 'fill-current' : 'text-slate-200'}`} />)}
+            </div>
+          </div>
+          {l.productName && <Badge variant="secondary" className="max-w-full truncate">{l.productName}</Badge>}
+          <div className="bg-amber-50/60 dark:bg-slate-900 p-3 rounded-md border border-amber-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap break-words">
+            “{l.text}”
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{l.createdAt ? new Date(l.createdAt).toLocaleString() : ''}</span>
+            {l.status === 'approved' && l.verified && <span className="flex items-center gap-1 text-green-700"><ShieldCheck className="h-3 w-3" />Verified buyer</span>}
+          </div>
+          {l.status !== 'approved' && (
+            <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+              <input type="checkbox" className="h-4 w-4 accent-green-600" checked={v} onChange={(e) => setVerifiedPick((m) => ({ ...m, [l.id]: e.target.checked }))} />
+              Show “Verified Buyer” stamp (tick only if they really ordered)
+            </label>
+          )}
+        </CardContent>
+        <CardFooter className="p-3 border-t bg-slate-50/50 dark:bg-slate-900/50 flex flex-wrap gap-2">
+          {l.status !== 'approved' && (
+            <Button disabled={isBusy} onClick={() => act(l, { status: 'approved', verified: v }, 'Approved — now showing in the app')} className="flex-1 min-w-[120px] bg-green-600 hover:bg-green-700 text-white">
+              <CheckCircle className="h-4 w-4 mr-2" /> Approve
+            </Button>
+          )}
+          {l.status === 'approved' && (
+            <Button disabled={isBusy} variant="outline" onClick={() => act(l, { status: 'pending' }, 'Hidden from the app')} className="flex-1 min-w-[120px]">
+              <Undo2 className="h-4 w-4 mr-2" /> Hide from app
+            </Button>
+          )}
+          {l.status !== 'rejected' && (
+            <Button disabled={isBusy} variant="destructive" onClick={() => act(l, { status: 'rejected' }, 'Rejected')} className="flex-1 min-w-[120px]">
+              <XCircle className="h-4 w-4 mr-2" /> Reject
+            </Button>
+          )}
+          {l.status === 'rejected' && (
+            <Button disabled={isBusy} variant="outline" onClick={() => { if (confirm('Delete this letter permanently?')) act(l, { action: 'delete' }, 'Deleted') }} className="flex-1 min-w-[120px]">
+              <Trash2 className="h-4 w-4 mr-2" /> Delete
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+    )
   }
 
-  const pendingReviews = reviews.filter(r => r.status === 'pending' || !r.status)
-  const approvedReviews = reviews.filter(r => r.status === 'approved')
-  const rejectedReviews = reviews.filter(r => r.status === 'rejected')
-
-  const ReviewCard = ({ review }: { review: Review }) => (
-    <Card className="border shadow-sm flex flex-col">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg text-indigo-600">{review.productId}</CardTitle>
-            <CardDescription className="text-slate-500 font-medium mt-1">by {review.userName || 'Anonymous'}</CardDescription>
-          </div>
-          <div className="flex text-yellow-500">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className={`h-4 w-4 ${i < (review.rating || 5) ? 'fill-current' : 'text-slate-200'}`} />
-            ))}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1">
-        <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md border border-slate-100 dark:border-slate-800 italic text-slate-700 dark:text-slate-300 text-sm">
-          "{review.comment}"
-        </div>
-        <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-          <Clock className="h-3 w-3" /> 
-          {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Unknown date'}
-        </p>
-      </CardContent>
-      <CardFooter className="pt-2 border-t bg-slate-50/50 dark:bg-slate-900/50 flex gap-2">
-        {review.status !== 'approved' && (
-          <Button onClick={() => approveReview(review.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-            <CheckCircle className="h-4 w-4 mr-2" /> Approve
-          </Button>
-        )}
-        {review.status !== 'rejected' && (
-          <Button onClick={() => rejectReview(review.id)} variant="destructive" className="flex-1">
-            <XCircle className="h-4 w-4 mr-2" /> Reject
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
-  )
+  const List = ({ items, empty }: { items: Letter[]; empty: string }) =>
+    isLoading ? <p className="text-slate-500 py-12 text-center">Loading letters…</p>
+      : items.length === 0 ? <div className="text-center py-12 px-4 text-slate-500 border rounded-lg border-dashed">{empty}</div>
+      : <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">{items.map((l) => <LetterCard key={l.id} l={l} />)}</div>
 
   return (
-    <div className="flex-1 space-y-6 p-2 sm:p-8 pt-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 space-y-2">
-        <div>
+    <div className="flex-1 space-y-6 p-3 sm:p-8 pt-6 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-            <MessageSquare className="h-8 w-8 text-indigo-600" />
-            Reviews Management
+            <MessageSquare className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-600 shrink-0" />
+            Letters to Amma
           </h2>
-          <p className="text-slate-500">Moderate customer feedback before it appears in your app.</p>
+          <p className="text-slate-500 text-sm">Letters customers send from the app’s “Write to Amma” button. Approved letters appear in the app’s Letters from Home section.</p>
         </div>
-        <Button variant="outline" onClick={fetchReviews}>Refresh List</Button>
+        <Button variant="outline" onClick={load} disabled={isLoading}><RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />Refresh</Button>
       </div>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full md:w-[400px] grid-cols-3 mb-6">
-          <TabsTrigger value="pending" className="relative">
-            Pending
-            {pendingReviews.length > 0 && (
-              <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 rounded-full">
-                {pendingReviews.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        <TabsList className="grid w-full sm:w-[420px] grid-cols-3 mb-6">
+          <TabsTrigger value="pending">Pending{pending.length > 0 && <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 px-1.5 rounded-full">{pending.length}</Badge>}</TabsTrigger>
+          <TabsTrigger value="approved">Approved ({approved.length})</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected ({rejected.length})</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="pending">
-          {isLoading ? <p className="text-slate-500 py-12 text-center">Loading reviews...</p> : pendingReviews.length === 0 ? (
-             <div className="text-center py-12 text-slate-500 border rounded-lg border-dashed">No pending reviews!</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pendingReviews.map(r => <ReviewCard key={r.id} review={r} />)}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="approved">
-          {isLoading ? <p className="text-slate-500 py-12 text-center">Loading reviews...</p> : approvedReviews.length === 0 ? (
-            <div className="text-center py-12 text-slate-500 border rounded-lg border-dashed">No approved reviews yet.</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {approvedReviews.map(r => <ReviewCard key={r.id} review={r} />)}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="rejected">
-          {isLoading ? <p className="text-slate-500 py-12 text-center">Loading reviews...</p> : rejectedReviews.length === 0 ? (
-            <div className="text-center py-12 text-slate-500 border rounded-lg border-dashed">No rejected reviews.</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rejectedReviews.map(r => <ReviewCard key={r.id} review={r} />)}
-            </div>
-          )}
-        </TabsContent>
+        <TabsContent value="pending"><List items={pending} empty="No new letters waiting." /></TabsContent>
+        <TabsContent value="approved"><List items={approved} empty="No approved letters yet." /></TabsContent>
+        <TabsContent value="rejected"><List items={rejected} empty="No rejected letters." /></TabsContent>
       </Tabs>
     </div>
   )
