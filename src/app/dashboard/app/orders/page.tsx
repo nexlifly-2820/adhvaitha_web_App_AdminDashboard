@@ -255,7 +255,7 @@ export default function OrdersPage() {
             phone: phone,
             address: address,
             items: items,
-            delivery: Number(o.delivery_fee || o.deliveryFee || 40),
+            delivery: Number(o.delivery_fee ?? o.deliveryFee ?? 40),
             payment: o.payment_method || o.paymentMethod || o.paymentStatus || 'Online',
             status: uiStatus,
             time: timeString,
@@ -270,12 +270,13 @@ export default function OrdersPage() {
         });
 
         // Sort by id / time descending
-        liveOrders.sort((a, b) => {
-          const idA = Number(a.rawOrder?.id) || 0;
-          const idB = Number(b.rawOrder?.id) || 0;
-          if (idA && idB) return idB - idA;
-          return 0;
-        });
+        // newest first (by order time, else numeric id)
+        const when = (o: Order) => {
+          const r = o.rawOrder || {}
+          const t = Date.parse(r.created_at || r.orderDate || r.createdAt || '')
+          return isNaN(t) ? Number(r.id) || 0 : t
+        }
+        liveOrders.sort((a, b) => when(b) - when(a));
 
         setOrders(liveOrders);
       }
@@ -288,6 +289,8 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
+    const t = setInterval(fetchOrders, 30000); // new app orders appear without reloading
+    return () => clearInterval(t);
   }, []);
 
   // Removed mock toast for brevity

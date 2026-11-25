@@ -2,25 +2,33 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { fetchApi, postApi } from '@/lib/api-client';
 import { createShiprocketOrder } from '@/lib/shiprocket'; // Assuming this still works with standard JSON
+import { readAppOrders, updateAppOrder } from '@/lib/appOrders';
 
 // GET: Fetch all orders
 export async function GET() {
+  // app orders (always available) + old orders.php (when it works)
+  const data: Record<string, any> = {};
   try {
     const ordersArray = await fetchApi('/orders.php');
-    
-    // The frontend expects data as a record { documentId: { ...orderData } }
-    const data: Record<string, any> = {};
     if (Array.isArray(ordersArray)) {
       ordersArray.forEach((order: any) => {
-        data[order.order_id] = order;
+        const id = order.order_id || order.orderId || order.id;
+        if (id) data[id] = order;
       });
     }
-
-    return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: any) {
-    console.error('Error fetching orders:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('orders.php unavailable:', error?.message);
   }
+  try {
+    const app = await readAppOrders();
+    for (const o of app) {
+      if (o.status === 'Payment pending' || o.status === 'Payment failed') continue; // not real orders yet
+      data[o.order_id] = { ...(data[o.order_id] || {}), ...o };
+    }
+  } catch (error: any) {
+    console.error('app orders unavailable:', error?.message);
+  }
+  return NextResponse.json({ success: true, data }, { status: 200 });
 }
 
 // POST: Create or update an order
@@ -32,6 +40,12 @@ export async function POST(request: Request) {
     // We can handle both create and update via the orders.php POST endpoint
     // BigRock orders.php expects standard fields
     if (documentId) {
+       // orders placed from the app are updated in the app orders list
+       const updatedApp = await updateAppOrder(String(documentId), orderData);
+       if (updatedApp) {
+         try { await postApi('/orders.php', { ...updatedApp, ...orderData, order_id: documentId }); } catch {}
+         return NextResponse.json({ success: true, message: 'Order updated successfully' }, { status: 200 });
+       }
        // Updating existing order
        // The PHP script handles update natively via INSERT ... ON DUPLICATE KEY UPDATE, 
        // but we need to ensure action parameter is passed if required, or simply passing the order_id updates it.
