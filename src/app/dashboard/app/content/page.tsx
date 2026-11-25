@@ -21,6 +21,7 @@ import { TrustPromiseManager, DEFAULT_TRUST, TrustConfig } from './components/Tr
 import { PicklesShowcaseManager, DEFAULT_PICKLES_CONFIG, PicklesConfig } from './components/PicklesShowcaseManager'
 import { WishlistPantryManager, DEFAULT_WISHLIST_CONFIG, WishlistConfig } from './components/WishlistPantryManager'
 import { HomeCategoriesManager } from './components/HomeCategoriesManager'
+import { HomeOffersManager } from './components/HomeOffersManager'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
@@ -1437,6 +1438,10 @@ export default function ContentManager() {
 
   const saveCurrentTab = () => {
     switch (activeTab) {
+      case 'home_offers':
+      case 'home_categories':
+        toast.info('Use the Save button inside the card below.');
+        break;
       case 'banners':
         handleSaveTab('auto_banners', { banners: autoBanners });
         const legacyMain = autoBanners.map(b => ({
@@ -3298,6 +3303,18 @@ export default function ContentManager() {
               <span className="font-semibold text-xs text-left">Home Categories</span>
             </span>
             <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded uppercase">Strip</span>
+          </TabsTrigger>
+
+          {/* HOME OFFERS (colourful coupon cards) */}
+          <TabsTrigger
+            value="home_offers"
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-rose-700" />
+              <span className="font-semibold text-xs text-left">Home Offers</span>
+            </span>
+            <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded uppercase">Coupons</span>
           </TabsTrigger>
 
           {/* ART OF PAIRING TAB TRIGGER */}
@@ -7102,6 +7119,11 @@ export default function ContentManager() {
               }}
               allProducts={allProducts}
             />
+          </TabsContent>
+
+          {/* HOME OFFERS SECTION — saves itself */}
+          <TabsContent value="home_offers" className="mt-0 space-y-6">
+            <HomeOffersManager />
           </TabsContent>
 
           {/* HOME CATEGORIES SECTION — saves itself */}
