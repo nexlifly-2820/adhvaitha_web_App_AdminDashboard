@@ -104,7 +104,7 @@ export default function NotificationsPage() {
             <Users className="h-4 w-4" /> Marketing Broadcast
           </TabsTrigger>
           <TabsTrigger value="custom" className="flex items-center gap-2">
-            <User className="h-4 w-4" /> Targeted Notification
+            <Bell className="h-4 w-4" /> Automatic
           </TabsTrigger>
         </TabsList>
 
@@ -200,67 +200,24 @@ export default function NotificationsPage() {
         </TabsContent>
 
         <TabsContent value="custom">
-          <Card className="border-none shadow-md overflow-hidden">
-            <div className="h-2 w-full bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+          <Card>
             <CardHeader>
-              <CardTitle>Targeted Notification</CardTitle>
-              <CardDescription>
-                Send a specific message to a single user (e.g., apologies for delay, special custom reward).
-              </CardDescription>
+              <CardTitle>Automatic notifications</CardTitle>
+              <CardDescription>These go out on their own — you don’t need to send them. Each shows the Ambhujakshi logo and the customer’s order number.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold mb-1">Targeting Info</p>
-                  <p>You need the exact User ID from the CRM or Orders page to send a targeted message.</p>
+            <CardContent className="space-y-3">
+              {[
+                ['Order placed 🎉', 'Right after a customer pays online or places a Cash on Delivery order.'],
+                ['Order accepted 🍲 · Packed 📦 · On the way 🚚 · Out for delivery 🛵 · Delivered 💛 · Cancelled', 'When you change the order status in Orders.'],
+                ['Your cart misses you 🛒', '2 hours after a customer adds items to the cart but does not order.'],
+                ['Still thinking about …?', '24 hours later, if the cart is still not ordered. Both cart reminders stop as soon as they order or empty the cart.'],
+              ].map(([t, d]) => (
+                <div key={t} className="rounded-lg border p-3">
+                  <div className="text-sm font-semibold">{t}</div>
+                  <div className="text-xs text-slate-500">{d}</div>
                 </div>
-              </div>
-
-              <div className="max-w-xl space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">User ID</label>
-                  <Input 
-                    placeholder="e.g. usr_123abc..." 
-                    list="push-user-ids"
-                    value={custUserId}
-                    onChange={(e) => setCustUserId(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">Notification Title</label>
-                  <Input 
-                    placeholder="e.g. Sorry for the delay!" 
-                    value={custTitle}
-                    onChange={(e) => setCustTitle(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">Message Body</label>
-                  <textarea 
-                    placeholder="We've credited 500 coins to your wallet as an apology..." 
-                    className="w-full min-h-[100px] rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950"
-                    value={custBody}
-                    onChange={(e) => setCustBody(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">Image Upload (Optional)</label>
-                  <ImageUpload 
-                    value={custImage}
-                    onChange={(url) => setCustImage(url)}
-                    folder="notifications"
-                  />
-                </div>
-                <Button 
-                  onClick={handleSendCustom} 
-                  disabled={isSending} 
-                  className="w-full bg-teal-600 hover:bg-teal-700 h-12 text-md mt-4"
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  {isSending ? 'Sending to User...' : 'Send Targeted Message'}
-                </Button>
-              </div>
+              ))}
+              <p className="text-xs text-slate-500">Use the Marketing tab for offers and announcements to all customers.</p>
             </CardContent>
           </Card>
         </TabsContent>

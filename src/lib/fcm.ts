@@ -89,3 +89,12 @@ export async function readTokens(): Promise<Record<string, string[]>> {
 export async function writeTokens(tokens: Record<string, string[]>) {
   await postApi('/app_settings.php?doc_id=push_tokens', { version: 1, tokens, updatedAt: new Date().toISOString() });
 }
+
+/** Sends to every phone of one customer (used for automatic order notifications). Never throws. */
+export async function notifyUser(userId: string, m: PushMessage) {
+  try {
+    if (!userId || !pushReady()) return;
+    const tokens = (await readTokens())[userId] || [];
+    for (const t of tokens) await sendToToken(t, m);
+  } catch {}
+}

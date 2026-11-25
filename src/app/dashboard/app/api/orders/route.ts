@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { fetchApi, postApi } from '@/lib/api-client';
 import { createShiprocketOrder } from '@/lib/shiprocket'; // Assuming this still works with standard JSON
 import { readAppOrders, updateAppOrder } from '@/lib/appOrders';
-import { pushReady, readTokens, sendToToken } from '@/lib/fcm';
+import { notifyUser } from '@/lib/fcm';
 
 const STATUS_TEXT: Record<string, [string, string]> = {
   accepted: ['Order accepted 🍲', 'Amma has started preparing your order'],
@@ -18,9 +18,8 @@ const STATUS_TEXT: Record<string, [string, string]> = {
 async function notifyStatus(userId: string, orderId: string, status: string) {
   try {
     const t = STATUS_TEXT[status];
-    if (!t || !userId || !pushReady()) return;
-    const tokens = (await readTokens())[userId] || [];
-    for (const tok of tokens) await sendToToken(tok, { title: t[0], body: `${t[1]} · ${orderId}`, data: { orderId, type: 'order_status' } });
+    if (!t) return;
+    await notifyUser(userId, { title: t[0], body: `${t[1]} · ${orderId}`, data: { orderId, type: 'order_status' } });
   } catch {}
 }
 

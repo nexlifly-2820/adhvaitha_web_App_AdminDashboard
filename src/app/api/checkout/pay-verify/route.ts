@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifySignature, fetchPayment } from '@/lib/razorpay';
 import { readAppOrders, updateAppOrder, mirrorToOrdersPhp } from '@/lib/appOrders';
+import { notifyUser } from '@/lib/fcm';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,10 @@ export async function POST(request: Request) {
     const p: any = await fetchPayment(rPay).catch(() => null);
     const method = p?.method ? String(p.method).toUpperCase() : existing.payment_method;
     const updated = await updateAppOrder(orderId, { paymentStatus: 'paid', status: 'Placed', razorpay_payment_id: rPay, payment_method: `${method === 'NETBANKING' ? 'Net Banking' : method} · Paid` });
-    if (updated) await mirrorToOrdersPhp(updated);
+    if (updated) {
+      await mirrorToOrdersPhp(updated);
+      await notifyUser(updated.user_id, { title: 'Order placed 🎉', body: `Thank you! Payment of ₹${Math.round(Number(updated.total) || 0)} received. Amma will start preparing order ${orderId} soon.`, data: { orderId, type: 'order_placed' } });
+    }
     return NextResponse.json({ success: true, order: { id: orderId, orderId, status: 'Placed', paymentMethod: updated?.payment_method, total: updated?.total } });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e?.message || 'Verification failed' }, { status: 500 });
