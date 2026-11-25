@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ImageUpload } from '@/components/ImageUpload'
+import { BUILT_IN_PREVIEWS } from './builtInPreviews'
 import { toast } from 'sonner'
 import { ArrowDown, ArrowUp, Loader2, Plus, RotateCcw, Save, Trash2, LayoutGrid } from 'lucide-react'
 
@@ -103,6 +104,8 @@ export function HomeCategoriesManager() {
   }
 
   const isAsset = (u: string) => u.startsWith('assets/')
+  // built-in app images have a copy in the dashboard's /public/home_categories folder, so they can be previewed here
+  const previewSrc = (u: string) => (isAsset(u) ? BUILT_IN_PREVIEWS[u.split('/').pop() || ''] || `/home_categories/${u.split('/').pop()}` : u)
   const targetKind = (t: string) => (t.startsWith('category:') ? 'category' : t)
 
   return (
@@ -146,10 +149,10 @@ export function HomeCategoriesManager() {
                 {items.filter((x) => x.enabled && x.label.trim()).map((x, i) => (
                   <div key={i} className="w-14 text-center">
                     <div className="relative mx-auto h-12 w-12 rounded-xl bg-orange-50 p-1">
-                      {!isAsset(x.image) && x.image ? (
-                        <img src={x.image} alt="" className="h-full w-full object-contain" />
+                      {x.image ? (
+                        <img src={previewSrc(x.image)} alt="" className="h-full w-full object-contain" />
                       ) : (
-                        <div className="h-full w-full grid place-items-center text-[9px] text-orange-700">built-in</div>
+                        <div className="h-full w-full grid place-items-center text-[9px] text-orange-700">no image</div>
                       )}
                       {x.badge && (
                         <span className="absolute -top-1.5 -right-2 rounded bg-red-700 px-1 text-[7px] font-extrabold text-white">
@@ -168,7 +171,12 @@ export function HomeCategoriesManager() {
                 <div className="grid gap-3 md:grid-cols-[160px_1fr]">
                   <div>
                     <ImageUpload value={isAsset(x.image) ? '' : x.image} onChange={(url) => update(i, { image: url })} folder="home_categories" maxSizeMB={2} />
-                    {isAsset(x.image) && <p className="mt-1 text-[11px] text-muted-foreground">Using the app's built-in image. Upload to replace.</p>}
+                    {isAsset(x.image) && (
+                      <div className="mt-2 flex items-center gap-2 rounded-lg border bg-orange-50 p-2">
+                        <img src={previewSrc(x.image)} alt="" className="h-12 w-12 object-contain" />
+                        <p className="text-[11px] text-muted-foreground">Current image (built into the app). Upload above to replace it.</p>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
