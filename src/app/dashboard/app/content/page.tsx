@@ -32,6 +32,7 @@ import { FreshPicksBoard } from './components/FreshPicksBoard'
 import { FestiveManager } from './components/FestiveManager'
 import { SweetsBoard } from './components/SweetsBoard'
 import { SpiceBoard } from './components/SpiceBoard'
+import { ShopCatalogBoard } from './components/ShopCatalogBoard'
 import { ComboManager } from './components/ComboManager'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
@@ -3459,7 +3460,7 @@ export default function ContentManager() {
           >
             <span className="flex items-center gap-2">
               <Disc className="h-4 w-4 text-amber-600 fill-amber-500/20" />
-              <span className="font-semibold text-xs text-left">Lazy Susan</span>
+              <span className="font-semibold text-xs text-left">Shop Catalog (Lazy Susan)</span>
             </span>
             <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase">3D Wheel</span>
           </TabsTrigger>
@@ -4826,22 +4827,7 @@ export default function ContentManager() {
 
           {/* 3D CATEGORY TURNTABLE (LAZY SUSAN) SECTION */}
           <TabsContent value="turntable" className="mt-0 space-y-6">
-            <CategoryTurntableManager
-              config={turntableConfig}
-              onChange={setTurntableConfig}
-              onSave={async () => {
-                await handleSaveTab('shop_categories', {
-                  settings: turntableConfig.settings,
-                  categories: turntableConfig.categories
-                });
-              }}
-              isSaving={isSaving}
-              onResetDefaults={() => {
-                if (!confirm("Reset 3D Lazy Susan turntable to authentic defaults?")) return;
-                setTurntableConfig(DEFAULT_TURNTABLE_CONFIG);
-                toast.success('Restored Authentic Lazy Susan Defaults!');
-              }}
-            />
+            <ShopCatalogBoard />
           </TabsContent>
 
           <TabsContent value="kitchen_story" className="space-y-6 mt-0">
