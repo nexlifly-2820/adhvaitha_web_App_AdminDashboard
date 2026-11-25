@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { ImageUpload } from '@/components/ImageUpload'
 import { toast } from 'sonner'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Loader2, Plus, RotateCcw, Save, Store, Trash2 } from 'lucide-react'
-import { DEFAULT_SH_CATEGORIES, DEFAULT_SH_SETTINGS, SHOP_PREVIEWS, type ShCategory, type ShProduct, type ShSettings } from './shopCatalogDefaults'
+import { BOWL_FIX, DEFAULT_SH_CATEGORIES, DEFAULT_SH_SETTINGS, SHOP_PREVIEWS, type ShCategory, type ShProduct, type ShSettings } from './shopCatalogDefaults'
 
 const DOC_ID = 'shop_catalog'
 const BRAND = '#9E1424'
@@ -22,7 +22,7 @@ const hex = (v: any, fb: string) => (/^#[0-9a-fA-F]{6}$/.test(String(v)) ? Strin
 function normProducts(raw: any): ShProduct[] {
   if (!Array.isArray(raw)) return []
   return raw.map((m: any, i: number) => ({
-    id: String(m?.id || slug(String(m?.name || '')) || `p${i + 1}`), name: String(m?.name ?? ''), image: String(m?.image ?? ''),
+    id: String(m?.id || slug(String(m?.name || '')) || `p${i + 1}`), name: String(m?.name ?? ''), image: BOWL_FIX[String(m?.image ?? '')] || String(m?.image ?? ''),
     description: String(m?.description ?? ''), tag: String(m?.tag ?? ''), cureNote: String(m?.cureNote ?? ''),
     spice: Math.min(5, Math.max(0, Math.round(num(m?.spice)))), rating: Math.min(5, Math.max(0, num(m?.rating))),
     color1: hex(m?.color1, '#8A1A10'), color2: hex(m?.color2, '#2A0806'), enabled: m?.enabled !== false,
@@ -33,7 +33,7 @@ function normCats(raw: any): ShCategory[] {
   if (!Array.isArray(raw)) return []
   return raw.map((c: any, i: number) => ({
     id: String(c?.id || slug(String(c?.name || '')) || `c${i + 1}`), slug: String(c?.slug || slug(String(c?.name || ''))), name: String(c?.name ?? ''),
-    label: String(c?.label ?? ''), subtitle: String(c?.subtitle ?? ''), deckTitle: String(c?.deckTitle ?? ''), image: String(c?.image ?? ''),
+    label: String(c?.label ?? ''), subtitle: String(c?.subtitle ?? ''), deckTitle: String(c?.deckTitle ?? ''), image: BOWL_FIX[String(c?.image ?? '')] || String(c?.image ?? ''),
     color1: hex(c?.color1, '#E8432B'), color2: hex(c?.color2, '#9E1424'), color3: hex(c?.color3, '#4A0A0E'), enabled: c?.enabled !== false,
     products: normProducts(c?.products),
   }))
