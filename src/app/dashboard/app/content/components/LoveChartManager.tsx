@@ -106,12 +106,12 @@ export function LoveChartManager() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2"><Heart className="h-5 w-5 fill-rose-600 text-rose-600" /> Most Loved (The Love Chart)</CardTitle>
           <CardDescription>The dark spotlight section on the home page. The order here is the ranking (#1, #2…). It changes only when the customer taps.</CardDescription>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button variant="outline" onClick={() => { if (confirm('Reset to the 6 default bowls?')) { setItems(DEFAULT_LOVE_PRODUCTS); setSettings(DEFAULT_LOVE_SETTINGS); setOpen(0) } }}>
             <RotateCcw className="mr-1 h-4 w-4" /> Defaults
           </Button>
@@ -125,7 +125,7 @@ export function LoveChartManager() {
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
             {/* live preview */}
             <div>
               <div className="mb-2 text-xs font-bold text-muted-foreground">APP PREVIEW</div>
@@ -203,7 +203,7 @@ export function LoveChartManager() {
                     </div>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-[150px_1fr]">
+                  <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
                     <div>
                       <ImageUpload value={isAsset(c.image) ? '' : c.image} onChange={(url) => upd(open, { image: url })} folder="most_loved" maxSizeMB={3} />
                       {isAsset(c.image) && preview(c.image) && <div className="mt-1 flex items-center gap-2"><img src={preview(c.image)} alt="" className="h-12 w-12 object-contain" /><span className="text-[10px] text-muted-foreground">Built-in image</span></div>}
@@ -215,7 +215,7 @@ export function LoveChartManager() {
                       <div className="sm:col-span-2"><label className="text-xs font-semibold">Tagline</label><Input value={c.tagline} onChange={(e) => upd(open, { tagline: e.target.value })} placeholder="sweet jaggery meets fiery mango" /></div>
                       <div><label className="text-xs font-semibold">Badge (gold tag)</label><Input value={c.badge} onChange={(e) => upd(open, { badge: e.target.value })} placeholder="👑 No.1 this week" /></div>
                       <div><label className="text-xs font-semibold">Loves (red tag)</label><Input value={c.loves} onChange={(e) => upd(open, { loves: e.target.value })} placeholder="2.1k" /></div>
-                      <div className="grid grid-cols-3 gap-2 sm:col-span-2">
+                      <div className="grid grid-cols-1 gap-2 sm:col-span-2 sm:grid-cols-3">
                         <div><label className="text-xs font-semibold">Rating</label><Input type="number" step="0.1" value={c.rating} onChange={(e) => upd(open, { rating: Math.min(5, num(e.target.value)) })} /></div>
                         <div><label className="text-xs font-semibold">Sold today</label><Input type="number" value={c.soldToday} onChange={(e) => upd(open, { soldToday: Math.round(num(e.target.value)) })} /></div>
                         <div><label className="text-xs font-semibold">Spice (0–3)</label>
@@ -241,7 +241,7 @@ export function LoveChartManager() {
                   <div className="space-y-2 rounded-lg border p-3">
                     <div className="text-xs font-bold">Sizes & prices</div>
                     {c.variants.map((v, k) => (
-                      <div key={k} className="grid grid-cols-[1fr_95px_95px_90px_40px] items-center gap-2">
+                      <div key={k} className="grid grid-cols-2 sm:grid-cols-[1fr_95px_95px_90px_40px] items-center gap-2">
                         <Input value={v.label} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, label: e.target.value } : y)) })} placeholder="250g" />
                         <Input type="number" value={v.price} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, price: num(e.target.value) } : y)) })} placeholder="Price ₹" />
                         <Input type="number" value={v.mrp} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, mrp: num(e.target.value) } : y)) })} placeholder="MRP ₹" />

@@ -44,7 +44,7 @@ function OfferPreview({ o }: { o: HomeOffer }) {
   const g = OFFER_THEMES[o.theme] || OFFER_THEMES.red
   return (
     <div
-      className="relative w-[290px] shrink-0 overflow-hidden rounded-[22px] p-4 text-white"
+      className="relative w-[290px] max-w-full shrink-0 overflow-hidden rounded-[22px] p-4 text-white"
       style={{ background: `linear-gradient(125deg, ${g[0]}, ${g[1]} 55%, ${g[2]})`, boxShadow: `0 14px 22px -14px ${g[2]}` }}
     >
       <div className="pointer-events-none absolute -right-10 -top-12 h-[170px] w-[170px] rounded-full" style={{ background: 'radial-gradient(rgba(255,255,255,.35), rgba(255,255,255,0) 70%)' }} />
@@ -126,7 +126,7 @@ export function HomeOffersManager() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2">
             <Ticket className="h-5 w-5 text-rose-700" /> Home Offers
@@ -136,7 +136,7 @@ export function HomeOffersManager() {
             Note: the discount itself comes from the app's coupon rules — currently FIRST30, FREESHIP, PICKLE100 and FESTIVE20.
           </CardDescription>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button variant="outline" onClick={() => confirm('Reset to the 4 default offers?') && setItems(DEFAULT_HOME_OFFERS)}>
             <RotateCcw className="mr-1 h-4 w-4" /> Defaults
           </Button>

@@ -121,12 +121,12 @@ export function StorySnacksManager() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2"><Newspaper className="h-5 w-5 text-amber-700" /> Snacks with a Story</CardTitle>
           <CardDescription>Newspaper-cone cards on the home page. Customers tap a cone to flip it and read the story, pick a size and add to cart.</CardDescription>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button variant="outline" onClick={() => { if (confirm('Reset to the 4 default snacks?')) { setList(DEFAULT_SS_LIST); setSettings(DEFAULT_SS_SETTINGS); setOpen(0) } }}>
             <RotateCcw className="mr-1 h-4 w-4" /> Defaults
           </Button>
@@ -138,7 +138,7 @@ export function StorySnacksManager() {
 
       <CardContent>
         {loading ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> : (
-          <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)] [&>*]:min-w-0">
             <div>
               <div className="mb-2 flex items-center justify-between text-xs font-bold text-muted-foreground">APP PREVIEW
                 <button type="button" onClick={() => setFlipped((f) => !f)} className="rounded-full border px-2 py-0.5 text-[11px] font-semibold text-stone-700">{flipped ? '↺ Show cone' : '↻ Show story side'}</button></div>
@@ -197,7 +197,7 @@ export function StorySnacksManager() {
                       <Button size="sm" variant="outline" className="text-red-700" disabled={list.length <= 1} onClick={() => { if (confirm(`Delete "${c.name || 'this snack'}"?`)) { setList((p) => p.filter((_, k) => k !== open)); setOpen(0) } }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-[150px_1fr]">
+                  <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
                     <div>
                       <ImageUpload value={isAsset(c.image) ? '' : c.image} onChange={(url) => upd(open, { image: url })} folder="story_snacks" maxSizeMB={3} />
                       {isAsset(c.image) && preview(c.image) && <div className="mt-1 flex items-center gap-2"><img src={preview(c.image)} alt="" className="h-12 w-12 object-contain" /><span className="text-[10px] text-muted-foreground">Built-in image</span></div>}
@@ -215,7 +215,7 @@ export function StorySnacksManager() {
                   <div className="space-y-2 rounded-lg border p-3">
                     <div className="text-xs font-bold">Sizes & prices <span className="font-normal text-muted-foreground">(first one is selected by default, up to 4)</span></div>
                     {c.weights.map((w, k) => (
-                      <div key={k} className="grid grid-cols-[1fr_120px_40px] gap-2">
+                      <div key={k} className="grid grid-cols-2 sm:grid-cols-[1fr_120px_40px] gap-2">
                         <Input value={w.label} onChange={(e) => upd(open, { weights: c.weights.map((y, j) => (j === k ? { ...y, label: e.target.value } : y)) })} placeholder="250g" />
                         <Input type="number" value={w.price} onChange={(e) => upd(open, { weights: c.weights.map((y, j) => (j === k ? { ...y, price: num(e.target.value) } : y)) })} placeholder="Price ₹" />
                         <Button size="sm" variant="outline" className="text-red-700" disabled={c.weights.length <= 1} onClick={() => upd(open, { weights: c.weights.filter((_, j) => j !== k) })}><Trash2 className="h-4 w-4" /></Button>

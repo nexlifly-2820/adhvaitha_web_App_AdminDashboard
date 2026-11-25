@@ -3152,15 +3152,15 @@ export default function ContentManager() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4 sm:p-6 pb-20">
-      <div className="flex items-center justify-between sticky top-0 z-20 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-sm py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between sticky top-0 z-20 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-sm py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
             <ImageIcon className="h-6 w-6 text-[#f97316]" />
             App Content Manager
           </h2>
           <p className="text-slate-500">Manage all app_data documents reflecting directly in the app.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={handleMigrateImages} disabled={isSaving} variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950">
             Migrate Images
           </Button>
@@ -3197,7 +3197,7 @@ export default function ContentManager() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full flex gap-6 flex-col lg:flex-row items-start lg:h-[calc(100vh-180px)]">
-        <TabsList className="flex flex-col justify-start bg-slate-100 dark:bg-slate-900 w-full lg:w-56 items-stretch p-2 gap-2 shrink-0 lg:h-full overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl custom-scrollbar">
+        <TabsList className="flex flex-col justify-start bg-slate-100 dark:bg-slate-900 w-full lg:w-56 items-stretch p-2 gap-2 shrink-0 max-h-[45vh] lg:max-h-none lg:h-full overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl custom-scrollbar">
           {/* AUTO BANNER CAROUSEL TAB TRIGGER */}
           <TabsTrigger 
             value="banners" 

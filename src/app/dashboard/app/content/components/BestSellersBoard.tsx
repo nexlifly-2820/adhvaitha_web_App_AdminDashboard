@@ -112,12 +112,12 @@ export function BestSellersBoard() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2"><Trophy className="h-5 w-5 text-amber-500" /> Best Sellers</CardTitle>
           <CardDescription>The champions podium on the home page. Each tab shows its top 3 on the podium and the rest as ranked rows. Customers change tabs by tapping.</CardDescription>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button variant="outline" onClick={() => { if (confirm('Reset to the default 12 products and 5 tabs?')) { setProducts(DEFAULT_BS_PRODUCTS); setCats(DEFAULT_BS_CATEGORIES); setSettings(DEFAULT_BS_SETTINGS); setCat(0); setProd(0) } }}>
             <RotateCcw className="mr-1 h-4 w-4" /> Defaults
           </Button>
@@ -129,7 +129,7 @@ export function BestSellersBoard() {
 
       <CardContent>
         {loading ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> : (
-          <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
             {/* preview */}
             <div>
               <div className="mb-2 text-xs font-bold text-muted-foreground">APP PREVIEW</div>
@@ -206,7 +206,7 @@ export function BestSellersBoard() {
                   </div>
                   {c && (
                     <div className="space-y-3 rounded-xl border p-4">
-                      <div className="grid grid-cols-[70px_1fr_auto] items-end gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-[70px_1fr_auto] items-end gap-2">
                         <div><label className="text-xs font-semibold">Emoji</label><Input value={c.emoji} onChange={(e) => updC(cat, { emoji: e.target.value })} /></div>
                         <div><label className="text-xs font-semibold">Tab name</label><Input value={c.name} onChange={(e) => updC(cat, { name: e.target.value })} placeholder="Pickles" /></div>
                         <div className="flex gap-1">
@@ -260,7 +260,7 @@ export function BestSellersBoard() {
                     <div className="space-y-3 rounded-xl border p-4">
                       <div className="flex items-center"><div className="text-sm font-bold">{p.name || 'New product'}</div>
                         <Button size="sm" variant="outline" className="ml-auto text-red-700" onClick={() => { if (confirm(`Delete "${p.name}"? It will be removed from every tab.`)) { setCats((cs) => cs.map((cc) => ({ ...cc, productIds: cc.productIds.filter((id) => id !== p.id) }))); setProducts((ps) => ps.filter((_, k) => k !== prod)); setProd(0) } }}><Trash2 className="h-4 w-4" /></Button></div>
-                      <div className="grid gap-3 sm:grid-cols-[150px_1fr]">
+                      <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
                         <div>
                           <ImageUpload value={isAsset(p.image) ? '' : p.image} onChange={(url) => updP(prod, { image: url })} folder="best_sellers" maxSizeMB={3} />
                           {isAsset(p.image) && preview(p.image) && <div className="mt-1 flex items-center gap-2"><img src={preview(p.image)} alt="" className="h-12 w-12 object-contain" /><span className="text-[10px] text-muted-foreground">Built-in image</span></div>}

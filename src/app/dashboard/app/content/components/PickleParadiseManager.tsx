@@ -100,12 +100,12 @@ export function PickleParadiseManager() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle>Pickle Paradise</CardTitle>
           <CardDescription>The pickles section on the home page. Customers tap a pickle (or the arrows) to see it — nothing changes on its own.</CardDescription>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button variant="outline" onClick={() => { if (confirm('Reset to the 8 default pickles?')) { setItems(DEFAULT_PP_ITEMS); setSettings(DEFAULT_PP_SETTINGS); setOpen(0) } }}>
             <RotateCcw className="mr-1 h-4 w-4" /> Defaults
           </Button>
@@ -119,7 +119,7 @@ export function PickleParadiseManager() {
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
             {/* live app preview */}
             <div>
               <div className="mb-2 text-xs font-bold text-muted-foreground">APP PREVIEW</div>
@@ -212,7 +212,7 @@ export function PickleParadiseManager() {
                       <Button size="sm" variant="outline" className="text-red-700" disabled={items.length <= 1} onClick={() => { if (confirm(`Delete "${c.name || 'this pickle'}"?`)) { setItems((p) => p.filter((_, k) => k !== open)); setOpen(0) } }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-[150px_1fr]">
+                  <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
                     <div>
                       <ImageUpload value={isAsset(c.image) ? '' : c.image} onChange={(url) => upd(open, { image: url })} folder="pickle_paradise" maxSizeMB={3} />
                       {isAsset(c.image) && preview(c.image) && (
@@ -230,7 +230,7 @@ export function PickleParadiseManager() {
                   <div className="space-y-2 rounded-lg border p-3">
                     <div className="text-xs font-bold">Sizes & prices <span className="font-normal text-muted-foreground">(● = selected by default, up to 4)</span></div>
                     {c.variants.map((v, k) => (
-                      <div key={k} className="grid grid-cols-[28px_1fr_100px_100px_40px] items-center gap-2">
+                      <div key={k} className="grid grid-cols-2 sm:grid-cols-[28px_1fr_100px_100px_40px] items-center gap-2">
                         <input type="radio" name={`ppdef-${open}`} checked={c.defaultVariant === k} onChange={() => upd(open, { defaultVariant: k })} />
                         <Input value={v.label} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, label: e.target.value } : y)) })} placeholder="250 g" />
                         <Input type="number" value={v.price} onChange={(e) => upd(open, { variants: c.variants.map((y, j) => (j === k ? { ...y, price: num(e.target.value) } : y)) })} placeholder="Price ₹" />

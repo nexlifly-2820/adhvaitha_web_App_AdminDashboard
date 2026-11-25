@@ -110,7 +110,7 @@ export function HomeCategoriesManager() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2">
             <LayoutGrid className="h-5 w-5 text-rose-700" /> Home Categories
@@ -120,7 +120,7 @@ export function HomeCategoriesManager() {
             Best image: square cut-out PNG (transparent background), around 256×256.
           </CardDescription>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button
             variant="outline"
             onClick={() => {
@@ -168,7 +168,7 @@ export function HomeCategoriesManager() {
 
             {items.map((x, i) => (
               <div key={i} className={`rounded-xl border p-3 ${x.enabled ? '' : 'opacity-60'}`}>
-                <div className="grid gap-3 md:grid-cols-[160px_1fr]">
+                <div className="grid gap-3 md:grid-cols-[160px_minmax(0,1fr)]">
                   <div>
                     <ImageUpload value={isAsset(x.image) ? '' : x.image} onChange={(url) => update(i, { image: url })} folder="home_categories" maxSizeMB={2} />
                     {isAsset(x.image) && (
