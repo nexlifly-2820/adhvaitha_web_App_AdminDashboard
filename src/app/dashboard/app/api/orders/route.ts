@@ -3,6 +3,26 @@ import { NextResponse } from 'next/server';
 import { fetchApi, postApi } from '@/lib/api-client';
 import { createShiprocketOrder } from '@/lib/shiprocket'; // Assuming this still works with standard JSON
 import { readAppOrders, updateAppOrder } from '@/lib/appOrders';
+import { pushReady, readTokens, sendToToken } from '@/lib/fcm';
+
+const STATUS_TEXT: Record<string, [string, string]> = {
+  accepted: ['Order accepted 🍲', 'Amma has started preparing your order'],
+  packing: ['Packed with love 📦', 'Your order is sealed and ready to ship'],
+  shipped: ['On the way 🚚', 'Your order has been shipped'],
+  out_for_delivery: ['Out for delivery 🛵', 'Your order will reach you today'],
+  delivered: ['Delivered 💛', 'Enjoy your homemade treats! Tap to rate your order'],
+  rejected: ['Order cancelled', 'Sorry, we could not complete your order. Any payment will be refunded'],
+};
+
+// tells the customer's phone when the admin changes the order status
+async function notifyStatus(userId: string, orderId: string, status: string) {
+  try {
+    const t = STATUS_TEXT[status];
+    if (!t || !userId || !pushReady()) return;
+    const tokens = (await readTokens())[userId] || [];
+    for (const tok of tokens) await sendToToken(tok, { title: t[0], body: `${t[1]} · ${orderId}`, data: { orderId, type: 'order_status' } });
+  } catch {}
+}
 
 // GET: Fetch all orders
 export async function GET() {
@@ -41,8 +61,10 @@ export async function POST(request: Request) {
     // BigRock orders.php expects standard fields
     if (documentId) {
        // orders placed from the app are updated in the app orders list
+       const before = (await readAppOrders()).find((o) => o.order_id === String(documentId));
        const updatedApp = await updateAppOrder(String(documentId), orderData);
        if (updatedApp) {
+         if (orderData.status && orderData.status !== before?.status) await notifyStatus(updatedApp.user_id, updatedApp.order_id, String(orderData.status));
          try { await postApi('/orders.php', { ...updatedApp, ...orderData, order_id: documentId }); } catch {}
          return NextResponse.json({ success: true, message: 'Order updated successfully' }, { status: 200 });
        }

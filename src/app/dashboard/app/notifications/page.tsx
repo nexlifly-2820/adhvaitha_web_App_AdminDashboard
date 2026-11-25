@@ -1,12 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Bell, Send, Image as ImageIcon, Users, User, AlertCircle } from 'lucide-react'
-import { httpsCallable } from 'firebase/functions'
-import { functions } from '@/lib/firebase-app'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageUpload } from '@/components/ImageUpload'
@@ -25,6 +23,18 @@ export default function NotificationsPage() {
   const [custBody, setCustBody] = useState('')
   const [custImage, setCustImage] = useState('')
 
+  const [status, setStatus] = useState<{ ready: boolean; users: number; userIds: string[] } | null>(null)
+  useEffect(() => {
+    fetch('/dashboard/app/api/push/send', { cache: 'no-store' }).then((r) => r.json()).then(setStatus).catch(() => setStatus({ ready: false, users: 0, userIds: [] }))
+  }, [])
+
+  const push = async (body: Record<string, unknown>) => {
+    const res = await fetch('/dashboard/app/api/push/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const j = await res.json().catch(() => ({}))
+    if (!res.ok || j?.success === false) throw new Error(j?.error || 'Failed to send notification')
+    return j
+  }
+
   const handleSendMarketing = async () => {
     if (!mktTitle.trim() || !mktBody.trim()) {
       toast.error('Title and Body are required')
@@ -33,19 +43,14 @@ export default function NotificationsPage() {
 
     setIsSending(true)
     try {
-      const sendMarketingNotification = httpsCallable(functions, 'sendMarketingNotification')
-      await sendMarketingNotification({
-        title: mktTitle,
-        body: mktBody,
-        imageUrl: mktImage
-      })
+      await push({ mode: 'all', title: mktTitle, body: mktBody, image: mktImage })
       toast.success('Marketing notification sent to all app users!')
       setMktTitle('')
       setMktBody('')
       setMktImage('')
     } catch (error: any) {
       console.error('Error sending marketing notification:', error)
-      toast.error(error?.message || 'Failed to send notification. Check Cloud Functions.')
+      toast.error(error?.message || 'Failed to send notification.')
     } finally {
       setIsSending(false)
     }
@@ -59,13 +64,7 @@ export default function NotificationsPage() {
 
     setIsSending(true)
     try {
-      const sendCustomNotification = httpsCallable(functions, 'sendCustomNotification')
-      await sendCustomNotification({
-        userId: custUserId,
-        title: custTitle,
-        body: custBody,
-        imageUrl: custImage
-      })
+      await push({ mode: 'user', userId: custUserId.trim(), title: custTitle, body: custBody, image: custImage })
       toast.success(`Notification sent to user ${custUserId}!`)
       setCustUserId('')
       setCustTitle('')
@@ -88,6 +87,16 @@ export default function NotificationsPage() {
         </h2>
         <p className="text-slate-500">Engage your app users with push notifications.</p>
       </div>
+
+      {status && (
+        <div className={`rounded-xl border p-3 text-sm ${status.ready ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+          {status.ready
+            ? <>Push is ready. <b>{status.users}</b> customer{status.users === 1 ? '' : 's'} can get personal notifications. “All users” reaches every phone that allowed notifications.</>
+            : <>Push is not set up yet: add <b>FIREBASE_SERVICE_ACCOUNT</b> in Vercel → Settings → Environment Variables, then redeploy.</>}
+        </div>
+      )}
+
+      <datalist id="push-user-ids">{(status?.userIds || []).map((u) => <option key={u} value={u} />)}</datalist>
 
       <Tabs defaultValue="marketing" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -213,6 +222,7 @@ export default function NotificationsPage() {
                   <label className="text-sm font-semibold">User ID</label>
                   <Input 
                     placeholder="e.g. usr_123abc..." 
+                    list="push-user-ids"
                     value={custUserId}
                     onChange={(e) => setCustUserId(e.target.value)}
                   />
