@@ -24,6 +24,7 @@ import { HomeCategoriesManager } from './components/HomeCategoriesManager'
 import { HomeOffersManager } from './components/HomeOffersManager'
 import { ArtOfPairingManager } from './components/ArtOfPairingManager'
 import { SpecialsManager } from './components/SpecialsManager'
+import { PickleParadiseManager } from './components/PickleParadiseManager'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
@@ -1524,10 +1525,7 @@ export default function ContentManager() {
         toast.info('Use the Save button inside the card below.');
         break
       case 'pickles_showcase':
-        handleSaveTab('pickles', {
-          settings: picklesConfig.settings,
-          pickles: picklesConfig.pickles
-        });
+        toast.info('Use the Save button inside the card below.');
         break
     }
   }
@@ -5956,66 +5954,7 @@ export default function ContentManager() {
 
           {/* AMMA'S PICKLES (PICKLES SHOWCASE) SECTION */}
           <TabsContent value="pickles_showcase" className="mt-0 space-y-6">
-            <PicklesShowcaseManager
-              config={picklesConfig}
-              onChange={setPicklesConfig}
-              onSave={async () => {
-                await handleSaveTab('pickles', {
-                  settings: picklesConfig.settings,
-                  pickles: picklesConfig.pickles
-                });
-
-                // Also sync to relational showcase tables
-                try {
-                  await fetch('/api/admin/showcase/pickles/settings', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      enabled: picklesConfig.settings.enabled,
-                      eyebrow: picklesConfig.settings.eyebrow,
-                      viewAllText: picklesConfig.settings.viewAllLabel || 'View all →'
-                    })
-                  });
-
-                  for (let idx = 0; idx < picklesConfig.pickles.length; idx++) {
-                    const p = picklesConfig.pickles[idx];
-                    const shots = (p.shots || []).map(s => ({
-                      image: s.url,
-                      caption: s.caption || '',
-                      ms: s.ms || 2100
-                    }));
-                    const variants = [
-                      { id: p.variantId || '250g', label: p.variantId || '250 g', price: p.price || 199, mrp: p.mrp || 0 }
-                    ];
-
-                    await fetch('/api/admin/showcase/pickles/items', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        productId: p.productId,
-                        name: p.name,
-                        badge: p.tag,
-                        description: p.description,
-                        cureText: p.cureNote,
-                        thumb: p.thumb,
-                        shots,
-                        variants,
-                        sort: idx + 1
-                      })
-                    }).catch(() => {});
-                  }
-                } catch (e) {
-                  console.warn('Sync to showcase tables warning:', e);
-                }
-              }}
-              isSaving={isSaving}
-              onResetDefaults={() => {
-                if (!confirm("Reset Amma's Pickles showcase to authentic defaults?")) return;
-                setPicklesConfig(DEFAULT_PICKLES_CONFIG);
-                toast.success('Restored Authentic Pickles Showcase Defaults!');
-              }}
-              allProducts={allProducts}
-            />
+            <PickleParadiseManager />
           </TabsContent>
 
           {/* HOME OFFERS SECTION — saves itself */}
