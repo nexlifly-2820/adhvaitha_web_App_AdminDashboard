@@ -20,6 +20,7 @@ import { LettersFromHomeManager, DEFAULT_REVIEWS, ReviewsConfig } from './compon
 import { TrustPromiseManager, DEFAULT_TRUST, TrustConfig } from './components/TrustPromiseManager'
 import { PicklesShowcaseManager, DEFAULT_PICKLES_CONFIG, PicklesConfig } from './components/PicklesShowcaseManager'
 import { WishlistPantryManager, DEFAULT_WISHLIST_CONFIG, WishlistConfig } from './components/WishlistPantryManager'
+import { HomeCategoriesManager } from './components/HomeCategoriesManager'
 import { CategoryTurntableManager, DEFAULT_TURNTABLE_CONFIG, CategoryTurntableConfig } from './components/CategoryTurntableManager'
 
 // Schemas based on Data Guide
@@ -3287,6 +3288,18 @@ export default function ContentManager() {
           <TabsTrigger value="coupons" className="justify-start data-[state=active]:bg-white">Active Coupons</TabsTrigger>
           <TabsTrigger value="packaging" className="justify-start data-[state=active]:bg-white">Packaging</TabsTrigger>
           <TabsTrigger value="onboarding" className="justify-start data-[state=active]:bg-white">Onboarding</TabsTrigger>
+          {/* HOME CATEGORIES (white strip under the header) */}
+          <TabsTrigger
+            value="home_categories"
+            className="justify-start data-[state=active]:bg-white flex items-center justify-between group"
+          >
+            <span className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-rose-700" />
+              <span className="font-semibold text-xs text-left">Home Categories</span>
+            </span>
+            <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded uppercase">Strip</span>
+          </TabsTrigger>
+
           {/* ART OF PAIRING TAB TRIGGER */}
           <TabsTrigger 
             value="pairings" 
@@ -7089,6 +7102,11 @@ export default function ContentManager() {
               }}
               allProducts={allProducts}
             />
+          </TabsContent>
+
+          {/* HOME CATEGORIES SECTION — saves itself */}
+          <TabsContent value="home_categories" className="mt-0 space-y-6">
+            <HomeCategoriesManager />
           </TabsContent>
 
           {/* AMMA'S PANTRY (WISHLIST) SECTION */}
