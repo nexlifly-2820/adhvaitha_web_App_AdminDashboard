@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     if (!wasShipped && saved) {
       try { await notifyUser(saved.user_id, { title: 'On the way 🚚', body: `Shipped with ${r.courier_name || 'our courier'} · AWB ${r.awb_code} · ${id}`, data: { orderId: id, type: 'order_status' } }); } catch {}
     }
-    return NextResponse.json({ success: true, shiprocketOrderId: r.shiprocketOrderId, ...r });
+    return NextResponse.json({ success: true, ...r });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e?.message || 'Shiprocket failed' }, { status: 500 });
   }
