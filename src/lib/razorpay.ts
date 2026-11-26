@@ -31,3 +31,18 @@ export async function fetchPayment(paymentId: string) {
   });
   return res.ok ? res.json() : null;
 }
+
+/** Refunds a captured payment. amountPaise empty = full refund. */
+export async function refundPayment(paymentId: string, amountPaise?: number, notes: Record<string, string> = {}) {
+  const body: any = { notes, speed: 'normal' };
+  if (amountPaise && amountPaise > 0) body.amount = Math.round(amountPaise);
+  const res = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}/refund`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Basic ' + Buffer.from(`${RZP_KEY_ID}:${RZP_SECRET}`).toString('base64') },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || !j?.id) throw new Error(j?.error?.description || 'Refund failed');
+  return j as { id: string; amount: number; status: string };
+}

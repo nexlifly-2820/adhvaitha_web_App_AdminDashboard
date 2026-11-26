@@ -81,7 +81,7 @@ async function loadDelivery() {
   }
 }
 
-const isRealOrder = (o: AppOrder) => o.paymentStatus === 'paid' || o.paymentStatus === 'cod' || (o.status && !/pending|fail|cancel/i.test(o.status) && o.paymentStatus !== 'pending' && o.paymentStatus !== 'failed')
+const isRealOrder = (o: AppOrder) => !/rejected|cancel/i.test(String(o.status || '')) && (o.paymentStatus === 'paid' || o.paymentStatus === 'cod' || (o.status && !/pending|fail|cancel/i.test(o.status) && o.paymentStatus !== 'pending' && o.paymentStatus !== 'failed'))
 const phone10 = (s: string) => String(s || '').replace(/\D/g, '').slice(-10)
 
 export function couponProblem(o: Offer | undefined, ctx: { subtotal: number; lines: CartLine[]; uid: string; phone: string; orders: AppOrder[] }): string | null {

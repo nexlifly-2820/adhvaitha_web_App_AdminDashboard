@@ -306,7 +306,7 @@ export default function OrdersPage() {
     try {
       const orderToUpdate = orders.find(o => o.id === orderId);
       if (orderToUpdate) {
-        await fetch('/dashboard/app/api/orders', {
+        const res = await fetch('/dashboard/app/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -315,6 +315,9 @@ export default function OrdersPage() {
             rejectionReason: reason || ''
           })
         });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok || j?.success === false) alert(j?.error || 'Could not update the order');
+        fetchOrders();
       }
     } catch(err) {
       console.error('Failed to update status', err);
@@ -391,6 +394,7 @@ export default function OrdersPage() {
               order={selectedOrder}
               onUpdateStatus={handleUpdateStatus}
               onUpdateHeritage={handleUpdateHeritage}
+              onRefresh={fetchOrders}
             />
           </div>
         </div>
@@ -538,7 +542,7 @@ function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: b
 
 // --- RIGHT PANEL ---
 
-function OrderDetail({ order, onUpdateStatus, onUpdateHeritage }: { order: Order, onUpdateStatus: (id: string, s: OrderStatus, reason?: string) => void, onUpdateHeritage: (id: string, heritage: any) => void }) {
+function OrderDetail({ order, onUpdateStatus, onUpdateHeritage, onRefresh }: { order: Order, onUpdateStatus: (id: string, s: OrderStatus, reason?: string) => void, onUpdateHeritage: (id: string, heritage: any) => void, onRefresh: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -593,23 +597,20 @@ function OrderDetail({ order, onUpdateStatus, onUpdateHeritage }: { order: Order
   };
 
   const handlePushToShiprocket = async () => {
-    if (!order.rawOrder) {
-      alert("Raw order data missing!");
-      return;
-    }
-    
+    if (!order.rawOrder?.order_id) { alert('Only app orders can be shipped with Shiprocket'); return; }
+    if (!confirm('Create the Shiprocket shipment, assign a courier and request pickup?')) return;
     try {
       setIsLoading(true);
       const res = await fetch('/dashboard/app/api/shiprocket/push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: order.rawOrder })
+        body: JSON.stringify({ orderId: order.rawOrder.order_id, action: 'ship' })
       });
       const data = await res.json();
       if (data.success) {
-        alert(`Pushed to Shiprocket successfully! Tracking ID: ${data.shiprocketOrderId}`);
-        // Optionally update UI here
-        order.shiprocketOrderId = data.shiprocketOrderId;
+        alert(`Shipped with ${data.courier_name || 'courier'} · AWB ${data.awb_code}${data.warnings?.length ? '\n\n' + data.warnings.join('\n') : ''}`);
+        if (data.label_url) window.open(data.label_url, '_blank');
+        onRefresh();
       } else {
         alert(`Failed: ${data.error}`);
       }
@@ -693,15 +694,15 @@ function OrderDetail({ order, onUpdateStatus, onUpdateHeritage }: { order: Order
                 {['accepted', 'packing'].includes(order.status) && (
                   <button
                     onClick={handlePushToShiprocket}
-                    disabled={!!order.shiprocketOrderId}
+                    disabled={!!order.rawOrder?.awb_code}
                     className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 shadow-sm transition-all ${
-                      order.shiprocketOrderId 
+                      order.rawOrder?.awb_code 
                         ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed' 
                         : 'bg-purple-600 text-white hover:bg-purple-700'
                     }`}
                   >
                     <Truck className="h-4 w-4" /> 
-                    {order.shiprocketOrderId ? `Shiprocket ID: ${order.shiprocketOrderId}` : 'Push to Shiprocket'}
+                    {order.rawOrder?.awb_code ? `AWB ${order.rawOrder.awb_code}` : 'Ship with Shiprocket'}
                   </button>
                 )}
                 
@@ -714,6 +715,9 @@ function OrderDetail({ order, onUpdateStatus, onUpdateHeritage }: { order: Order
               </div>
             )}
           </div>
+
+          {/* Courier, refund and damage report */}
+          {order.rawOrder?.source === 'app' && <ShippingRefundPanel order={order} onRefresh={onRefresh} />}
 
           {/* SECTION 4: Items */}
           <OrderItems order={order} />
@@ -1024,6 +1028,135 @@ function NewOrderToast({ order, onAccept, onReject, onClose }: any) {
           }
         `}</style>
       </div>
+    </div>
+  );
+}
+
+
+// --- COURIER / REFUND / DAMAGE REPORT (app orders) ---
+
+function ShippingRefundPanel({ order, onRefresh }: { order: Order, onRefresh: () => void }) {
+  const r = order.rawOrder || {};
+  const total = Number(r.total || r.total_amount || 0);
+  const refunded = Number(r.refund_amount || 0);
+  const paid = r.paymentStatus === 'paid';
+  const cancelled = order.status === 'rejected';
+  const [busy, setBusy] = useState('');
+  const [modal, setModal] = useState<'' | 'cancel' | 'refund'>('');
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+
+  const call = async (url: string, body: any, key: string) => {
+    setBusy(key);
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.success) { alert(j.error || 'Something went wrong'); return null; }
+      onRefresh();
+      return j;
+    } finally { setBusy(''); }
+  };
+
+  const submit = async () => {
+    const amt = parseFloat(amount) || 0;
+    const ok = await call('/dashboard/app/api/orders/refund', { orderId: r.order_id, action: modal, amount: amt, reason }, modal);
+    if (ok) { setModal(''); setAmount(''); setReason(''); }
+  };
+
+  const label = async () => {
+    if (r.label_url) { window.open(r.label_url, '_blank'); return; }
+    const j = await call('/dashboard/app/api/shiprocket/push', { orderId: r.order_id, action: 'label' }, 'label');
+    if (j?.label_url) window.open(j.label_url, '_blank');
+  };
+
+  const refundText: Record<string, string> = { initiated: 'Refund started', processed: 'Refunded', failed: 'Refund FAILED', none: 'No refund needed (COD)' };
+  const events: any[] = Array.isArray(r.tracking_events) ? [...r.tracking_events].reverse() : [];
+
+  return (
+    <div className="bg-white p-6 rounded-xl border border-[#e5e7eb] shadow-sm space-y-5">
+      <h3 className="text-lg font-semibold flex items-center gap-2"><Truck className="h-5 w-5 text-purple-600" /> Courier & Refund</h3>
+
+      {r.awb_code ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="bg-slate-50 rounded-lg p-3"><div className="text-xs text-slate-500">Courier</div><div className="font-semibold break-words">{r.courier_name || '-'}</div></div>
+          <div className="bg-slate-50 rounded-lg p-3"><div className="text-xs text-slate-500">AWB</div><div className="font-semibold break-all">{r.awb_code}</div></div>
+          <div className="bg-slate-50 rounded-lg p-3"><div className="text-xs text-slate-500">Courier status</div><div className="font-semibold">{r.courier_status || (r.pickup_requested ? 'Pickup requested' : 'Waiting')}</div></div>
+          <div className="bg-slate-50 rounded-lg p-3"><div className="text-xs text-slate-500">Expected delivery</div><div className="font-semibold">{r.etd ? String(r.etd).slice(0, 16) : '-'}</div></div>
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500">Not shipped yet. Accept the order, pack it, then press <b>Ship with Shiprocket</b>.</p>
+      )}
+
+      {r.awb_code && (
+        <div className="flex flex-wrap gap-2">
+          <button onClick={label} disabled={busy === 'label'} className="px-3 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50">{busy === 'label' ? 'Loading…' : 'Print label'}</button>
+          <a href={r.tracking_url || `https://shiprocket.co/tracking/${r.awb_code}`} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50">Open tracking</a>
+        </div>
+      )}
+
+      {events.length > 0 && (
+        <ul className="text-sm space-y-2 border-l-2 border-purple-200 pl-4">
+          {events.slice(0, 8).map((e, i) => (
+            <li key={i}><span className="font-medium">{e.status}</span>{e.location ? ` · ${e.location}` : ''}<div className="text-xs text-slate-400">{String(e.at).slice(0, 16).replace('T', ' ')}</div></li>
+          ))}
+        </ul>
+      )}
+
+      <div className="border-t pt-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-slate-500">Payment:</span>
+          <span className="font-semibold">{paid ? `Paid online ₹${total}` : r.paymentStatus === 'cod' ? 'Cash on delivery' : r.paymentStatus || '-'}</span>
+          {r.refund_status && (
+            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${r.refund_status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+              {refundText[r.refund_status] || r.refund_status}{refunded ? ` · ₹${refunded}` : ''}
+            </span>
+          )}
+        </div>
+        {r.refund_error && <p className="text-xs text-red-600 break-words">{r.refund_error}</p>}
+        {r.cancelled_by && <p className="text-xs text-slate-500">Cancelled by {r.cancelled_by}{r.cancelled_at ? ` on ${String(r.cancelled_at).slice(0, 10)}` : ''}</p>}
+        <div className="flex flex-wrap gap-2">
+          {!cancelled && order.status !== 'delivered' && (
+            <button onClick={() => { setModal('cancel'); setAmount(''); }} className="px-3 py-2 text-sm rounded-lg border-2 border-red-200 text-red-600 hover:bg-red-50">{paid ? 'Cancel & Refund' : 'Cancel order'}</button>
+          )}
+          {paid && refunded < total && (cancelled || order.status === 'delivered' || r.refund_status === 'failed') && (
+            <button onClick={() => { setModal('refund'); setAmount(String(Math.round((total - refunded) * 100) / 100)); }} className="px-3 py-2 text-sm rounded-lg bg-amber-500 text-white hover:bg-amber-600">{r.refund_status === 'failed' ? 'Retry refund' : 'Refund (full / part)'}</button>
+          )}
+        </div>
+      </div>
+
+      {r.issue && (
+        <div className="border-t pt-4 space-y-2">
+          <h4 className="font-semibold text-red-700 flex items-center gap-2"><AlertCircle className="h-4 w-4" /> Damage reported</h4>
+          <p className="text-sm whitespace-pre-wrap break-words">{r.issue.text}</p>
+          <p className="text-xs text-slate-400">{String(r.issue.at).slice(0, 16).replace('T', ' ')}</p>
+          {r.issue.photo_doc && (
+            <a href={`/dashboard/app/api/orders/issue-photo?doc=${r.issue.photo_doc}`} target="_blank" rel="noreferrer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/dashboard/app/api/orders/issue-photo?doc=${r.issue.photo_doc}`} alt="Damage photo" className="max-h-56 rounded-lg border" />
+            </a>
+          )}
+          <p className="text-xs text-slate-500">Use “Refund (full / part)” above to refund the damaged item.</p>
+        </div>
+      )}
+
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white p-6 rounded-xl w-[420px] max-w-full shadow-xl space-y-3">
+            <h3 className="text-lg font-bold">{modal === 'cancel' ? (paid ? 'Cancel & Refund' : 'Cancel order') : 'Refund'}</h3>
+            {paid && (
+              <div>
+                <label className="text-xs font-semibold text-slate-500">Refund amount (₹) — max ₹{Math.round((total - refunded) * 100) / 100}{modal === 'cancel' ? ', empty = full' : ''}</label>
+                <input type="number" min="1" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="w-full border rounded-lg p-2 text-sm mt-1" placeholder="Full amount" />
+              </div>
+            )}
+            <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason (customer sees this)" className="w-full border rounded-lg p-3 text-sm min-h-[80px]" />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setModal('')} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Close</button>
+              <button onClick={submit} disabled={!!busy} className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50">{busy ? 'Working…' : 'Confirm'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

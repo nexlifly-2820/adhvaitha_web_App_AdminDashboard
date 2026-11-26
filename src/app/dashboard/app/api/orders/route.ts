@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { fetchApi, postApi } from '@/lib/api-client';
-import { createShiprocketOrder } from '@/lib/shiprocket'; // Assuming this still works with standard JSON
+import { cancelAppOrder } from '@/lib/orderActions';
 import { readAppOrders, updateAppOrder } from '@/lib/appOrders';
 import { notifyUser } from '@/lib/fcm';
 
@@ -61,6 +61,12 @@ export async function POST(request: Request) {
     if (documentId) {
        // orders placed from the app are updated in the app orders list
        const before = (await readAppOrders()).find((o) => o.order_id === String(documentId));
+       // cancelling an app order also refunds online payments and cancels the courier
+       if (before && orderData.status === 'rejected' && !/rejected|cancel/i.test(String(before.status))) {
+         const r = await cancelAppOrder(String(documentId), { by: 'admin', reason: String(orderData.rejectionReason || 'Cancelled by Adhvaitha') });
+         return NextResponse.json({ success: r.ok, error: r.error, message: 'Order cancelled' }, { status: r.ok ? 200 : 409 });
+       }
+       if (before && orderData.status === 'delivered' && !before.delivered_at) orderData.delivered_at = new Date().toISOString();
        const updatedApp = await updateAppOrder(String(documentId), orderData);
        if (updatedApp) {
          if (orderData.status && orderData.status !== before?.status) await notifyStatus(updatedApp.user_id, updatedApp.order_id, String(orderData.status));

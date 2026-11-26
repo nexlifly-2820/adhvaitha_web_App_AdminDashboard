@@ -1,77 +1,33 @@
 import { NextResponse } from 'next/server';
-import { doc, updateDoc } from 'firebase/firestore';
-import { appOrdersCollection } from '@/lib/firebase-app';
-import { createShiprocketOrder } from '@/lib/shiprocket';
-import { OrderDetails } from '@/types/order';
+import { readAppOrders, updateAppOrder } from '@/lib/appOrders';
+import { shipAppOrder, shiprocketLabel, shiprocketReady } from '@/lib/shiprocket';
+import { notifyUser } from '@/lib/fcm';
 
+export const dynamic = 'force-dynamic';
+
+// Admin → POST /dashboard/app/api/shiprocket/push  { orderId, action?: 'ship' | 'label' }
 export async function POST(request: Request) {
+  const b = await request.json().catch(() => ({}));
+  const id = String(b?.orderId || b?.order?.id || b?.order?.order_id || '');
+  if (!shiprocketReady()) return NextResponse.json({ success: false, error: 'Shiprocket is not connected yet. Add SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD in Vercel and redeploy.' }, { status: 400 });
+  const o = (await readAppOrders()).find((x) => x.order_id === id);
+  if (!o) return NextResponse.json({ success: false, error: 'Only app orders can be shipped from here' }, { status: 404 });
+  if (/rejected|cancel/i.test(String(o.status))) return NextResponse.json({ success: false, error: 'This order is cancelled' }, { status: 409 });
   try {
-    const body = await request.json();
-    const order: OrderDetails = body.order;
-
-    if (!order || !order.id) {
-      return NextResponse.json(
-        { success: false, error: 'Valid order data is required' },
-        { status: 400 }
-      );
+    if (b?.action === 'label') {
+      if (!o.shipment_id) throw new Error('Ship the order first');
+      const url = await shiprocketLabel(String(o.shipment_id));
+      await updateAppOrder(id, { label_url: url });
+      return NextResponse.json({ success: true, label_url: url });
     }
-
-    // Map OrderDetails to Shiprocket Payload
-    const shiprocketPayload = {
-      order_id: order.id,
-      order_date: new Date(order.orderDate).toISOString().slice(0, 10), // YYYY-MM-DD
-      pickup_location: "Primary", // Note: Ensure this matches the exact pickup location name in Shiprocket dashboard
-      billing_customer_name: order.customerInfo.name || "Customer",
-      billing_last_name: "", // Shiprocket might require this, but empty string usually works if first name is full name
-      billing_address: order.shippingInfo.address || "N/A",
-      billing_city: order.shippingInfo.city || "Unknown",
-      billing_pincode: order.shippingInfo.zipCode || "000000",
-      billing_state: order.shippingInfo.state || "Unknown",
-      billing_country: order.shippingInfo.country || "India",
-      billing_email: order.customerInfo.email || "customer@example.com",
-      billing_phone: order.customerInfo.mobileNumber || "0000000000",
-      shipping_is_billing: true,
-      order_items: order.products.map((item) => ({
-        name: item.name || "Product",
-        sku: item.sku || "N/A",
-        units: item.quantity || 1,
-        selling_price: item.unitPrice || item.totalPrice || 0,
-        hsn: 2001, // Default HSN code for pickles as requested
-      })),
-      payment_method: order.paymentMethod === "COD" ? "COD" : "Prepaid",
-      sub_total: order.totalAmount,
-      length: 10, // Provide actual package dimensions (cm) in the future
-      breadth: 10,
-      height: 10,
-      weight: 0.5, // Provide actual package weight (kg) in the future
-    };
-
-    console.log(`Pushing order ${order.id} to Shiprocket...`);
-    const shiprocketResponse = await createShiprocketOrder(shiprocketPayload);
-    
-    // Check if Shiprocket returned a valid order ID
-    if (shiprocketResponse && shiprocketResponse.order_id) {
-      // Update Firebase to mark it as pushed
-      const docRef = doc(appOrdersCollection, order.id);
-      await updateDoc(docRef, {
-        shiprocketOrderId: shiprocketResponse.order_id.toString(),
-        updatedAt: new Date().toISOString()
-      });
-
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Order successfully pushed to Shiprocket',
-        shiprocketOrderId: shiprocketResponse.order_id
-      }, { status: 200 });
-    } else {
-      throw new Error("Shiprocket response did not contain an order_id");
+    const r = await shipAppOrder(o);
+    const wasShipped = String(o.status).toLowerCase() === 'shipped';
+    const saved = await updateAppOrder(id, { ...r, status: 'shipped', shipped_at: o.shipped_at || new Date().toISOString(), trackingId: r.awb_code, courierName: r.courier_name });
+    if (!wasShipped && saved) {
+      try { await notifyUser(saved.user_id, { title: 'On the way 🚚', body: `Shipped with ${r.courier_name || 'our courier'} · AWB ${r.awb_code} · ${id}`, data: { orderId: id, type: 'order_status' } }); } catch {}
     }
-
-  } catch (error: any) {
-    console.error('Error pushing to Shiprocket:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Failed to push to Shiprocket' 
-    }, { status: 500 });
+    return NextResponse.json({ success: true, shiprocketOrderId: r.shiprocketOrderId, ...r });
+  } catch (e: any) {
+    return NextResponse.json({ success: false, error: e?.message || 'Shiprocket failed' }, { status: 500 });
   }
 }
