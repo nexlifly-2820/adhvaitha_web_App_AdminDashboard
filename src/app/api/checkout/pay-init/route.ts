@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRazorpayOrder, razorpayReady, RZP_KEY_ID } from '@/lib/razorpay';
 import { orderFromCheckout, upsertAppOrder } from '@/lib/appOrders';
+import { guardCheckout } from '@/lib/checkoutGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,8 @@ export async function POST(request: Request) {
     if (!razorpayReady()) return NextResponse.json({ success: false, error: 'Online payment is not set up yet. Please choose Cash on Delivery.' }, { status: 503 });
     const b = await request.json().catch(() => ({}));
     const order = orderFromCheckout(b, METHOD[String(b?.method)] || 'Online');
+    const stop = await guardCheckout(request, b, order);
+    if (stop) return stop;
     if (!(order.total > 0)) return NextResponse.json({ success: false, error: 'Amount is missing' }, { status: 400 });
     if (!order.items.length) return NextResponse.json({ success: false, error: 'Your cart is empty' }, { status: 400 });
     const rzp = await createRazorpayOrder(Math.round(order.total * 100), order.order_id, { appOrderId: order.order_id, phone: order.customer_phone });

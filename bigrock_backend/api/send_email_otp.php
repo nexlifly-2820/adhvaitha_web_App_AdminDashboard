@@ -1,4 +1,5 @@
 <?php
+require_once 'aj_key.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
@@ -51,8 +52,8 @@ $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
 
 $sent = mail($email, $subject, $body, $headers, "-fnoreply@api.adhvaithafoods.in");
 
-echo json_encode([
-    'success' => true,
-    'message' => $sent ? "OTP sent to $email" : "OTP generated",
-    'debug_otp' => $otp
-]);
+$out = ['success' => true, 'message' => $sent ? "OTP sent to $email" : "OTP generated"];
+// only the admin server gets the code back (it checks the code itself)
+if (aj_key_configured() && aj_key_ok()) $out['debug_otp'] = $otp;
+if (!aj_key_configured()) $out['debug_otp'] = $otp; // until aj_secret.php is uploaded
+echo json_encode($out);

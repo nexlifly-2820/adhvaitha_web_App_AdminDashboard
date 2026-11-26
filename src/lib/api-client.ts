@@ -54,6 +54,8 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     headers: {
       'Content-Type': 'application/json',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      // lets the BigRock server know this request comes from the admin (see app_settings.php)
+      ...(typeof window === 'undefined' && process.env.BIGROCK_API_KEY ? { 'X-AJ-Key': process.env.BIGROCK_API_KEY } : {}),
       ...options.headers,
     },
   });

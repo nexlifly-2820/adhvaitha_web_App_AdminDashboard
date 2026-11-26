@@ -18,8 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner'
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  password: z.string().min(1, { message: 'Please enter your password' }),
 })
 
 export default function LoginPage() {
@@ -28,7 +27,6 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
       password: '',
     },
   })
@@ -36,9 +34,19 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true)
     try {
-      // Dummy UI login for now
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      toast.success('Logged in successfully (UI Only)')
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok || !j.success) {
+        toast.error(j.error || 'Login failed')
+        return
+      }
+      toast.success('Welcome back')
+      const next = new URLSearchParams(window.location.search).get('next') || '/dashboard'
+      window.location.href = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard'
     } catch (error) {
       toast.error('An unexpected error occurred')
     } finally {
@@ -47,12 +55,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-screen w-full items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold tracking-tight">Admin Login</CardTitle>
           <CardDescription>
-            Enter your email and password to access the dashboard
+            Enter the admin password to open the dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -60,25 +68,12 @@ export default function LoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="admin@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="••••••••" autoFocus autoComplete="current-password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

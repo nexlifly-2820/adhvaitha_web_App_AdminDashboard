@@ -1,5 +1,20 @@
 <?php
 require_once 'db.php';
+require_once 'aj_key.php';
+
+// Private documents (orders, customer data, login codes) can only be read by the admin server,
+// and only the admin server may save anything.
+$__doc = $_GET['doc_id'] ?? $_GET['key'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && !aj_key_ok()) {
+    http_response_code(403);
+    echo json_encode(["error" => "Not allowed"]);
+    exit();
+}
+if ($_SERVER['REQUEST_METHOD'] == 'GET' && aj_is_private_doc((string)$__doc) && !aj_key_ok()) {
+    http_response_code(403);
+    echo json_encode(["error" => "Not allowed"]);
+    exit();
+}
 
 // Handle GET request: Fetch a specific setting document
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {

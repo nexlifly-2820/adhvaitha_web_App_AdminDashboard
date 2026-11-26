@@ -25,7 +25,7 @@ if (isset($otps[$email])) {
         exit;
     }
     
-    if ($record['otp'] === $userOtp || $userOtp === '123456') {
+    if (hash_equals((string)$record['otp'], (string)$userOtp)) {
         unset($otps[$email]);
         file_put_contents($file, json_encode($otps));
         echo json_encode(['success' => true, 'verified' => true, 'message' => 'OTP verified successfully']);
@@ -33,10 +33,5 @@ if (isset($otps[$email])) {
     }
 }
 
-// Fallback for dev test mode
-if ($userOtp === '123456') {
-    echo json_encode(['success' => true, 'verified' => true, 'message' => 'Test OTP verified']);
-    exit;
-}
 
 echo json_encode(['success' => false, 'verified' => false, 'message' => 'Invalid OTP code']);

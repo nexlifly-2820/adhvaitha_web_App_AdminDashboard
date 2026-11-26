@@ -133,6 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <a href="/api/auth/admin-logout" className="rounded-full border px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300">Log out</a>
             <Button variant="ghost" size="icon" className="relative hover:bg-slate-100 rounded-full">
               <Bell className="h-5 w-5 text-slate-600" />
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></span>

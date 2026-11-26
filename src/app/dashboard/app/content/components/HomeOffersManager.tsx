@@ -20,8 +20,17 @@ export type HomeOffer = {
   value: number
   minOrder: number
   maxDiscount: number
+  firstOrderOnly: boolean
+  oncePerCustomer: boolean
+  startDate: string
+  endDate: string
+  totalLimit: number
+  category: string
   enabled: boolean
 }
+
+const RULE_DEFAULTS = { firstOrderOnly: false, oncePerCustomer: false, startDate: '', endDate: '', totalLimit: 0, category: '' }
+const CATEGORIES: [string, string][] = [['', 'All products'], ['pickles', 'Pickles only'], ['podis', 'Podis only'], ['sweets', 'Sweets only'], ['snacks', 'Snacks only']]
 
 export const OFFER_THEMES: Record<string, [string, string, string]> = {
   red: ['#E8344A', '#B0122E', '#7A0A22'],
@@ -35,10 +44,10 @@ export const OFFER_THEMES: Record<string, [string, string, string]> = {
 }
 
 export const DEFAULT_HOME_OFFERS: HomeOffer[] = [
-  { code: 'FIRST30', label: 'WELCOME OFFER', title: '30% OFF', sub: 'On your first order above ₹500', emoji: '🎁', theme: 'red', type: 'percent', value: 30, minOrder: 500, maxDiscount: 0, enabled: true },
-  { code: 'FREESHIP', label: 'FREE DELIVERY', title: '₹0 DELIVERY', sub: 'On all orders · no minimum', emoji: '🛵', theme: 'green', type: 'freeship', value: 0, minOrder: 0, maxDiscount: 0, enabled: true },
-  { code: 'PICKLE100', label: 'PICKLE SPECIAL', title: '₹100 OFF', sub: 'On pickle orders above ₹999', emoji: '🫙', theme: 'orange', type: 'flat', value: 100, minOrder: 999, maxDiscount: 0, enabled: true },
-  { code: 'FESTIVE20', label: 'FESTIVE OFFER', title: '20% OFF', sub: 'On orders above ₹1500', emoji: '🪔', theme: 'purple', type: 'percent', value: 20, minOrder: 1500, maxDiscount: 0, enabled: true },
+  { code: 'FIRST30', label: 'WELCOME OFFER', title: '30% OFF', sub: 'On your first order above ₹500', emoji: '🎁', theme: 'red', type: 'percent', value: 30, minOrder: 500, maxDiscount: 0, firstOrderOnly: true, oncePerCustomer: true, startDate: '', endDate: '', totalLimit: 0, category: '', enabled: true },
+  { code: 'FREESHIP', label: 'FREE DELIVERY', title: '₹0 DELIVERY', sub: 'On all orders · no minimum', emoji: '🛵', theme: 'green', type: 'freeship', value: 0, minOrder: 0, maxDiscount: 0, firstOrderOnly: false, oncePerCustomer: false, startDate: '', endDate: '', totalLimit: 0, category: '', enabled: true },
+  { code: 'PICKLE100', label: 'PICKLE SPECIAL', title: '₹100 OFF', sub: 'On pickle orders above ₹999', emoji: '🫙', theme: 'orange', type: 'flat', value: 100, minOrder: 999, maxDiscount: 0, firstOrderOnly: false, oncePerCustomer: false, startDate: '', endDate: '', totalLimit: 0, category: 'pickles', enabled: true },
+  { code: 'FESTIVE20', label: 'FESTIVE OFFER', title: '20% OFF', sub: 'On orders above ₹1500', emoji: '🪔', theme: 'purple', type: 'percent', value: 20, minOrder: 1500, maxDiscount: 0, firstOrderOnly: false, oncePerCustomer: false, startDate: '', endDate: '', totalLimit: 0, category: '', enabled: true },
 ]
 
 // Old saved offers had no discount rule — read it from the title/sub text (same as the app does).
@@ -62,11 +71,30 @@ function guessRule(x: any): Pick<HomeOffer, 'type' | 'value' | 'minOrder' | 'max
   return { type, value, minOrder, maxDiscount: Number(x.maxDiscount) || 0 }
 }
 
+function readRules(x: any): Pick<HomeOffer, 'firstOrderOnly' | 'oncePerCustomer' | 'startDate' | 'endDate' | 'totalLimit' | 'category'> {
+  const code = String(x.code ?? '').toUpperCase()
+  return {
+    firstOrderOnly: x.firstOrderOnly === undefined ? code === 'FIRST30' : !!x.firstOrderOnly,
+    oncePerCustomer: x.oncePerCustomer === undefined ? code === 'FIRST30' : !!x.oncePerCustomer,
+    startDate: String(x.startDate ?? ''),
+    endDate: String(x.endDate ?? ''),
+    totalLimit: Math.max(0, Math.round(Number(x.totalLimit) || 0)),
+    category: String(x.category ?? (code === 'PICKLE100' ? 'pickles' : '')),
+  }
+}
+
 export function ruleText(o: HomeOffer) {
   const min = o.minOrder > 0 ? ` on orders ≥ ₹${o.minOrder}` : ' · no minimum'
-  if (o.type === 'freeship') return `Free delivery${min}`
-  if (o.type === 'flat') return `₹${o.value} off${min}`
-  return `${o.value}% off${o.maxDiscount > 0 ? ` (max ₹${o.maxDiscount})` : ''}${min}`
+  const base = o.type === 'freeship' ? `Free delivery${min}` : o.type === 'flat' ? `₹${o.value} off${min}` : `${o.value}% off${o.maxDiscount > 0 ? ` (max ₹${o.maxDiscount})` : ''}${min}`
+  const extra = [
+    o.category && CATEGORIES.find(([k]) => k === o.category)?.[1],
+    o.firstOrderOnly && 'first order only',
+    o.oncePerCustomer && 'once per customer',
+    o.totalLimit > 0 && `first ${o.totalLimit} uses`,
+    o.startDate && `from ${o.startDate}`,
+    o.endDate && `until ${o.endDate}`,
+  ].filter(Boolean)
+  return extra.length ? `${base} · ${extra.join(' · ')}` : base
 }
 
 const EMOJIS = ['🎁', '🛵', '🫙', '🪔', '🎉', '🔥', '💝', '🌶️', '🍬', '🥭', '⭐', '🏷️']
@@ -114,6 +142,7 @@ export function HomeOffersManager() {
               emoji: String(x.emoji ?? '🎁'),
               theme: OFFER_THEMES[x.theme] ? String(x.theme) : 'red',
               ...guessRule(x),
+              ...readRules(x),
               enabled: x.enabled !== false,
             })),
           )
@@ -142,6 +171,7 @@ export function HomeOffersManager() {
     if (new Set(clean.map((x) => x.code)).size !== clean.length) return toast.error('Two offers have the same code')
     if (clean.some((x) => x.type !== 'freeship' && !(x.value > 0))) return toast.error('Set the discount amount for every offer')
     if (clean.some((x) => x.type === 'percent' && x.value > 90)) return toast.error('Percent discount must be 90% or less')
+    if (clean.some((x) => x.startDate && x.endDate && x.endDate < x.startDate)) return toast.error('An offer ends before it starts — check the dates')
     setSaving(true)
     try {
       const res = await fetch('/dashboard/app/api/app-data', {
@@ -239,6 +269,32 @@ export function HomeOffersManager() {
                         <Input type="number" min={0} value={x.maxDiscount} onChange={(e) => update(i, { maxDiscount: Number(e.target.value) || 0 })} />
                       </div>
                     )}
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="text-xs font-semibold">Applies to</label>
+                      <select value={x.category} onChange={(e) => update(i, { category: e.target.value })} className="h-9 w-full rounded-md border bg-white px-2 text-sm">
+                        {CATEGORIES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold">Starts (optional)</label>
+                      <Input type="date" value={x.startDate} onChange={(e) => update(i, { startDate: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold">Ends (optional)</label>
+                      <Input type="date" value={x.endDate} onChange={(e) => update(i, { endDate: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold">Total uses (0 = no limit)</label>
+                      <Input type="number" min={0} value={x.totalLimit} onChange={(e) => update(i, { totalLimit: Math.max(0, Math.round(Number(e.target.value) || 0)) })} />
+                    </div>
+                    <div className="col-span-2 flex flex-wrap gap-x-5 gap-y-1 sm:col-span-4">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" checked={x.firstOrderOnly} onChange={(e) => update(i, { firstOrderOnly: e.target.checked })} /> First order only
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" checked={x.oncePerCustomer} onChange={(e) => update(i, { oncePerCustomer: e.target.checked })} /> Once per customer
+                      </label>
+                    </div>
                     <p className="col-span-2 text-xs text-rose-800 sm:col-span-4">Customer gets: <b>{ruleText(x)}</b></p>
                   </div>
                   <div>
@@ -271,7 +327,7 @@ export function HomeOffersManager() {
             ))}
 
             <Button variant="outline" className="w-full" disabled={items.length >= 8}
-              onClick={() => setItems((p) => [...p, { code: '', label: 'NEW OFFER', title: '', sub: '', emoji: '🎉', theme: 'blue', type: 'percent', value: 10, minOrder: 0, maxDiscount: 0, enabled: true }])}>
+              onClick={() => setItems((p) => [...p, { code: '', label: 'NEW OFFER', title: '', sub: '', emoji: '🎉', theme: 'blue', type: 'percent', value: 10, minOrder: 0, maxDiscount: 0, ...RULE_DEFAULTS, enabled: true }])}>
               <Plus className="mr-1 h-4 w-4" /> Add offer {items.length >= 8 && '(max 8)'}
             </Button>
           </>

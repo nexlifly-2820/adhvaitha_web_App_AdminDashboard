@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once 'db.php';
+require_once 'aj_key.php';
 
 // Default authentic Lazy Susan configuration
 $defaultConfig = [
@@ -106,6 +107,8 @@ $defaultConfig = [
     ]
 ];
 
+// Handle GET: send the saved (or default) configuration
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $finalConfig = $defaultConfig;
 
     // 1. Check if saved in app_settings table
@@ -159,6 +162,11 @@ $defaultConfig = [
 
 // Handle POST/PUT: Save configuration
 if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PUT') {
+    if (!aj_key_ok()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Not allowed']);
+        exit();
+    }
     $rawInput = file_get_contents("php://input");
     $data = json_decode($rawInput, true);
 

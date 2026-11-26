@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { orderFromCheckout, upsertAppOrder, mirrorToOrdersPhp } from '@/lib/appOrders';
 import { notifyUser } from '@/lib/fcm';
+import { guardCheckout } from '@/lib/checkoutGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,8 @@ export async function POST(request: Request) {
   try {
     const b = await request.json().catch(() => ({}));
     const order = orderFromCheckout(b, 'COD');
+    const stop = await guardCheckout(request, b, order);
+    if (stop) return stop;
     if (!order.items.length) return NextResponse.json({ success: false, error: 'Your cart is empty' }, { status: 400 });
     await upsertAppOrder(order);
     await mirrorToOrdersPhp(order);
