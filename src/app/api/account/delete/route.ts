@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { clean } from '@/lib/reviewInbox';
+import { uidForEmail } from '@/lib/customerAuth';
 import { readTokens, writeTokens } from '@/lib/fcm';
 import { readDeletions, writeDeletions } from '@/lib/accountDeletions';
 
@@ -9,7 +10,10 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const b = await request.json().catch(() => ({}));
-    const userId = clean(b.userId, 80);
+    const fromWeb = b.source === 'web';
+    const webEmail = clean(b.email, 80).toLowerCase();
+    // website form: no login, so it is only a request — the admin confirms by email before deleting
+    const userId = fromWeb ? (webEmail.includes('@') ? uidForEmail(webEmail) : '') : clean(b.userId, 80);
     if (!userId || userId === 'guest') return NextResponse.json({ success: false, error: 'Not signed in' }, { status: 400 });
     const items = await readDeletions();
     if (!items.some((x) => x.userId === userId && x.status === 'pending')) {
@@ -19,14 +23,14 @@ export async function POST(request: Request) {
         name: clean(b.name, 60),
         email: clean(b.email, 80),
         phone: clean(b.phone, 20),
-        reason: clean(b.reason, 300),
+        reason: (fromWeb ? '[Website form — confirm by email first] ' : '') + clean(b.reason, 300),
         status: 'pending',
         createdAt: new Date().toISOString(),
       });
       await writeDeletions(items.slice(0, 5000));
     }
-    // stop sending this user notifications
-    try {
+    // stop sending this user notifications (only when the request came from the logged-in app)
+    if (!fromWeb) try {
       const all = await readTokens();
       if (all[userId]) { delete all[userId]; await writeTokens(all); }
     } catch {}
