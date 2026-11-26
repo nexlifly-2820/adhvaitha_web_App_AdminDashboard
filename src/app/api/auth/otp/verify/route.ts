@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       try {
         const r = await fetch(`${BIGROCK_API_URL}/verify_email_otp.php`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+          headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json, text/plain, */*' },
           body: JSON.stringify({ email, otp: code }),
           cache: 'no-store',
         })

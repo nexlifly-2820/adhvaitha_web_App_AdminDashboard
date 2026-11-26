@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     const r = await fetch(`${BIGROCK_API_URL}/send_email_otp.php`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0', ...(process.env.BIGROCK_API_KEY ? { 'X-AJ-Key': process.env.BIGROCK_API_KEY.trim().replace(/^["']|["']$/g, '') } : {}) },
+      headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json, text/plain, */*', ...(process.env.BIGROCK_API_KEY ? { 'X-AJ-Key': process.env.BIGROCK_API_KEY.trim().replace(/^["']|["']$/g, '') } : {}) },
       body: JSON.stringify({ email }),
       cache: 'no-store',
     })

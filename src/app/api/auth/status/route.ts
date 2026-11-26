@@ -10,7 +10,7 @@ export async function GET() {
   let bigrock = 'not tested'
   if (key) {
     try {
-      const r = await fetch(`${BIGROCK_API_URL}/app_settings.php?doc_id=login_otps`, { headers: { 'X-AJ-Key': key, 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' })
+      const r = await fetch(`${BIGROCK_API_URL}/app_settings.php?doc_id=login_otps`, { headers: { 'X-AJ-Key': key, 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json, text/plain, */*' }, cache: 'no-store' })
       bigrock = r.status === 200 ? 'OK — BigRock accepts the key' : `BigRock refused the key (HTTP ${r.status})`
     } catch (e: any) {
       bigrock = `Could not reach BigRock: ${e?.message || e}`
