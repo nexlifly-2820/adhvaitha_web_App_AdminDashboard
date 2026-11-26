@@ -24,6 +24,7 @@ export async function POST(request: Request) {
 
     const item: InboxItem = {
       id: `u${Date.now()}${Math.floor(Math.random() * 1000)}`,
+      userId: clean(b.userId, 80),
       name,
       city: clean(b.city, 40),
       phone,

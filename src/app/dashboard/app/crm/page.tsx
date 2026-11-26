@@ -34,6 +34,20 @@ export default function CRMPage() {
   const [users, setUsers] = useState<any[]>([])
   const [isUsersLoading, setIsUsersLoading] = useState(true)
   const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [deletions, setDeletions] = useState<any[]>([])
+
+  const fetchDeletions = async () => {
+    try {
+      const r = await fetch('/dashboard/app/api/account-deletions')
+      const j = await r.json()
+      if (j.success) setDeletions(j.data || [])
+    } catch {}
+  }
+
+  const markDeleted = async (id: string) => {
+    const r = await fetch('/dashboard/app/api/account-deletions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: 'done' }) })
+    if (r.ok) { toast.success('Marked as deleted'); fetchDeletions() } else toast.error('Could not update')
+  }
 
 
   const fetchInquiries = async () => {
@@ -75,6 +89,7 @@ export default function CRMPage() {
   useEffect(() => {
     fetchInquiries()
     fetchUsers()
+    fetchDeletions()
     const t = setInterval(fetchInquiries, 30000) // new messages show without refreshing
     return () => clearInterval(t)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -143,6 +158,10 @@ export default function CRMPage() {
             {pendingCount > 0 && (
               <Badge variant="destructive" className="bg-red-500 text-[10px] px-1.5 py-0 rounded-full">{pendingCount}</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="deletions" className="rounded-none border-b-2 border-transparent data-[state=active]:border-orange-600 data-[state=active]:shadow-none data-[state=active]:bg-transparent px-2 py-3 flex items-center gap-2">
+            Deletion Requests
+            {deletions.some((d) => d.status === 'pending') && <Badge variant="destructive" className="h-5 px-1.5">{deletions.filter((d) => d.status === 'pending').length}</Badge>}
           </TabsTrigger>
         </TabsList>
         
@@ -348,7 +367,32 @@ export default function CRMPage() {
           </Card>
         </div>
       </TabsContent>
-    </Tabs>
+            <TabsContent value="deletions" className="flex-1 mt-0 min-h-0 overflow-y-auto">
+          <p className="mb-3 text-sm text-slate-500">Customers who tapped <b>Delete my account</b> in the app. Their app data is already wiped on the phone and notifications stopped. Remove their orders/records from your other systems if required, then mark done.</p>
+          {deletions.length === 0 ? (
+            <div className="p-8 text-center text-slate-500">No deletion requests.</div>
+          ) : (
+            <div className="space-y-3">
+              {deletions.map((d) => (
+                <Card key={d.id} className="border-none shadow-sm">
+                  <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="font-semibold">{d.name || 'Customer'} <span className="text-xs font-normal text-slate-500">· {new Date(d.createdAt).toLocaleString()}</span></div>
+                      <div className="break-all text-xs text-slate-500">{[d.phone, d.email, d.userId].filter(Boolean).join(' · ')}</div>
+                      {d.reason && <div className="mt-1 text-sm text-slate-700">Reason: {d.reason}</div>}
+                    </div>
+                    {d.status === 'pending' ? (
+                      <Button size="sm" variant="outline" onClick={() => markDeleted(d.id)}>Mark done</Button>
+                    ) : (
+                      <Badge variant="secondary" className="w-fit bg-green-100 text-green-800">Done</Badge>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+</Tabs>
   </div>
   )
 }

@@ -8,6 +8,7 @@ export type InboxStatus = 'pending' | 'approved' | 'rejected';
 
 export interface InboxItem {
   id: string;
+  userId?: string;
   name: string;
   city: string;
   phone: string;
