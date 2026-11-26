@@ -30,18 +30,17 @@ export async function POST(request: Request) {
 
     const r = await fetch(`${BIGROCK_API_URL}/send_email_otp.php`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0', ...(process.env.BIGROCK_API_KEY ? { 'X-AJ-Key': process.env.BIGROCK_API_KEY } : {}) },
+      headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0', ...(process.env.BIGROCK_API_KEY ? { 'X-AJ-Key': process.env.BIGROCK_API_KEY.trim().replace(/^["']|["']$/g, '') } : {}) },
       body: JSON.stringify({ email }),
       cache: 'no-store',
     })
     const j: any = await r.json().catch(() => ({}))
-    const code = String(j?.debug_otp || j?.otp || '')
-    if (!/^\d{6}$/.test(code)) return NextResponse.json({ success: false, error: 'Could not send the code. Please try again.' }, { status: 502 })
     if (!String(j?.message || '').toLowerCase().startsWith('otp sent')) {
       return NextResponse.json({ success: false, error: 'Our email could not be sent right now. Please try again in a minute.' }, { status: 502 })
     }
-
-    all[k] = { h: await otpHash(email, code), exp: now + 10 * 60_000, tries: 0, sent: [...sent, now] }
+    // If BigRock shares the code with us we check it here; otherwise BigRock checks it (verify_email_otp.php).
+    const code = String(j?.debug_otp || '')
+    all[k] = { h: /^\d{6}$/.test(code) ? await otpHash(email, code) : '', exp: now + 10 * 60_000, tries: 0, sent: [...sent, now] }
     await writeOtps(all)
     return NextResponse.json({ success: true, message: `Code sent to ${email}` })
   } catch (e: any) {

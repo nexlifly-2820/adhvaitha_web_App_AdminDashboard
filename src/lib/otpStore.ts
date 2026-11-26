@@ -12,7 +12,7 @@ export async function readOtps(): Promise<Record<string, OtpRec>> {
 export async function writeOtps(items: Record<string, OtpRec>) {
   const now = Date.now()
   for (const k of Object.keys(items)) if (items[k].exp < now - 3600_000) delete items[k] // drop old ones
-  await writeDoc('login_otps', { version: 1, items })
+  try { await writeDoc('login_otps', { version: 1, items }) } catch { /* rate limits are best effort */ }
 }
 
 export const otpKey = async (email: string) => (await hmac('otp-key:' + email.trim().toLowerCase())).slice(0, 22)

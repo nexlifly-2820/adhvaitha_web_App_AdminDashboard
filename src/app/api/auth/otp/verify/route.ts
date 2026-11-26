@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { otpHash, otpKey, readOtps, writeOtps } from '@/lib/otpStore'
+import { BIGROCK_API_URL } from '@/lib/api-client'
 import { issueCustomerToken, uidForEmail } from '@/lib/customerAuth'
 
 export const dynamic = 'force-dynamic'
@@ -25,10 +26,29 @@ export async function POST(request: Request) {
 
     const all = await readOtps()
     const k = await otpKey(email)
-    const rec = all[k]
-    if (!rec || rec.exp < Date.now()) return NextResponse.json({ success: false, error: 'This code has expired. Tap "Resend" for a new one.' }, { status: 401 })
+    // if we couldn't save the record, BigRock still has the code
+    const rec = all[k] || { h: '', exp: Date.now() + 60_000, tries: 0, sent: [] }
+    if (rec.exp < Date.now()) return NextResponse.json({ success: false, error: 'This code has expired. Tap "Resend" for a new one.' }, { status: 401 })
     if (rec.tries >= 5) return NextResponse.json({ success: false, error: 'Too many wrong tries. Tap "Resend" for a new code.' }, { status: 429 })
-    if ((await otpHash(email, code)) !== rec.h) {
+    let good = false
+    if (rec.h) {
+      good = (await otpHash(email, code)) === rec.h
+    } else {
+      // BigRock kept the code — ask it (it deletes the code after one correct use)
+      try {
+        const r = await fetch(`${BIGROCK_API_URL}/verify_email_otp.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+          body: JSON.stringify({ email, otp: code }),
+          cache: 'no-store',
+        })
+        const j: any = await r.json().catch(() => ({}))
+        good = j?.success === true || j?.verified === true
+      } catch {
+        return NextResponse.json({ success: false, error: 'Could not check the code. Please try again.' }, { status: 502 })
+      }
+    }
+    if (!good) {
       rec.tries += 1
       await writeOtps(all)
       return NextResponse.json({ success: false, error: 'Wrong code, please try again.' }, { status: 401 })
