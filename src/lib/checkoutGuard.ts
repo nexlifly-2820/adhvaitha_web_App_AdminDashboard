@@ -12,6 +12,11 @@ export async function guardCheckout(request: Request, b: any, order: AppOrder): 
   if (!cust) return NextResponse.json({ success: false, relogin: true, error: 'Please log in again to place your order.' }, { status: 401 })
   const bill = await priceCart({ ...b, coupon: b?.coupon ?? b?.code ?? '' }, { uid: cust.uid, phone: order.customer_phone })
   if (!bill.items.length) return NextResponse.json({ success: false, error: 'Your cart is empty' }, { status: 400 })
+  // the website only sells products from the shared catalogue with a real price
+  if (b?.source === 'web' && bill.unverified > 0) {
+    const bad = bill.items.find((l) => !l.verified)
+    return NextResponse.json({ success: false, priceChanged: true, error: `${bad?.name || 'An item'} is not available online right now. Please remove it from your cart.` }, { status: 409 })
+  }
   const sent = Math.round(Number(b?.total ?? b?.amount) || 0)
   if (bill.couponError) {
     return NextResponse.json({ success: false, couponError: bill.couponError, error: `${bill.couponError}. Please remove the coupon and try again.`, bill: { total: bill.total } }, { status: 409 })

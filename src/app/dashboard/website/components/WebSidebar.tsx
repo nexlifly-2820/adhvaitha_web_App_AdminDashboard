@@ -23,7 +23,7 @@ const navItems = [
   { title: 'Homepage', icon: Home, href: '/dashboard/website/homepage' },
   { title: 'FAQ', icon: HelpCircle, href: '/dashboard/website/faq' },
   { title: 'Gallery', icon: ImageIcon, href: '/dashboard/website/gallery' },
-  { title: 'Product display', icon: BookOpen, href: '/dashboard/website/products' },
+  { title: 'Products (shared)', icon: BookOpen, href: '/dashboard/website/products' },
   { title: 'Recipes display', icon: FileText, href: '/dashboard/website/recipes' },
   { title: 'Recipes page', icon: BookMarked, href: '/dashboard/website/recipes-page' },
   { title: 'Contact info', icon: Phone, href: '/dashboard/website/contact' },

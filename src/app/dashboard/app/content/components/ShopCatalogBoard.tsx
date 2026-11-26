@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { ImageUpload } from '@/components/ImageUpload'
 import { toast } from 'sonner'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Loader2, Plus, RotateCcw, Save, Store, Trash2, X } from 'lucide-react'
-import { BOWL_FIX, DEFAULT_SH_CATEGORIES, DEFAULT_SH_SETTINGS, INGREDIENT_PALETTE, SHOP_PREVIEWS, type ShCategory, type ShProduct, type ShSettings } from './shopCatalogDefaults'
+import { BOWL_FIX, DEFAULT_SH_CATEGORIES, DEFAULT_SH_SETTINGS, INGREDIENT_PALETTE, SHOP_PREVIEWS, WEB_CATEGORIES, type ShCategory, type ShProduct, type ShSettings, type ShWeb } from './shopCatalogDefaults'
 
 const DOC_ID = 'shop_catalog'
 const BRAND = '#9E1424'
@@ -28,7 +28,14 @@ function normProducts(raw: any): ShProduct[] {
     color1: hex(m?.color1, '#8A1A10'), color2: hex(m?.color2, '#2A0806'), enabled: m?.enabled !== false,
     variants: Array.isArray(m?.variants) ? m.variants.map((v: any, k: number) => ({ id: String(v?.id || `v${k + 1}`), label: String(v?.label ?? ''), price: num(v?.price), mrp: num(v?.mrp), inStock: v?.inStock !== false })) : [],
     ...pageFields(m),
+    ...(m?.web && typeof m.web === 'object' ? { web: normWeb(m.web) } : {}),
   }))
+}
+function normWeb(w: any): ShWeb {
+  return {
+    show: w?.show === true, category: String(w?.category ?? ''), image: String(w?.image ?? ''), badge: String(w?.badge ?? ''),
+    ...(w?.sourceId ? { sourceId: String(w.sourceId) } : {}), ...(w?.sourceName ? { sourceName: String(w.sourceName) } : {}),
+  }
 }
 // product-page details; missing ones are filled from the default catalogue entry of the same product
 function pageFields(m: any) {
@@ -101,8 +108,10 @@ export function ShopCatalogBoard() {
       if (!c.image) return toast.error(`${c.name}: the bowl image for the turntable is needed`)
       for (const [i, x] of c.products.entries()) {
         if (!x.name.trim()) return toast.error(`${c.name} product ${i + 1}: name is needed`)
-        if (!x.image) return toast.error(`${x.name}: image is needed`)
-        if (!x.variants.length || x.variants.some((v) => !v.label.trim() || v.price <= 0)) return toast.error(`${x.name}: every size needs a name and a price`)
+        if (x.enabled && !x.image) return toast.error(`${x.name}: image is needed`)
+        if (!x.variants.length || x.variants.some((v) => !v.label.trim())) return toast.error(`${x.name}: every size needs a name`)
+        if (x.enabled && x.variants.some((v) => v.price <= 0)) return toast.error(`${x.name}: every size needs a price to show in the app (or untick "Show in app")`)
+        if (x.web?.show && !x.web.image && !x.image) return toast.error(`${x.name}: add a website photo`)
         const id = x.id || slug(x.name)
         if (ids.has(id)) return toast.error(`${x.name}: appears twice — remove one`)
         ids.add(id)
@@ -274,7 +283,8 @@ export function ShopCatalogBoard() {
                         <div key={x.id + j} onClick={() => { setPi(j); setIngPick(false) }} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1.5 text-sm ${pi === j ? 'border-red-800 bg-red-50 dark:bg-red-950/30' : ''} ${x.enabled ? '' : 'opacity-50'}`}>
                           {preview(x.image) && <img src={preview(x.image)} alt="" className="h-7 w-7 object-contain" />}
                           <span className="flex-1 truncate font-medium">{j + 1}. {x.name || 'Untitled'}</span>
-                          {!x.enabled && <span className="text-[10px]">hidden</span>}
+                          {!x.enabled && <span className="text-[10px]">app hidden</span>}
+                          {x.web?.show && <span className="text-[10px]" title="Shown on the website">🌐</span>}
                           <span className="text-xs text-stone-500">₹{x.variants[0]?.price ?? '-'}</span>
                         </div>
                       ))}
@@ -383,6 +393,8 @@ export function ShopCatalogBoard() {
                     ))}
                     <Button size="sm" variant="outline" disabled={prod.variants.length >= 5} onClick={() => updProd({ variants: [...prod.variants, { id: `v${Date.now()}`, label: '', price: 0, mrp: 0, inStock: true }] })}><Plus className="mr-1 h-4 w-4" /> Add size</Button>
                   </div>
+
+                  <WebsiteSection prod={prod} onChange={(web) => updProd({ web })} />
                 </div>
               )}
             </div>
@@ -390,5 +402,40 @@ export function ShopCatalogBoard() {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+
+// --- Website details (same product, shown on adhvaithafoods.in). The app ignores these. ---
+function WebsiteSection({ prod, onChange }: { prod: ShProduct; onChange: (w: ShWeb) => void }) {
+  const w: ShWeb = prod.web || { show: false, category: '', image: '', badge: '' }
+  const set = (patch: Partial<ShWeb>) => onChange({ ...w, ...patch })
+  const noPrice = prod.variants.every((v) => !(v.price > 0))
+  return (
+    <div className="space-y-2 rounded-lg border border-sky-200 bg-sky-50/40 p-3 dark:border-sky-900 dark:bg-sky-950/20">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="text-xs font-bold">🌐 Website (adhvaithafoods.in)</div>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={w.show} onChange={(e) => set({ show: e.target.checked })} /> Show on website</label>
+      </div>
+      <p className="text-[11px] text-muted-foreground">Name, description, sizes, prices and stock above are shared with the app. {w.show && noPrice ? 'No prices yet — the website shows it without “Add to cart”.' : ''}</p>
+      {w.show && (
+        <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
+          <div>
+            <ImageUpload value={w.image} onChange={(url: string) => set({ image: url })} folder="shop" maxSizeMB={3} />
+            <div className="mt-1 text-[10px] text-muted-foreground">Website photo (brass bowl, cream or transparent background). Empty = app photo.</div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div>
+              <label className="text-xs font-semibold">Website category</label>
+              <select value={w.category} onChange={(e) => set({ category: e.target.value })} className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm">
+                <option value="">Choose…</option>
+                {WEB_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div><label className="text-xs font-semibold">Badge (optional)</label><Input value={w.badge} onChange={(e) => set({ badge: e.target.value })} placeholder="Bestseller" /></div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

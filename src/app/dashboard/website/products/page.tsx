@@ -1,49 +1,22 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useCallback } from "react";
-import { ProductsTable, WebsiteProduct } from "@/components/website/ProductsTable";
-import { AddProductDialog } from "@/components/website/AddProductDialog";
+// Website → Products: the ONE shared product list (same editor as App → Content → Shop catalogue).
+import { Toaster } from 'sonner'
+import { ShopCatalogBoard } from '@/app/dashboard/app/content/components/ShopCatalogBoard'
 
-export default function WebsiteProductsPage() {
-  const [products, setProducts] = useState<WebsiteProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/dashboard/website/api/get-website-products');
-      const result = await response.json();
-      if (result.success) {
-        setProducts(result.data);
-      } else {
-        console.error("Failed to fetch products:", result.error);
-      }
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
+export default function SharedProductsPage() {
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] p-8 pt-6 space-y-6 overflow-hidden">
-      <div className="flex items-center justify-between shrink-0">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Website Products</h2>
-          <p className="text-muted-foreground mt-1">
-            Manage the products displayed on the public website menu.
-          </p>
-        </div>
-        <AddProductDialog onProductAdded={fetchProducts} />
+    <div className="p-3 sm:p-6 space-y-4">
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Products (shared with the app)</h2>
+        <p className="text-slate-500 mt-1 text-sm">
+          Edit once, both update: name, description, sizes, prices and stock are the same in the app and on adhvaithafoods.in.
+          Open a product and use its <b>🌐 Website</b> box to show it on the website, pick the website category and bowl photo.
+          “Show in app” only controls the app.
+        </p>
       </div>
-
-      <div className="flex-1 overflow-hidden">
-        <ProductsTable data={products} isLoading={isLoading} onRefresh={fetchProducts} />
-      </div>
+      <ShopCatalogBoard />
+      <Toaster richColors position="top-center" />
     </div>
-  );
+  )
 }

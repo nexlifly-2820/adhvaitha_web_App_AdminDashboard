@@ -1,7 +1,10 @@
 // Shop catalogue (Shop tab: lazy susan + category decks) defaults — used by the admin board
 export type ShVariant = { id: string; label: string; price: number; mrp: number; inStock: boolean }
 export type ShIngredient = { name: string; image: string }
-export type ShProduct = { id: string; name: string; image: string; description: string; tag: string; cureNote: string; spice: number; rating: number; color1: string; color2: string; enabled: boolean; variants: ShVariant[]; ingredients: ShIngredient[]; process: string; processText: string; origin: string; shelfLife: string; storage: string; highlight: string; features: string[] }
+// Website details for the same product (the app ignores these). show = sold/shown on adhvaithafoods.in
+export type ShWeb = { show: boolean; category: string; image: string; badge: string; sourceId?: string; sourceName?: string }
+export const WEB_CATEGORIES = ['Prepared Foods', 'Ready-to-eat savouries', 'Salts, spices, soups', 'Indian Sweets & Snacks']
+export type ShProduct = { web?: ShWeb; id: string; name: string; image: string; description: string; tag: string; cureNote: string; spice: number; rating: number; color1: string; color2: string; enabled: boolean; variants: ShVariant[]; ingredients: ShIngredient[]; process: string; processText: string; origin: string; shelfLife: string; storage: string; highlight: string; features: string[] }
 export type ShCategory = { id: string; slug: string; name: string; label: string; subtitle: string; deckTitle: string; image: string; color1: string; color2: string; color3: string; enabled: boolean; products: ShProduct[] }
 export type ShSettings = { enabled: boolean; eyebrow: string; titleStart: string; titleAccent: string; hint: string; products: boolean; artisanName: string; artisanSince: string; artisanPhoto: string; artisanQuote: string }
 

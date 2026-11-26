@@ -1,20 +1,33 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
-type Product = { id: string; name: string; image: string; categoryName: string; hidden: boolean; variants: { label: string; price: number; inStock: boolean }[] }
+type Product = { id: string; name: string; onWeb: boolean }
 
 export default function WebStorePage() {
   const [shopEnabled, setShopEnabled] = useState(true)
   const [codEnabled, setCodEnabled] = useState(true)
   const [notice, setNotice] = useState('')
   const [products, setProducts] = useState<Product[]>([])
-  const [hidden, setHidden] = useState<Set<string>>(new Set())
-  const [q, setQ] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [linking, setLinking] = useState(false)
+  const [linkMsg, setLinkMsg] = useState('')
+
+  const linkProducts = async () => {
+    if (!confirm('Link the website products into the shared product list? The app will not change. Close any open Shop catalogue editor first.')) return
+    setLinking(true); setLinkMsg('')
+    try {
+      const r = await fetch('/dashboard/website/api/import-products', { method: 'POST' })
+      const j = await r.json()
+      setLinkMsg(j.success
+        ? `Done: ${j.linked} linked to app products, ${j.added} website-only products added (hidden in app, add prices to sell), ${j.skipped} already linked, ${j.notOnWeb} app products kept off the website.`
+        : (j.error || 'Could not link'))
+    } catch { setLinkMsg('Could not link. Check your internet.') }
+    setLinking(false)
+  }
 
   useEffect(() => {
     (async () => {
@@ -27,21 +40,19 @@ export default function WebStorePage() {
           setShopEnabled(s.data.shopEnabled !== false)
           setCodEnabled(s.data.codEnabled !== false)
           setNotice(s.data.notice || '')
-          setHidden(new Set(s.data.hidden || []))
         }
         if (Array.isArray(c?.products)) setProducts(c.products)
       } finally { setLoading(false) }
     })()
   }, [])
 
-  const shown = useMemo(() => products.filter((p) => !q || p.name.toLowerCase().includes(q.toLowerCase())), [products, q])
 
   const save = async () => {
     setSaving(true); setMsg('')
     try {
       const r = await fetch('/dashboard/website/api/store', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shopEnabled, codEnabled, notice, hidden: [...hidden] }),
+        body: JSON.stringify({ shopEnabled, codEnabled, notice }),
       })
       const j = await r.json()
       setMsg(j.success ? 'Saved. The website updates within a minute.' : (j.error || 'Could not save'))
@@ -49,7 +60,6 @@ export default function WebStorePage() {
     setSaving(false)
   }
 
-  const toggle = (id: string) => setHidden((h) => { const n = new Set(h); if (n.has(id)) n.delete(id); else n.add(id); return n })
 
   if (loading) return <div className="p-6">Loading…</div>
 
@@ -76,22 +86,21 @@ export default function WebStorePage() {
       </div>
 
       <div className="bg-white rounded-xl border p-4 sm:p-6 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h3 className="font-semibold">Products sold on the website <span className="text-slate-400 font-normal">({products.length - hidden.size} of {products.length})</span></h3>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="border rounded-lg p-2 text-sm w-full sm:w-60" />
+        <h3 className="font-semibold">Products (shared with the app)</h3>
+        <p className="text-sm text-slate-500">
+          There is one product list for the app and the website. Edit name, description, sizes, prices and stock once — both update.
+          Each product has a <b>🌐 Website</b> box (show on website, website category, bowl photo, badge). The app ignores it.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/dashboard/website/products" className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700">Edit products</Link>
+          <button onClick={linkProducts} disabled={linking} className="px-4 py-2 rounded-lg border text-sm font-semibold hover:bg-slate-50 disabled:opacity-50">{linking ? 'Linking…' : 'Link website products (one time)'}</button>
         </div>
-        <p className="text-xs text-slate-500">Untick a product to stop selling it on the website only. It stays in the app.</p>
-        <div className="divide-y max-h-[55vh] overflow-y-auto">
-          {shown.map((p) => (
-            <label key={p.id} className="flex items-center gap-3 py-2 cursor-pointer">
-              <input type="checkbox" className="h-4 w-4 shrink-0" checked={!hidden.has(p.id)} onChange={() => toggle(p.id)} />
-              <div className="min-w-0 flex-1">
-                <div className="font-medium text-sm truncate">{p.name}</div>
-                <div className="text-xs text-slate-500 truncate">{p.categoryName} · {p.variants.map((v) => `${v.label} ₹${v.price}${v.inStock ? '' : ' (out)'}`).join(' · ')}</div>
-              </div>
-            </label>
-          ))}
-        </div>
+        <p className="text-xs text-slate-500">
+          “Link website products” joins the products currently on the website into the shared list: matching products get their website photo and category;
+          website-only products are added <b>hidden in the app</b> with sizes but no prices (add prices to sell them). Safe to press again.
+        </p>
+        {linkMsg && <p className="text-sm text-slate-700">{linkMsg}</p>}
+        {products.length > 0 && <p className="text-xs text-slate-500">On the website now: {products.filter((p: any) => p.onWeb).length} products.</p>}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
