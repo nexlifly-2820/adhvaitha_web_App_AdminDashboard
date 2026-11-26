@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   Search, Check, Clock, Package, Truck, Home,
   X, ChevronRight, Phone, MapPin, CreditCard, User, AlertCircle,
@@ -168,6 +169,9 @@ export default function OrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('All');
   const [search, setSearch] = useState('');
+  const pathname = usePathname() || '';
+  // opened from Website Management → show website orders first
+  const [source, setSource] = useState<'all' | 'app' | 'web'>(pathname.includes('/website') ? 'web' : 'all');
   const [showToast, setShowToast] = useState(false);
   const [toastOrder, setToastOrder] = useState<Order | null>(null);
 
@@ -354,6 +358,7 @@ export default function OrdersPage() {
 
   const filteredOrders = orders.filter(o => {
     if (filter !== 'All' && o.status !== filter.toLowerCase().replace(/ /g, '_')) return false;
+    if (source !== 'all' && (o.rawOrder?.source === 'web' ? 'web' : 'app') !== source) return false;
     if (search && !o.customer.toLowerCase().includes(search.toLowerCase()) && !o.id.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -375,6 +380,8 @@ export default function OrdersPage() {
           setFilter={setFilter}
           search={search}
           setSearch={setSearch}
+          source={source}
+          setSource={setSource}
           selectedOrderId={selectedOrderId}
           onSelectOrder={setSelectedOrderId}
         />
@@ -416,7 +423,7 @@ export default function OrdersPage() {
 
 function OrderList({
   orders, allOrdersCount, pendingCount, filter, setFilter,
-  search, setSearch, selectedOrderId, onSelectOrder
+  search, setSearch, selectedOrderId, onSelectOrder, source, setSource
 }: any) {
   const tabs = ['All', 'Pending', 'Accepted', 'Packing', 'Shipped', 'Out for Delivery', 'Delivered', 'Rejected'];
 
@@ -449,6 +456,21 @@ function OrderList({
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
             />
           </div>
+
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+          {([['all', 'All orders'], ['app', '📱 App'], ['web', '🌐 Website']] as const).map(([k, label]) => (
+            <button
+              key={k}
+              onClick={() => setSource(k)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap border transition-colors ${source === k
+                ? 'bg-orange-500 border-orange-500 text-white'
+                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {tabs.map(t => (
@@ -516,7 +538,10 @@ function OrderCard({ order, isSelected, onClick }: { order: Order, isSelected: b
             <p className="font-bold text-sm text-slate-800 truncate tracking-tight">
               {order.customer.length > 20 && !order.customer.includes(' ') ? `User (${order.customer.substring(0, 5)})` : order.customer}
             </p>
-            <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5 uppercase tracking-wider">{order.id}</p>
+            <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5 uppercase tracking-wider">
+              <span className={`mr-1.5 inline-block rounded px-1.5 py-px text-[10px] font-bold normal-case tracking-normal ${order.rawOrder?.source === 'web' ? 'bg-sky-100 text-sky-700' : 'bg-orange-100 text-orange-700'}`}>{order.rawOrder?.source === 'web' ? 'Website' : 'App'}</span>
+              {order.id}
+            </p>
           </div>
         </div>
         <div className="text-right shrink-0">
@@ -717,7 +742,7 @@ function OrderDetail({ order, onUpdateStatus, onUpdateHeritage, onRefresh }: { o
           </div>
 
           {/* Courier, refund and damage report */}
-          {order.rawOrder?.source === 'app' && <ShippingRefundPanel order={order} onRefresh={onRefresh} />}
+          {(order.rawOrder?.source === 'app' || order.rawOrder?.source === 'web') && <ShippingRefundPanel order={order} onRefresh={onRefresh} />}
 
           {/* SECTION 4: Items */}
           <OrderItems order={order} />

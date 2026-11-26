@@ -10,16 +10,22 @@ import {
   MessageSquare, 
   Phone,
   Home,
-  HelpCircle
+  HelpCircle,
+  ShoppingBag,
+  Store,
+  BookMarked
 } from 'lucide-react'
 
 const navItems = [
   { title: 'Overview', icon: Globe, href: '/dashboard/website' },
+  { title: 'Website orders', icon: ShoppingBag, href: '/dashboard/website/orders' },
+  { title: 'Online store', icon: Store, href: '/dashboard/website/store' },
   { title: 'Homepage', icon: Home, href: '/dashboard/website/homepage' },
   { title: 'FAQ', icon: HelpCircle, href: '/dashboard/website/faq' },
   { title: 'Gallery', icon: ImageIcon, href: '/dashboard/website/gallery' },
   { title: 'Product display', icon: BookOpen, href: '/dashboard/website/products' },
   { title: 'Recipes display', icon: FileText, href: '/dashboard/website/recipes' },
+  { title: 'Recipes page', icon: BookMarked, href: '/dashboard/website/recipes-page' },
   { title: 'Contact info', icon: Phone, href: '/dashboard/website/contact' },
 ]
 
@@ -31,7 +37,7 @@ export default function WebSidebar() {
       {navItems.map((item) => {
         const isActive = item.href === '/dashboard/website' 
           ? pathname === item.href 
-          : pathname.startsWith(item.href);
+          : pathname === item.href || pathname.startsWith(item.href + '/');
 
         return (
           <Link

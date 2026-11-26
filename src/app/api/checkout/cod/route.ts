@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { orderFromCheckout, upsertAppOrder, mirrorToOrdersPhp } from '@/lib/appOrders';
 import { notifyUser } from '@/lib/fcm';
 import { guardCheckout } from '@/lib/checkoutGuard';
+import { readDoc } from '@/lib/reviewInbox';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,10 @@ export async function POST(request: Request) {
   try {
     const b = await request.json().catch(() => ({}));
     const order = orderFromCheckout(b, 'COD');
+    if (order.source === 'web') {
+      const store = await readDoc('web_store').catch(() => null);
+      if (store?.codEnabled === false) return NextResponse.json({ success: false, error: 'Cash on Delivery is not available on the website right now. Please pay online.' }, { status: 400 });
+    }
     const stop = await guardCheckout(request, b, order);
     if (stop) return stop;
     if (!order.items.length) return NextResponse.json({ success: false, error: 'Your cart is empty' }, { status: 400 });

@@ -26,7 +26,7 @@ export interface AppOrder {
   failure_reason?: string;
   created_at: string;
   updated_at?: string;
-  source: 'app';
+  source: 'app' | 'web';
   [k: string]: any;
 }
 
@@ -101,7 +101,7 @@ export function orderFromCheckout(b: any, method: string, extra: Partial<AppOrde
     paymentStatus: method === 'COD' ? 'cod' : 'pending',
     status: method === 'COD' ? 'Placed' : 'Payment pending',
     created_at: new Date().toISOString(),
-    source: 'app',
+    source: b?.source === 'web' ? 'web' : 'app',
     ...extra,
   };
 }
