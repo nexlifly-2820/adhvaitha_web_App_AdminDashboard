@@ -16,6 +16,10 @@ export type HomeOffer = {
   sub: string
   emoji: string
   theme: string
+  type: 'percent' | 'flat' | 'freeship'
+  value: number
+  minOrder: number
+  maxDiscount: number
   enabled: boolean
 }
 
@@ -31,11 +35,39 @@ export const OFFER_THEMES: Record<string, [string, string, string]> = {
 }
 
 export const DEFAULT_HOME_OFFERS: HomeOffer[] = [
-  { code: 'FIRST30', label: 'WELCOME OFFER', title: '30% OFF', sub: 'On your first order above ₹500', emoji: '🎁', theme: 'red', enabled: true },
-  { code: 'FREESHIP', label: 'FREE DELIVERY', title: '₹0 DELIVERY', sub: 'On all orders · no minimum', emoji: '🛵', theme: 'green', enabled: true },
-  { code: 'PICKLE100', label: 'PICKLE SPECIAL', title: '₹100 OFF', sub: 'On pickle orders above ₹999', emoji: '🫙', theme: 'orange', enabled: true },
-  { code: 'FESTIVE20', label: 'FESTIVE OFFER', title: '20% OFF', sub: 'On orders above ₹1500', emoji: '🪔', theme: 'purple', enabled: true },
+  { code: 'FIRST30', label: 'WELCOME OFFER', title: '30% OFF', sub: 'On your first order above ₹500', emoji: '🎁', theme: 'red', type: 'percent', value: 30, minOrder: 500, maxDiscount: 0, enabled: true },
+  { code: 'FREESHIP', label: 'FREE DELIVERY', title: '₹0 DELIVERY', sub: 'On all orders · no minimum', emoji: '🛵', theme: 'green', type: 'freeship', value: 0, minOrder: 0, maxDiscount: 0, enabled: true },
+  { code: 'PICKLE100', label: 'PICKLE SPECIAL', title: '₹100 OFF', sub: 'On pickle orders above ₹999', emoji: '🫙', theme: 'orange', type: 'flat', value: 100, minOrder: 999, maxDiscount: 0, enabled: true },
+  { code: 'FESTIVE20', label: 'FESTIVE OFFER', title: '20% OFF', sub: 'On orders above ₹1500', emoji: '🪔', theme: 'purple', type: 'percent', value: 20, minOrder: 1500, maxDiscount: 0, enabled: true },
 ]
+
+// Old saved offers had no discount rule — read it from the title/sub text (same as the app does).
+function guessRule(x: any): Pick<HomeOffer, 'type' | 'value' | 'minOrder' | 'maxDiscount'> {
+  const t = String(x.title ?? '').toUpperCase()
+  const code = String(x.code ?? '').toUpperCase()
+  let type: HomeOffer['type'] = x.type === 'flat' || x.type === 'freeship' || x.type === 'percent' ? x.type : 'percent'
+  let value = Number(x.value) || 0
+  if (!x.type) {
+    const pct = t.match(/(\d+)\s*%/)
+    const rs = t.match(/₹\s*(\d+)/)
+    if (pct) { type = 'percent'; value = Number(pct[1]) }
+    else if (t.includes('DELIVERY') || t.includes('SHIP') || code.includes('SHIP') || (rs && rs[1] === '0')) type = 'freeship'
+    else if (rs) { type = 'flat'; value = Number(rs[1]) }
+  }
+  let minOrder = Number(x.minOrder)
+  if (x.minOrder == null || Number.isNaN(minOrder)) {
+    const m = String(x.sub ?? '').match(/(?:above|over|min[a-z]*)\D{0,6}(\d[\d,]*)/i)
+    minOrder = m ? Number(m[1].replace(/,/g, '')) : 0
+  }
+  return { type, value, minOrder, maxDiscount: Number(x.maxDiscount) || 0 }
+}
+
+export function ruleText(o: HomeOffer) {
+  const min = o.minOrder > 0 ? ` on orders ≥ ₹${o.minOrder}` : ' · no minimum'
+  if (o.type === 'freeship') return `Free delivery${min}`
+  if (o.type === 'flat') return `₹${o.value} off${min}`
+  return `${o.value}% off${o.maxDiscount > 0 ? ` (max ₹${o.maxDiscount})` : ''}${min}`
+}
 
 const EMOJIS = ['🎁', '🛵', '🫙', '🪔', '🎉', '🔥', '💝', '🌶️', '🍬', '🥭', '⭐', '🏷️']
 const DOC_ID = 'home_offers'
@@ -81,6 +113,7 @@ export function HomeOffersManager() {
               sub: String(x.sub ?? ''),
               emoji: String(x.emoji ?? '🎁'),
               theme: OFFER_THEMES[x.theme] ? String(x.theme) : 'red',
+              ...guessRule(x),
               enabled: x.enabled !== false,
             })),
           )
@@ -106,6 +139,9 @@ export function HomeOffersManager() {
   const save = async () => {
     const clean = items.map((x) => ({ ...x, code: x.code.trim().toUpperCase(), title: x.title.trim() }))
     if (clean.some((x) => !x.code || !x.title)) return toast.error('Every offer needs a code and a big title')
+    if (new Set(clean.map((x) => x.code)).size !== clean.length) return toast.error('Two offers have the same code')
+    if (clean.some((x) => x.type !== 'freeship' && !(x.value > 0))) return toast.error('Set the discount amount for every offer')
+    if (clean.some((x) => x.type === 'percent' && x.value > 90)) return toast.error('Percent discount must be 90% or less')
     setSaving(true)
     try {
       const res = await fetch('/dashboard/app/api/app-data', {
@@ -133,7 +169,7 @@ export function HomeOffersManager() {
           </CardTitle>
           <CardDescription>
             The colourful coupon cards on the app's home page. Customers tap <b>Copy</b> to copy the code and apply it at checkout.
-            Note: the discount itself comes from the app's coupon rules — currently FIRST30, FREESHIP, PICKLE100 and FESTIVE20.
+            The same coupons show in the app's <b>My Coupons</b> page and at checkout, using the discount rule you set on each one.
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2 sm:shrink-0">
@@ -177,6 +213,34 @@ export function HomeOffersManager() {
                     <label className="text-xs font-semibold">Line under the title</label>
                     <Input value={x.sub} maxLength={40} onChange={(e) => update(i, { sub: e.target.value })} placeholder="On your first order above ₹500" />
                   </div>
+                  <div className="md:col-span-3 grid grid-cols-2 gap-2 rounded-lg border border-dashed border-rose-200 bg-rose-50/40 p-2 sm:grid-cols-4">
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="text-xs font-semibold">Discount type</label>
+                      <select value={x.type} onChange={(e) => update(i, { type: e.target.value as HomeOffer['type'] })}
+                        className="h-9 w-full rounded-md border bg-white px-2 text-sm">
+                        <option value="percent">% off</option>
+                        <option value="flat">₹ flat off</option>
+                        <option value="freeship">Free delivery</option>
+                      </select>
+                    </div>
+                    {x.type !== 'freeship' && (
+                      <div>
+                        <label className="text-xs font-semibold">{x.type === 'percent' ? 'Percent (%)' : 'Amount (₹)'}</label>
+                        <Input type="number" min={0} value={x.value} onChange={(e) => update(i, { value: Number(e.target.value) || 0 })} />
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-xs font-semibold">Min order (₹)</label>
+                      <Input type="number" min={0} value={x.minOrder} onChange={(e) => update(i, { minOrder: Number(e.target.value) || 0 })} />
+                    </div>
+                    {x.type === 'percent' && (
+                      <div>
+                        <label className="text-xs font-semibold">Max discount (₹, 0 = none)</label>
+                        <Input type="number" min={0} value={x.maxDiscount} onChange={(e) => update(i, { maxDiscount: Number(e.target.value) || 0 })} />
+                      </div>
+                    )}
+                    <p className="col-span-2 text-xs text-rose-800 sm:col-span-4">Customer gets: <b>{ruleText(x)}</b></p>
+                  </div>
                   <div>
                     <label className="text-xs font-semibold">Icon</label>
                     <div className="flex flex-wrap gap-1">
@@ -207,7 +271,7 @@ export function HomeOffersManager() {
             ))}
 
             <Button variant="outline" className="w-full" disabled={items.length >= 8}
-              onClick={() => setItems((p) => [...p, { code: '', label: 'NEW OFFER', title: '', sub: '', emoji: '🎉', theme: 'blue', enabled: true }])}>
+              onClick={() => setItems((p) => [...p, { code: '', label: 'NEW OFFER', title: '', sub: '', emoji: '🎉', theme: 'blue', type: 'percent', value: 10, minOrder: 0, maxDiscount: 0, enabled: true }])}>
               <Plus className="mr-1 h-4 w-4" /> Add offer {items.length >= 8 && '(max 8)'}
             </Button>
           </>

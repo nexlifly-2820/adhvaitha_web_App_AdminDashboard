@@ -1,33 +1,60 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { fetchApi, postApi } from '@/lib/api-client';
+import { fetchApi } from '@/lib/api-client';
+import { readContacts, writeContacts } from '@/lib/contactInbox';
 
-// GET: Fetch all inquiries
+// GET: all Contact Us messages (new app inbox + any old ones from inquiries.php)
 export async function GET() {
   try {
-    const data = await fetchApi('/inquiries.php');
+    const items = await readContacts();
+    let legacy: any[] = [];
+    try {
+      const old = await fetchApi('/inquiries.php');
+      const arr = Array.isArray(old) ? old : Array.isArray(old?.data) ? old.data : [];
+      legacy = arr.map((x: any) => ({
+        id: String(x.id ?? ''),
+        userId: String(x.userId ?? x.user_id ?? ''),
+        userName: String(x.userName ?? x.name ?? ''),
+        email: String(x.email ?? ''),
+        phone: String(x.phone ?? ''),
+        message: String(x.message ?? ''),
+        status: x.status === 'resolved' ? 'resolved' : 'pending',
+        createdAt: String(x.createdAt ?? x.created_at ?? ''),
+        adminReply: x.adminReply ?? x.admin_reply,
+      }));
+    } catch {}
+    const ids = new Set(items.map((x) => x.id));
+    const data = [...items, ...legacy.filter((x) => x.id && !ids.has(x.id))];
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: any) {
-    console.error('Error fetching inquiries:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-// POST: Update inquiry
+// POST: mark resolved / reopen  { id, status, adminReply }
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    // Assuming inquiries.php handles POST for updates too if we modify it, 
-    // Wait, inquiries.php currently only handles INSERT. 
-    // To update, we should pass it to our PHP script or handle it here. 
-    // But we didn't add update logic to inquiries.php!
-    // Since we can't change PHP easily, let's just pretend it succeeds or we skip it, but wait! The CRM needs to resolve it.
-    // I didn't add UPDATE to inquiries.php. Let's just return a success mock for now, or if they add it later it will work.
-    // Or we can execute a direct MySQL query if we really had to, but we only have HTTP access.
-    
-    // For now, let's just return success so the UI works.
-    return NextResponse.json({ success: true, message: 'Inquiry resolved successfully' }, { status: 200 });
+    const b = await request.json();
+    const items = await readContacts();
+    const i = items.findIndex((x) => x.id === b.id);
+    if (i < 0) return NextResponse.json({ success: false, error: 'Inquiry not found' }, { status: 404 });
+    items[i] = {
+      ...items[i],
+      status: b.status === 'pending' ? 'pending' : 'resolved',
+      adminReply: String(b.adminReply ?? '').slice(0, 1500),
+      resolvedAt: new Date().toISOString(),
+    };
+    await writeContacts(items);
+    return NextResponse.json({ success: true, message: 'Inquiry updated' }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
+}
+
+// DELETE ?id=
+export async function DELETE(request: Request) {
+  const id = new URL(request.url).searchParams.get('id');
+  const items = await readContacts();
+  await writeContacts(items.filter((x) => x.id !== id));
+  return NextResponse.json({ success: true });
 }

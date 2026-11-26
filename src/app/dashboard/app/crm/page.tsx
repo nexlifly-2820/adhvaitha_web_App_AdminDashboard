@@ -41,7 +41,7 @@ export default function CRMPage() {
       const res = await fetch('/dashboard/app/api/inquiries')
       const result = await res.json()
       if (result.success && result.data) {
-        const data = result.data as Inquiry[]
+        const data = (result.data as Inquiry[]).map((x) => ({ ...x, id: String(x.id) }))
         data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         setInquiries(data)
         if (selectedInquiry) {
@@ -75,6 +75,8 @@ export default function CRMPage() {
   useEffect(() => {
     fetchInquiries()
     fetchUsers()
+    const t = setInterval(fetchInquiries, 30000) // new messages show without refreshing
+    return () => clearInterval(t)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleResolve = async () => {
@@ -110,6 +112,8 @@ export default function CRMPage() {
   const filteredInquiries = inquiries.filter(i => 
     i.userName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     i.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    i.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    i.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     i.id.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -213,9 +217,9 @@ export default function CRMPage() {
         </TabsContent>
         
         <TabsContent value="inquiries" className="flex-1 mt-0 min-h-0">
-          <div className="flex h-full w-full gap-6">
+          <div className="flex h-full w-full flex-col gap-4 md:flex-row md:gap-6">
             {/* Left Panel: List */}
-            <Card className="w-1/3 flex flex-col border-none shadow-md overflow-hidden min-h-0">
+            <Card className="flex max-h-[40vh] w-full flex-col overflow-hidden border-none shadow-md min-h-0 md:max-h-none md:w-1/3">
               <CardHeader className="pb-4 bg-slate-50 border-b border-slate-100 dark:bg-slate-900/50 dark:border-slate-800">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
@@ -245,6 +249,7 @@ export default function CRMPage() {
                     <span className="font-semibold text-sm truncate max-w-[150px]">{inquiry.userName || 'Anonymous User'}</span>
                     <span className="text-[10px] text-slate-500">{new Date(inquiry.createdAt || Date.now()).toLocaleDateString()}</span>
                   </div>
+                  {inquiry.phone && <p className="text-[11px] text-slate-500 mb-0.5">📞 {inquiry.phone}</p>}
                   <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1 mb-2">{inquiry.message}</p>
                   <div className="flex items-center gap-2">
                     {inquiry.status === 'pending' ? (
@@ -261,19 +266,23 @@ export default function CRMPage() {
       </Card>
 
       {/* Right Panel: Detail */}
-      <Card className="flex-1 flex flex-col border-none shadow-md overflow-hidden bg-white dark:bg-slate-900 relative">
+      <Card className="flex-1 flex flex-col border-none shadow-md overflow-hidden bg-white dark:bg-slate-900 relative min-h-[50vh] md:min-h-0">
         {selectedInquiry ? (
           <>
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start bg-slate-50/50 dark:bg-slate-900/50">
               <div>
                 <h3 className="text-xl font-bold">{selectedInquiry.userName || 'Anonymous User'}</h3>
-                <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
-                  <span>{selectedInquiry.email || 'No email'}</span>
-                  <span>•</span>
-                  <span>{selectedInquiry.phone || 'No phone'}</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500">
+                  {selectedInquiry.phone ? (
+                    <a href={`tel:${selectedInquiry.phone}`} className="font-semibold text-indigo-600 hover:underline">📞 {selectedInquiry.phone}</a>
+                  ) : <span>No phone</span>}
+                  {selectedInquiry.phone && (
+                    <a href={`https://wa.me/${selectedInquiry.phone.replace(/\D/g, '').replace(/^(\d{10})$/, '91$1')}`} target="_blank" rel="noreferrer" className="font-semibold text-green-600 hover:underline">WhatsApp</a>
+                  )}
+                  {selectedInquiry.email ? <a href={`mailto:${selectedInquiry.email}`} className="hover:underline">{selectedInquiry.email}</a> : <span>No email</span>}
                 </div>
               </div>
-              <div className="text-right">
+              <div className="sm:text-right">
                 <span className="text-xs text-slate-500 block mb-1">ID: {selectedInquiry.id}</span>
                 {selectedInquiry.status === 'pending' ? (
                   <Badge variant="outline" className="text-yellow-600 border-yellow-200 bg-yellow-50"><Clock className="w-3 h-3 mr-1" /> Awaiting Reply</Badge>
