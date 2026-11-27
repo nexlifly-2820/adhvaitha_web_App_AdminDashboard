@@ -44,14 +44,14 @@ export const DEFAULT_HOME_CATEGORIES: HomeCategory[] = [
   { label: 'Sweets', image: 'assets/images/cat_sweets.png', badge: '', target: 'sweets', enabled: true },
   { label: 'Podis', image: 'assets/images/cat_podis.png', badge: '', target: 'podis', enabled: true },
   { label: 'Combos', image: 'assets/images/cat_combos.png', badge: '', target: 'combos', enabled: true },
-  { label: 'Offers', image: 'emoji:🎟️', badge: '', target: 'offers', enabled: true },
-  { label: 'Pairing', image: 'emoji:💞', badge: '', target: 'pairing', enabled: true },
-  { label: 'Specials', image: 'emoji:✨', badge: '', target: 'specials', enabled: true },
-  { label: 'Loved', image: 'emoji:❤️', badge: '', target: 'mostloved', enabled: true },
-  { label: 'Bestsellers', image: 'emoji:🏆', badge: '', target: 'bestsellers', enabled: true },
-  { label: 'Kadai', image: 'emoji:🍳', badge: '', target: 'kadai', enabled: true },
-  { label: 'Festive', image: 'emoji:🪔', badge: '', target: 'festive', enabled: true },
-  { label: 'Recent', image: 'emoji:🕘', badge: '', target: 'recent', enabled: true },
+  { label: 'Offers', image: 'assets/images/cat_offers.png', badge: '', target: 'offers', enabled: true },
+  { label: 'Pairing', image: 'assets/images/cat_pairing.png', badge: '', target: 'pairing', enabled: true },
+  { label: 'Specials', image: 'assets/images/cat_specials.png', badge: '', target: 'specials', enabled: true },
+  { label: 'Loved', image: 'assets/images/cat_loved.png', badge: '', target: 'mostloved', enabled: true },
+  { label: 'Bestsellers', image: 'assets/images/cat_bestsellers.png', badge: '', target: 'bestsellers', enabled: true },
+  { label: 'Kadai', image: 'assets/images/cat_kadai.png', badge: '', target: 'kadai', enabled: true },
+  { label: 'Festive', image: 'assets/images/cat_festive.png', badge: '', target: 'festive', enabled: true },
+  { label: 'Recent', image: 'assets/images/cat_recent.png', badge: '', target: 'recent', enabled: true },
 ]
 
 const DOC_ID = 'home_categories'
