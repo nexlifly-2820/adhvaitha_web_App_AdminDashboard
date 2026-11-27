@@ -27,7 +27,7 @@ export async function guardCheckout(request: Request, b: any, order: AppOrder): 
   Object.assign(order, {
     user_id: cust.uid,
     email: order.email || cust.email,
-    items: bill.items.map(({ name, qty, price, weight, image }) => ({ name, qty, price, weight, image })),
+    items: bill.items.map(({ name, qty, price, weight, image, combo }) => ({ name, qty, price, weight, image, ...(combo ? { combo } : {}) })),
     subtotal: bill.subtotal,
     delivery_fee: bill.delivery,
     packing_fee: bill.packing,

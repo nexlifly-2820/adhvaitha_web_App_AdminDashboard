@@ -2,13 +2,15 @@
 import { readDoc } from '@/lib/reviewInbox'
 import { readAppOrders, type AppOrder } from '@/lib/appOrders'
 import { DEFAULT_SH_CATEGORIES } from '@/app/dashboard/app/content/components/shopCatalogDefaults'
+import { DEFAULT_COMBO_PRODUCTS, DEFAULT_COMBO_SETTINGS } from '@/app/dashboard/app/content/components/comboDefaults'
 
 export interface Offer {
   code: string; title: string; sub: string; enabled: boolean
   type: 'percent' | 'flat' | 'freeship'; value: number; minOrder: number; maxDiscount: number
   firstOrderOnly: boolean; oncePerCustomer: boolean; startDate: string; endDate: string; totalLimit: number; category: string
 }
-export interface CartLine { name: string; qty: number; price: number; weight?: string; image?: string; verified?: boolean; category?: string }
+export interface ComboInfo { size: string; jars: string[] }
+export interface CartLine { name: string; qty: number; price: number; weight?: string; image?: string; verified?: boolean; category?: string; combo?: ComboInfo }
 export interface Bill {
   items: CartLine[]; subtotal: number; delivery: number; packing: number; gst: number; discount: number; total: number
   coupon: string | null; couponError: string | null; unverified: number
@@ -102,14 +104,62 @@ export function couponProblem(o: Offer | undefined, ctx: { subtotal: number; lin
 }
 
 /** Re-prices the cart from the catalogue and checks the coupon. */
+// ---------- Amma's Combo Box (Admin → Content → Combo Box, doc "combo_box") ----------
+async function loadCombo() {
+  const d = await readDoc('combo_box').catch(() => null)
+  const v2 = String(d?.version) === '2' && Array.isArray(d?.products) && d.products.length
+  const settings: any = v2 && d.settings ? d.settings : DEFAULT_COMBO_SETTINGS
+  const products: any[] = v2 ? d.products : (DEFAULT_COMBO_PRODUCTS as any[])
+  const jars = Math.max(2, Math.min(4, Math.round(num(settings?.jars)) || 4))
+  const tiers = (Array.isArray(settings?.tiers) ? settings.tiers : [])
+    .map((t: any) => ({ jars: Math.round(num(t?.jars)), percent: num(t?.percent) }))
+    .filter((t: any) => t.jars > 0 && t.percent > 0)
+    .sort((a: any, b: any) => a.jars - b.jars)
+  const byId = new Map<string, any>()
+  for (const p of products) {
+    if (p?.enabled === false || !String(p?.name || '').trim()) continue
+    byId.set(String(p.productId || p.id), p)
+  }
+  return { enabled: settings?.enabled !== false, jars, tiers, byId }
+}
+
+/** Works out a combo box's price exactly like the app: sum of the jar prices for that size minus the tier %. */
+function priceCombo(c: any, combo: Awaited<ReturnType<typeof loadCombo>>): { price: number; jars: string[] } | null {
+  const size = String(c?.size ?? '').trim()
+  const ids: string[] = (Array.isArray(c?.ids) ? c.ids : Array.isArray(c?.productIds) ? c.productIds : []).map(String).slice(0, 8)
+  if (!combo.enabled || !size || ids.length !== combo.jars) return null
+  let sum = 0
+  const jars: string[] = []
+  for (const id of ids) {
+    const p = combo.byId.get(id)
+    const pr = p?.prices?.[size]
+    if (!p || !pr || !(num(pr.price) > 0) || pr.inStock === false) return null
+    sum += num(pr.price)
+    jars.push(String(p.name))
+  }
+  let pct = 0
+  for (const t of combo.tiers) if (ids.length >= t.jars) pct = t.percent
+  const disc = Math.round(sum * pct / 100 * 100) / 100
+  return { price: r2(sum - disc), jars }
+}
+
 export async function priceCart(body: any, who: { uid: string; phone: string }): Promise<Bill & { offers: Offer[]; orders: AppOrder[]; ctx: any }> {
-  const [catalog, fees, offers, orders] = await Promise.all([loadCatalog(), loadDelivery(), loadOffers(), readAppOrders()])
+  const [catalog, fees, offers, orders, combo] = await Promise.all([loadCatalog(), loadDelivery(), loadOffers(), readAppOrders(), loadCombo()])
   let unverified = 0
   const items: CartLine[] = (Array.isArray(body?.items) ? body.items : []).slice(0, 60).map((it: any) => {
     const name = String(it?.name ?? '').replace(/[<>]/g, '').trim().slice(0, 120) || 'Product'
     const qty = Math.min(50, Math.max(1, Math.round(num(it?.qty ?? it?.quantity) || 1)))
     const weight = String(it?.weight ?? '').slice(0, 20)
     const sent = num(it?.price)
+    if (it?.combo && typeof it.combo === 'object') {
+      const cp = priceCombo(it.combo, combo)
+      if (!cp) unverified++
+      return {
+        name, qty, weight, image: String(it?.image ?? '').slice(0, 300), category: 'Combo',
+        price: cp ? cp.price : Math.max(0, sent), verified: !!cp,
+        ...(cp ? { combo: { size: String(it.combo.size), jars: cp.jars } } : {}),
+      }
+    }
     const c = catalog.get(norm(name))
     let price = sent
     let verified = false

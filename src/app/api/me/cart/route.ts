@@ -26,7 +26,7 @@ export async function PUT(request: Request) {
     price: Number(x?.price) || 0,
     category: str(x?.category, 40),
     tempering: x?.tempering === true,
-    note: str(x?.note, 200),
+    note: str(x?.note, 800),
   })).filter((x: any) => x.name)
   await writeDoc(await privateDocId('cart', c.uid), { version: 1, items, updatedAt: new Date().toISOString() })
   return NextResponse.json({ success: true })

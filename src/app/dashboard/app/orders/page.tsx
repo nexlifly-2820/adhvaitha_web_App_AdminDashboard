@@ -13,6 +13,8 @@ import {
 type OrderStatus = 'pending' | 'accepted' | 'packing' | 'shipped' | 'out_for_delivery' | 'delivered' | 'rejected';
 
 type OrderItem = {
+  weight?: string;
+  combo?: { size: string; jars: string[] };
   name: string;
   qty: number;
   price: number;
@@ -205,7 +207,9 @@ export default function OrdersPage() {
           const items: OrderItem[] = (o.products || o.items || []).map((item: any) => ({
             name: item.product_name || item.name || item.title || 'Product',
             qty: Number(item.quantity || item.qty || 1),
-            price: Number(item.price || item.unitPrice || 0)
+            price: Number(item.price || item.unitPrice || 0),
+            weight: item.weight || '',
+            ...(item.combo && Array.isArray(item.combo.jars) ? { combo: { size: String(item.combo.size || ''), jars: item.combo.jars.map(String) } } : {}),
           }));
 
           const address = typeof o.shipping_address === 'string' && o.shipping_address.trim()
@@ -919,11 +923,16 @@ function OrderItems({ order }: { order: Order }) {
           <div key={idx} className="flex justify-between items-center group">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-lg bg-orange-50 flex items-center justify-center text-xl shadow-sm border border-orange-100">
-                {item.name.toLowerCase().includes('pickle') ? '🫙' : '🥫'}
+                {item.combo ? '🎁' : item.name.toLowerCase().includes('pickle') ? '🫙' : '🥫'}
               </div>
               <div>
                 <p className="font-medium text-sm text-slate-900 group-hover:text-[#2563eb] transition-colors">{item.name}</p>
-                <p className="text-xs text-slate-500">₹{item.price} × {item.qty}</p>
+                <p className="text-xs text-slate-500">{item.weight ? `${item.weight} · ` : ''}₹{item.price} × {item.qty}</p>
+                {item.combo && (
+                  <ul className="mt-1 text-xs text-slate-600 list-disc pl-4">
+                    {item.combo.jars.map((j, k) => <li key={k}>{j} · {item.combo!.size}</li>)}
+                  </ul>
+                )}
               </div>
             </div>
             <p className="font-medium text-sm">₹{item.price * item.qty}</p>

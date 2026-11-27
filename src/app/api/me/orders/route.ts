@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       source: o.source || 'app',
       createdAt: o.created_at,
       status: String(o.status || 'Placed'),
-      items: (o.items || []).map((i) => ({ name: i.name, qty: i.qty, price: i.price, weight: i.weight || '', image: i.image || '' })),
+      items: (o.items || []).map((i) => ({ name: i.name, qty: i.qty, price: i.price, weight: i.weight || '', image: i.image || '', ...(i.combo ? { combo: i.combo } : {}) })),
       subtotal: Number(o.subtotal) || 0,
       delivery: Number(o.delivery_fee) || 0,
       packing: Number(o.packing_fee) || 0,
