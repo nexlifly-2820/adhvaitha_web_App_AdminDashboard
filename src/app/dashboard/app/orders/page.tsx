@@ -210,6 +210,7 @@ export default function OrdersPage() {
             price: Number(item.price || item.unitPrice || 0),
             weight: item.weight || '',
             ...(item.combo && Array.isArray(item.combo.jars) ? { combo: { size: String(item.combo.size || ''), jars: item.combo.jars.map(String) } } : {}),
+            ...(item.pair && item.pair.a ? { combo: { size: String(item.pair.label || ''), jars: [String(item.pair.a), String(item.pair.b)] } } : {}),
           }));
 
           const address = typeof o.shipping_address === 'string' && o.shipping_address.trim()

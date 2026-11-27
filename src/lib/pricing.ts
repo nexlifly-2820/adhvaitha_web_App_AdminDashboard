@@ -3,6 +3,7 @@ import { readDoc } from '@/lib/reviewInbox'
 import { readAppOrders, type AppOrder } from '@/lib/appOrders'
 import { DEFAULT_SH_CATEGORIES } from '@/app/dashboard/app/content/components/shopCatalogDefaults'
 import { DEFAULT_COMBO_PRODUCTS, DEFAULT_COMBO_SETTINGS } from '@/app/dashboard/app/content/components/comboDefaults'
+import { DEFAULT_COUPLES } from '@/app/dashboard/app/content/components/pairDefaults'
 
 export interface Offer {
   code: string; title: string; sub: string; enabled: boolean
@@ -10,7 +11,7 @@ export interface Offer {
   firstOrderOnly: boolean; oncePerCustomer: boolean; startDate: string; endDate: string; totalLimit: number; category: string
 }
 export interface ComboInfo { size: string; jars: string[] }
-export interface CartLine { name: string; qty: number; price: number; weight?: string; image?: string; verified?: boolean; category?: string; combo?: ComboInfo }
+export interface CartLine { name: string; qty: number; price: number; weight?: string; image?: string; verified?: boolean; category?: string; combo?: ComboInfo; pair?: { id: string; label: string; a: string; b: string } }
 export interface Bill {
   items: CartLine[]; subtotal: number; delivery: number; packing: number; gst: number; discount: number; total: number
   coupon: string | null; couponError: string | null; unverified: number
@@ -143,8 +144,21 @@ function priceCombo(c: any, combo: Awaited<ReturnType<typeof loadCombo>>): { pri
   return { price: r2(sum - disc), jars }
 }
 
+// ---------- Art of Pairing couples (Admin → Content → Art of Pairing, doc "art_of_pairing") ----------
+async function loadPairs(): Promise<any[]> {
+  const d = await readDoc('art_of_pairing').catch(() => null)
+  const list: any[] = Array.isArray(d?.couples) && d.couples.length ? d.couples : (DEFAULT_COUPLES as any[])
+  return list.filter((c) => c?.enabled !== false)
+}
+function pricePair(p: any, couples: any[]): { price: number; id: string; label: string; a: string; b: string } | null {
+  const c = couples.find((x) => String(x?.id) === String(p?.id ?? ''))
+  const w = c && (Array.isArray(c.weights) ? c.weights : []).find((x: any) => String(x?.label) === String(p?.label ?? ''))
+  if (!c || !w || !(num(w.price) > 0)) return null
+  return { price: r2(num(w.price)), id: String(c.id), label: String(w.label), a: String(c?.a?.name || ''), b: String(c?.b?.name || '') }
+}
+
 export async function priceCart(body: any, who: { uid: string; phone: string }): Promise<Bill & { offers: Offer[]; orders: AppOrder[]; ctx: any }> {
-  const [catalog, fees, offers, orders, combo] = await Promise.all([loadCatalog(), loadDelivery(), loadOffers(), readAppOrders(), loadCombo()])
+  const [catalog, fees, offers, orders, combo, couples] = await Promise.all([loadCatalog(), loadDelivery(), loadOffers(), readAppOrders(), loadCombo(), loadPairs()])
   let unverified = 0
   const items: CartLine[] = (Array.isArray(body?.items) ? body.items : []).slice(0, 60).map((it: any) => {
     const name = String(it?.name ?? '').replace(/[<>]/g, '').trim().slice(0, 120) || 'Product'
@@ -158,6 +172,15 @@ export async function priceCart(body: any, who: { uid: string; phone: string }):
         name, qty, weight, image: String(it?.image ?? '').slice(0, 300), category: 'Combo',
         price: cp ? cp.price : Math.max(0, sent), verified: !!cp,
         ...(cp ? { combo: { size: String(it.combo.size), jars: cp.jars } } : {}),
+      }
+    }
+    if (it?.pair && typeof it.pair === 'object') {
+      const pp = pricePair(it.pair, couples)
+      if (!pp) unverified++
+      return {
+        name, qty, weight, image: String(it?.image ?? '').slice(0, 300), category: 'Pairing',
+        price: pp ? pp.price : Math.max(0, sent), verified: !!pp,
+        ...(pp ? { pair: { id: pp.id, label: pp.label, a: pp.a, b: pp.b } } : {}),
       }
     }
     const c = catalog.get(norm(name))

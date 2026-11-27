@@ -26,6 +26,14 @@ export const TARGETS: { value: string; label: string }[] = [
   { value: 'sweets', label: 'Home → Sweet Tooth Club' },
   { value: 'podis', label: 'Home → Spice It Up (podis)' },
   { value: 'combos', label: 'Home → Combos' },
+  { value: 'offers', label: 'Home → Offers' },
+  { value: 'pairing', label: 'Home → Art of Pairing' },
+  { value: 'specials', label: 'Home → Specials' },
+  { value: 'mostloved', label: 'Home → Most Loved' },
+  { value: 'bestsellers', label: 'Home → Best Sellers' },
+  { value: 'kadai', label: 'Home → Fresh from the Kadai' },
+  { value: 'festive', label: 'Home → Festive' },
+  { value: 'recent', label: 'Home → Recently Viewed' },
   { value: 'category', label: 'Product list of a category…' },
 ]
 
@@ -36,6 +44,14 @@ export const DEFAULT_HOME_CATEGORIES: HomeCategory[] = [
   { label: 'Sweets', image: 'assets/images/cat_sweets.png', badge: '', target: 'sweets', enabled: true },
   { label: 'Podis', image: 'assets/images/cat_podis.png', badge: '', target: 'podis', enabled: true },
   { label: 'Combos', image: 'assets/images/cat_combos.png', badge: '', target: 'combos', enabled: true },
+  { label: 'Offers', image: 'emoji:🎟️', badge: '', target: 'offers', enabled: true },
+  { label: 'Pairing', image: 'emoji:💞', badge: '', target: 'pairing', enabled: true },
+  { label: 'Specials', image: 'emoji:✨', badge: '', target: 'specials', enabled: true },
+  { label: 'Loved', image: 'emoji:❤️', badge: '', target: 'mostloved', enabled: true },
+  { label: 'Bestsellers', image: 'emoji:🏆', badge: '', target: 'bestsellers', enabled: true },
+  { label: 'Kadai', image: 'emoji:🍳', badge: '', target: 'kadai', enabled: true },
+  { label: 'Festive', image: 'emoji:🪔', badge: '', target: 'festive', enabled: true },
+  { label: 'Recent', image: 'emoji:🕘', badge: '', target: 'recent', enabled: true },
 ]
 
 const DOC_ID = 'home_categories'
@@ -105,7 +121,9 @@ export function HomeCategoriesManager() {
 
   const isAsset = (u: string) => u.startsWith('assets/')
   // built-in app images have a copy in the dashboard's /public/home_categories folder, so they can be previewed here
-  const previewSrc = (u: string) => (isAsset(u) ? BUILT_IN_PREVIEWS[u.split('/').pop() || ''] || `/home_categories/${u.split('/').pop()}` : u)
+  // "emoji:🎁" = the app draws that emoji on the tile (upload a photo to replace it)
+  const emojiSvg = (e: string) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text x='32' y='44' font-size='38' text-anchor='middle'>${e}</text></svg>`)}`
+  const previewSrc = (u: string) => (u.startsWith('emoji:') ? emojiSvg(u.slice(6)) : isAsset(u) ? BUILT_IN_PREVIEWS[u.split('/').pop() || ''] || `/home_categories/${u.split('/').pop()}` : u)
   const targetKind = (t: string) => (t.startsWith('category:') ? 'category' : t)
 
   return (

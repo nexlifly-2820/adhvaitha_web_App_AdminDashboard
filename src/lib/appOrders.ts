@@ -3,7 +3,7 @@ import { fetchApi, postApi } from '@/lib/api-client';
 // Orders placed from the app are kept in app settings doc "app_orders" (always available),
 // and are also sent to the old orders.php when it works.
 
-export interface AppOrderItem { name: string; qty: number; price: number; weight?: string; image?: string; combo?: { size: string; jars: string[] } }
+export interface AppOrderItem { name: string; qty: number; price: number; weight?: string; image?: string; combo?: { size: string; jars: string[] }; pair?: { id: string; label: string; a: string; b: string } }
 export interface AppOrder {
   order_id: string;
   orderId: string;
