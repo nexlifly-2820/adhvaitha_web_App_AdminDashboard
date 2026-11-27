@@ -47,11 +47,11 @@ export const DEFAULT_HOME_CATEGORIES: HomeCategory[] = [
   { label: 'Offers', image: 'assets/images/cat_offers.png', badge: '', target: 'offers', enabled: true },
   { label: 'Pairing', image: 'assets/images/cat_pairing.png', badge: '', target: 'pairing', enabled: true },
   { label: 'Specials', image: 'assets/images/cat_specials.png', badge: '', target: 'specials', enabled: true },
-  { label: 'Loved', image: 'assets/images/cat_loved.png', badge: '', target: 'mostloved', enabled: true },
+  { label: 'Most Loved', image: 'assets/images/cat_loved.png', badge: '', target: 'mostloved', enabled: true },
   { label: 'Bestsellers', image: 'assets/images/cat_bestsellers.png', badge: '', target: 'bestsellers', enabled: true },
-  { label: 'Kadai', image: 'assets/images/cat_kadai.png', badge: '', target: 'kadai', enabled: true },
+  { label: 'Fresh Kadai', image: 'assets/images/cat_kadai.png', badge: '', target: 'kadai', enabled: true },
   { label: 'Festive', image: 'assets/images/cat_festive.png', badge: '', target: 'festive', enabled: true },
-  { label: 'Recent', image: 'assets/images/cat_recent.png', badge: '', target: 'recent', enabled: true },
+  { label: 'Order Again', image: 'assets/images/cat_recent.png', badge: '', target: 'recent', enabled: true },
 ]
 
 const DOC_ID = 'home_categories'
